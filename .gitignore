@@ -1,0 +1,22 @@
+# Python cache and compiled files
+__pycache__/
+*.pyc
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Excel or data exports
+*.xlsx
+*.xls
+*.csv
+*.pdf
+
+# IDE settings
+.idea/
+.vscode/
