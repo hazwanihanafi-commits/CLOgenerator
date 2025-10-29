@@ -103,12 +103,17 @@ def read_clo_table():
     return df
 
 def write_clo_table(df):
-    with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
-        writer.book = load_workbook(WORKBOOK_PATH)
-        if "CLO_Table" in writer.book.sheetnames:
-            std = writer.book["CLO_Table"]
-            writer.book.remove(std)
-        df.to_excel(writer, sheet_name="CLO_Table", index=False)
+    """Save CLO table back into Excel (Render-compatible)."""
+    from openpyxl import load_workbook
+    try:
+        book = load_workbook(WORKBOOK_PATH)
+        with pd.ExcelWriter(
+            WORKBOOK_PATH, engine="openpyxl", mode="a", if_sheet_exists="replace"
+        ) as writer:
+            writer.book = book
+            df.to_excel(writer, sheet_name="CLO_Table", index=False)
+    except Exception as e:
+        print("Error writing CLO_Table:", e)
 
 # --- Routes ---
 
@@ -182,11 +187,19 @@ def download():
     df = read_clo_table()
     if df.empty:
         return "<p>No CLO table to download.</p>"
+
+    # Create a downloadable Excel file in memory
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="CLO_Table")
+        df.to_excel(writer, sheet_name="CLO_Table", index=False)
     output.seek(0)
-    return send_file(output, as_attachment=True, download_name="CLO_Table.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="CLO_Table.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 if __name__ == "__main__":
     app.run(debug=True)
