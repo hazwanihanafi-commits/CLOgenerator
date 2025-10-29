@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SCLOG™ - Smart CLO Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f6f9fc;
+            margin: 30px;
+        }
+        h1 {
+            color: #004080;
+        }
+        form {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin-bottom: 30px;
+        }
+        input, textarea, select, button {
+            width: 100%;
+            margin-top: 8px;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #004080;
+            color: white;
+            border: none;
+            font-weight: bold;
+        }
+        button:hover {
+            background: #0066cc;
+        }
+        table.data {
+            border-collapse: collapse;
+            width: 100%;
+            margin-top: 20px;
+            background: #fff;
+        }
+        table.data th, table.data td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+        }
+        table.data th {
+            background: #004080;
+            color: white;
+        }
+        .message {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>SCLOG™ – Smart CLO Generator</h1>
+    <p>Use this form to add or edit Course Learning Outcomes (CLOs) and align them with PLOs and Bloom’s taxonomy levels.</p>
+
+    {% if message %}
+        <p class="message">{{ message }}</p>
+    {% endif %}
+
+    <form method="POST">
+        <label for="clo">CLO:</label>
+        <input type="text" id="clo" name="clo" placeholder="e.g., Apply exercise physiology principles" required>
+
+        <label for="plo">PLO:</label>
+        <select id="plo" name="plo" required>
+            <option value="">Select PLO</option>
+            <option value="PLO1">PLO1 - Knowledge</option>
+            <option value="PLO2">PLO2 - Practical Skills</option>
+            <option value="PLO3">PLO3 - Communication</option>
+            <option value="PLO4">PLO4 - Problem Solving</option>
+            <option value="PLO5">PLO5 - Ethics & Professionalism</option>
+        </select>
+
+        <label for="bloom">Bloom Level:</label>
+        <select id="bloom" name="bloom" required>
+            <option value="">Select Bloom Level</option>
+            <option value="Remember">Remember</option>
+            <option value="Understand">Understand</option>
+            <option value="Apply">Apply</option>
+            <option value="Analyze">Analyze</option>
+            <option value="Evaluate">Evaluate</option>
+            <option value="Create">Create</option>
+        </select>
+
+        <label for="description">Description (optional):</label>
+        <textarea id="description" name="description" rows="3" placeholder="Add short notes or context..."></textarea>
+
+        <button type="submit">Save CLO</button>
+    </form>
+
+    <h2>Existing CLO Records</h2>
+    <div>{{ table_html | safe }}</div>
+
+</body>
+</html>
