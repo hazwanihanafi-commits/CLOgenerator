@@ -56,13 +56,35 @@
     </select>
 
     <label for="content">Content / Object:</label>
-    <input type="text" id="content" name="content" placeholder="Enter learning content" required>
+    <input type="text" id="content" name="content" placeholder="e.g., clinical assessment methods, patient safety principles, data interpretation skills" required>
+    <small style="color:#555; font-size:13px;">
+    💡 <strong>Example:</strong> "ethical principles in clinical decision-making" or "motor function testing protocols"
+    </small>
 
     <label for="cw">Coursework %:</label>
     <input type="text" id="cw" name="cw" placeholder="e.g., 20%">
 
     <button type="submit">Generate CLO</button>
   </form>
+<button type="submit">Generate CLO</button>
+
+<div id="cloExample" style="
+  background:#f5f9ff;
+  border-left:4px solid #0077cc;
+  padding:10px 15px;
+  margin-top:15px;
+  border-radius:6px;
+  font-size:14px;
+  color:#333;
+">
+  <strong>🧩 Example of Generated CLO:</strong><br>
+  <em>
+    Integrate ethical principles in clinical decision-making 
+    with professionalism during clinical or group activities, 
+    demonstrating coherent organization of knowledge, 
+    guided by professional ethical standards.
+  </em>
+</div>
 
   <h2>Existing CLO Table</h2>
   <div id="tableWrap">{{ table_html | safe }}</div>
@@ -174,6 +196,29 @@
   <em>Universiti Sains Malaysia</em>. 
   All rights reserved.
 </footer>
+
+<script>
+const cloExampleBox = document.getElementById("cloExample");
+const ploSelect = document.getElementById("plo");
+
+const cloSamples = {
+  "PLO1": "Define key concepts of anticipatory thinking with ethics and professionalism based on case scenarios or clinical data.",
+  "PLO2": "Apply integrated problem-solving approaches with ethics and professionalism during clinical sessions, guided by integrity and ethical standards.",
+  "PLO3": "Demonstrate strategic thinking in professional practice standards during clinical applications, under supervised conditions.",
+  "PLO6": "Integrate ethical principles in clinical decision-making with professionalism during clinical or group activities, guided by ethical standards."
+};
+
+ploSelect.addEventListener("change", function() {
+  const selected = this.value;
+  if (cloSamples[selected]) {
+    cloExampleBox.querySelector("em").textContent = cloSamples[selected];
+  } else {
+    cloExampleBox.querySelector("em").textContent =
+      "Example will appear here after selecting a PLO.";
+  }
+});
+</script>
+
 
 </body>
 </html>
