@@ -197,6 +197,29 @@ def download():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+@app.route("/reset_table")
+def reset_table():
+    """Completely clear all rows in the CLO_Table sheet."""
+    try:
+        # Create an empty DataFrame with the same columns
+        df_empty = pd.DataFrame(columns=[
+            "ID", "Time", "Course", "PLO", "Bloom", "FullCLO",
+            "Mapping (SC + VBE)", "Assessment Methods",
+            "Evidence of Assessment", "Coursework Assessment Percentage (%)"
+        ])
+        # Save to workbook
+        with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
+            writer.book = load_workbook(WORKBOOK_PATH)
+            if "CLO_Table" in writer.book.sheetnames:
+                std = writer.book["CLO_Table"]
+                writer.book.remove(std)
+            df_empty.to_excel(writer, sheet_name="CLO_Table", index=False)
+        print("✅ CLO_Table has been reset successfully.")
+        return redirect(url_for("index"))
+    except Exception as e:
+        print(f"⚠️ Error resetting CLO_Table: {e}")
+        return f"<p>Error resetting table: {e}</p>"
+
 # --- Dynamic dropdowns ---
 
 @app.route("/api/get_blooms/<plo>")
@@ -250,4 +273,5 @@ def api_debug_plo(plo):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
