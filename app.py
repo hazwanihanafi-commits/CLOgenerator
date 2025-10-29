@@ -103,17 +103,27 @@ def read_clo_table():
     return df
 
 def write_clo_table(df):
-    """Save CLO table back into Excel (Render-compatible)."""
+    """Save CLO table back into Excel safely (compatible with pandas ≥ 2.1)."""
     from openpyxl import load_workbook
+
     try:
+        # Load workbook
         book = load_workbook(WORKBOOK_PATH)
-        with pd.ExcelWriter(
-            WORKBOOK_PATH, engine="openpyxl", mode="a", if_sheet_exists="replace"
-        ) as writer:
-            writer.book = book
+
+        # Remove existing sheet if exists
+        if "CLO_Table" in book.sheetnames:
+            std = book["CLO_Table"]
+            book.remove(std)
+
+        # Save DataFrame as new sheet
+        with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as writer:
+            writer._book = book   # ✅ internal property, not the removed setter
             df.to_excel(writer, sheet_name="CLO_Table", index=False)
+
+        print("✅ CLO_Table successfully written.")
     except Exception as e:
-        print("Error writing CLO_Table:", e)
+        print("⚠️ Error writing CLO_Table:", e)
+
 
 # --- Routes ---
 
@@ -203,3 +213,4 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
