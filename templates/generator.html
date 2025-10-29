@@ -62,65 +62,64 @@
   <h2>Existing CLO Table</h2>
   <div id="tableWrap">{{ table_html | safe }}</div>
 
-<script>
-// ---------- Inline edit & delete hookup (runs after DOM ready) ----------
-function hookTableActions() {
-  // inline editable cells
-  document.querySelectorAll("td[contenteditable='true']").forEach(td => {
-    td.removeEventListener("blur", td._blurHandler); // avoid duplicate handlers
-    td._blurHandler = async function(e) {
-      const row = e.target.closest("tr");
-      const rowId = row && row.children[0] ? row.children[0].innerText.trim() : null;
-      const field = e.target.getAttribute("data-field");
-      const value = e.target.innerText.trim();
-      if (!rowId || !field) return;
-      await fetch(`/edit/${rowId}`, {
-        method: "POST",
-        headers: {"Content-Type":"application/x-www-form-urlencoded"},
-        body: new URLSearchParams({ field, value })
-      });
-    };
-    td.addEventListener("blur", td._blurHandler);
-  });
+  <script>
+  // ---------- Inline edit & delete ----------
+  function hookTableActions() {
+    document.querySelectorAll("td[contenteditable='true']").forEach(td => {
+      td.removeEventListener("blur", td._blurHandler);
+      td._blurHandler = async function(e) {
+        const row = e.target.closest("tr");
+        const rowId = row?.children[0]?.innerText.trim();
+        const field = e.target.getAttribute("data-field");
+        const value = e.target.innerText.trim();
+        if (!rowId || !field) return;
+        await fetch(`/edit/${rowId}`, {
+          method: "POST",
+          headers: {"Content-Type":"application/x-www-form-urlencoded"},
+          body: new URLSearchParams({ field, value })
+        });
+      };
+      td.addEventListener("blur", td._blurHandler);
+    });
 
-  // delete buttons
-  document.querySelectorAll(".delete-btn").forEach(btn => {
-    btn.removeEventListener("click", btn._clickHandler);
-    btn._clickHandler = function() {
-      const id = btn.getAttribute("data-id");
-      if (confirm("Delete this row?")) {
-        window.location.href = `/delete/${id}`;
-      }
-    };
-    btn.addEventListener("click", btn._clickHandler);
-  });
-}
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+      btn.removeEventListener("click", btn._clickHandler);
+      btn._clickHandler = function() {
+        const id = btn.getAttribute("data-id");
+        if (confirm("Delete this row?")) window.location.href = `/delete/${id}`;
+      };
+      btn.addEventListener("click", btn._clickHandler);
+    });
+  }
+  document.addEventListener("DOMContentLoaded", hookTableActions);
 
-// call when page first loads
-document.addEventListener("DOMContentLoaded", hookTableActions);
+  // ---------- PLO → Bloom → Verb dropdown logic ----------
+  const ploSelect = document.getElementById("plo");
+  const bloomSelect = document.getElementById("bloom");
+  const verbSelect = document.getElementById("verb");
 
-// If you update the table HTML via AJAX later, call hookTableActions() again.
-</script>
-
-<script>
-// ---------- Dynamic PLO -> Bloom -> Verb population ----------
-const ploSelect = document.getElementById("plo");
-const bloomSelect = document.getElementById("bloom");
-const verbSelect = document.getElementById("verb");
-
-ploSelect.addEventListener("change", async function() {
-  const plo = this.value;
-  bloomSelect.innerHTML = "<option>Loading...</option>";
-  verbSelect.innerHTML = "<option value=''>-- Select Verb --</option>";
-
-  if (!plo) {
-    bloomSelect.innerHTML = "<option value=''>-- Select Bloom --</option>";
-    return;
+  async function fetchJson(url) {
+    const res = await fetch(url);
+    if (!res.ok) {
+      console.error("Request failed:", res.status, url);
+      return [];
+    }
+    try {
+      return await res.json();
+    } catch {
+      console.error("Response not JSON:", url);
+      return [];
+    }
   }
 
-  try {
-    const resp = await fetch(`/api/get_blooms/${encodeURIComponent(plo)}`);
-    const blooms = await resp.json();
+  ploSelect.addEventListener("change", async () => {
+    const plo = ploSelect.value;
+    bloomSelect.innerHTML = "<option>Loading...</option>";
+    verbSelect.innerHTML = "<option value=''>-- Select Verb --</option>";
+
+    if (!plo) return;
+
+    const blooms = await fetchJson(`/api/get_blooms/${encodeURIComponent(plo)}`);
     bloomSelect.innerHTML = "<option value=''>-- Select Bloom --</option>";
     blooms.forEach(b => {
       const opt = document.createElement("option");
@@ -128,26 +127,17 @@ ploSelect.addEventListener("change", async function() {
       opt.textContent = b;
       bloomSelect.appendChild(opt);
     });
-  } catch (e) {
-    console.error("Error fetching blooms:", e);
-    bloomSelect.innerHTML = "<option value=''>-- Select Bloom --</option>";
-  }
-});
+  });
 
-bloomSelect.addEventListener("change", async function() {
-  const bloom = this.value;
-  const plo = ploSelect.value;
-  verbSelect.innerHTML = "<option>Loading...</option>";
-  if (!plo || !bloom) {
-    verbSelect.innerHTML = "<option value=''>-- Select Verb --</option>";
-    return;
-  }
+  bloomSelect.addEventListener("change", async () => {
+    const bloom = bloomSelect.value;
+    const plo = ploSelect.value;
+    if (!bloom || !plo) return;
+    verbSelect.innerHTML = "<option>Loading...</option>";
 
-  try {
-    const resp = await fetch(`/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}`);
-    const verbs = await resp.json();
+    const verbs = await fetchJson(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}`);
     verbSelect.innerHTML = "<option value=''>-- Select Verb --</option>";
-    if (!verbs || verbs.length === 0) {
+    if (verbs.length === 0) {
       const opt = document.createElement("option");
       opt.value = "";
       opt.textContent = "-- No verbs found --";
@@ -160,12 +150,8 @@ bloomSelect.addEventListener("change", async function() {
       opt.textContent = v;
       verbSelect.appendChild(opt);
     });
-  } catch (e) {
-    console.error("Error fetching verbs:", e);
-    verbSelect.innerHTML = "<option value=''>-- Select Verb --</option>";
-  }
-});
-</script>
+  });
+  </script>
 
 </body>
 </html>
