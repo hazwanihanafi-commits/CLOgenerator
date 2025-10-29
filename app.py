@@ -302,8 +302,8 @@ def get_verbs_for_domain_and_bloom(domain, bloom):
     verbs = [v.strip() for v in str(raw).split(",") if v.strip()]
     return verbs
 
-@app.route("/get_blooms/<plo>")
-def get_blooms(plo):
+@app.route("/api/get_blooms/<plo>")
+def api_get_blooms(plo):
     """Return list of bloom levels for a PLO (based on PLO -> Domain -> Criterion sheet)."""
     details = get_plo_details(plo)
     if not details:
@@ -334,5 +334,6 @@ def get_verbs_route(plo, bloom):
     domain = details.get("Domain", "")
     verbs = get_verbs_for_domain_and_bloom(domain, bloom)
     return jsonify(verbs)
+
 
 
