@@ -24,9 +24,14 @@
 <body>
 
   <div class="topbar">
-    <h1>SCLOG™ — Smart CLO Generator</h1>
+  <h1>SCLOG™ — Smart CLO Generator</h1>
+  <div>
     <a class="btn" href="{{ url_for('download') }}">⬇️ Download CLO_Table.xlsx</a>
+    <a class="btn" style="background:#c0392b" href="{{ url_for('reset_table') }}" onclick="return confirm('Are you sure you want to clear the CLO table? This action cannot be undone.');">
+      🗑️ Reset Table
+    </a>
   </div>
+</div>
 
   <form method="POST" action="{{ url_for('generate') }}">
     <label for="course">Course:</label>
