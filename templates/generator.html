@@ -1,236 +1,277 @@
 <!DOCTYPE html>
 <html lang="en">
-<<style>
-  body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: linear-gradient(180deg, #f8f9fb 0%, #ffffff 100%);
-    color: #333;
-  }
-
-  .topbar {
-    background-color: #5C2E91;
-    color: white;
-    padding: 16px 40px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-  }
-
-  .topbar h1 {
-    margin: 0;
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-  }
-
-  a.btn {
-    background-color: #E5A823;
-    color: #fff;
-    padding: 8px 14px;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: 600;
-    transition: background 0.3s;
-  }
-
-  a.btn:hover {
-    background-color: #d39715;
-  }
-
-  form {
-    background: #ffffff;
-    padding: 25px;
-    margin: 30px auto;
-    border-radius: 10px;
-    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-    max-width: 850px;
-  }
-
-  label {
-    font-weight: 600;
-    color: #5C2E91;
-    margin-top: 10px;
-    display: block;
-  }
-
-  select, input {
-    width: 100%;
-    padding: 10px;
-    margin-top: 6px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 15px;
-    transition: border-color 0.3s;
-  }
-
-  select:focus, input:focus {
-    border-color: #5C2E91;
-    outline: none;
-    box-shadow: 0 0 3px rgba(92,46,145,0.4);
-  }
-
-  button {
-    background-color: #5C2E91;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    margin-top: 15px;
-    transition: background 0.3s;
-  }
-
-  button:hover {
-    background-color: #4a2475;
-  }
-
-  small {
-    display: block;
-    margin-bottom: 10px;
-  }
-
-  #cloExample {
-    background: #F3F0FA;
-    border-left: 5px solid #5C2E91;
-    padding: 12px 18px;
-    border-radius: 8px;
-    margin-top: 20px;
-    font-size: 15px;
-  }
-
-  #cloExample strong {
-    color: #5C2E91;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-    margin-top: 25px;
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  th {
-    background-color: #5C2E91;
-    color: white;
-    padding: 10px;
-  }
-
-  td {
-    padding: 8px;
-    border: 1px solid #ddd;
-  }
-
-  td[contenteditable="true"] {
-    background-color: #fff9e6;
-  }
-
-  .footer {
-    text-align: center;
-    padding: 15px 0;
-    font-size: 13px;
-    color: #777;
-    background-color: #F3F0FA;
-    border-top: 1px solid #ddd;
-    margin-top: 40px;
-  }
-</style>
->
+<head>
   <meta charset="utf-8">
   <title>SCLOG™ — Smart CLO Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- 🎨 USM Theme Styling -->
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background:#f9fafc; }
-    h1 { color:#003366; }
-    form { background:white; padding:15px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); max-width:900px; }
-    select, input { padding:8px; width:100%; margin:6px 0; border:1px solid #ccc; border-radius:4px; }
-    button { background:#0077cc; color:white; padding:10px 16px; border:none; border-radius:5px; cursor:pointer; }
-    button:hover { background:#005fa3; }
-    table { border-collapse: collapse; width:100%; background:white; margin-top:10px; }
-    th, td { border:1px solid #ddd; padding:8px; text-align:left; }
-    th { background:#003366; color:white; }
-    td[contenteditable="true"] { background:#fff9d6; }
-    .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-    a.btn { background:#22a; color:white; padding:8px 12px; border-radius:6px; text-decoration:none; }
-    a.btn:hover { background:#0077cc; }
-    .delete-btn { color:red; cursor:pointer; font-weight:bold; }
+    /* ====== BASE ====== */
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, #f8f9fb 0%, #ffffff 100%);
+      color: #333;
+      line-height: 1.6;
+    }
+
+    h1, h2 {
+      margin: 0;
+      font-weight: 600;
+    }
+
+    /* ====== TOPBAR ====== */
+    .topbar {
+      background-color: #5C2E91;
+      color: white;
+      padding: 16px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    }
+
+    .topbar h1 {
+      font-size: 22px;
+      letter-spacing: 0.4px;
+    }
+
+    .topbar-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    a.btn {
+      background-color: #E5A823;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: background 0.3s;
+    }
+
+    a.btn:hover { background-color: #d39715; }
+    .reset-btn { background-color: #c0392b; }
+    .reset-btn:hover { background-color: #a83226; }
+
+    /* ====== FORM ====== */
+    form {
+      background: #ffffff;
+      padding: 25px;
+      margin: 30px auto;
+      border-radius: 10px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+      max-width: 850px;
+    }
+
+    label {
+      font-weight: 600;
+      color: #5C2E91;
+      margin-top: 10px;
+      display: block;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 15px;
+      transition: border-color 0.3s;
+    }
+
+    select:focus, input:focus {
+      border-color: #5C2E91;
+      outline: none;
+      box-shadow: 0 0 3px rgba(92,46,145,0.4);
+    }
+
+    small {
+      display: block;
+      margin-bottom: 10px;
+      color: #555;
+      font-size: 13px;
+    }
+
+    button {
+      background-color: #5C2E91;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 15px;
+      transition: background 0.3s;
+    }
+
+    button:hover { background-color: #4a2475; }
+
+    /* ====== CLO EXAMPLE ====== */
+    #cloExample {
+      background: #F3F0FA;
+      border-left: 5px solid #5C2E91;
+      padding: 12px 18px;
+      border-radius: 8px;
+      margin: 20px auto;
+      max-width: 850px;
+      font-size: 15px;
+    }
+
+    #cloExample strong { color: #5C2E91; }
+
+    /* ====== TABLE ====== */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-top: 25px;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th {
+      background-color: #5C2E91;
+      color: white;
+      padding: 10px;
+      text-align: left;
+    }
+
+    td {
+      padding: 8px;
+      border: 1px solid #ddd;
+    }
+
+    td[contenteditable="true"] { background-color: #fff9e6; }
+
+    /* ====== FOOTER ====== */
+    .footer {
+      text-align: center;
+      padding: 15px 10px;
+      font-size: 13px;
+      color: #555;
+      background-color: #F3F0FA;
+      border-top: 1px solid #ddd;
+      margin-top: 40px;
+    }
+
+    /* ====== RESPONSIVE DESIGN ====== */
+    @media (max-width: 768px) {
+      .topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .topbar h1 {
+        font-size: 18px;
+        margin-bottom: 8px;
+      }
+
+      form {
+        margin: 15px;
+        padding: 20px;
+      }
+
+      button, a.btn {
+        width: 100%;
+        text-align: center;
+      }
+
+      #cloExample {
+        margin: 15px;
+        padding: 12px;
+        font-size: 14px;
+      }
+
+      table {
+        font-size: 13px;
+        overflow-x: auto;
+        display: block;
+      }
+
+      th, td {
+        white-space: nowrap;
+      }
+    }
   </style>
 </head>
+
 <body>
 
+  <!-- 🔹 Top Navigation Bar -->
   <div class="topbar">
-  <h1>SCLOG™ — Smart CLO Generator</h1>
-  <div>
-    <a class="btn" href="{{ url_for('download') }}">⬇️ Download CLO_Table.xlsx</a>
-    <a class="btn" style="background:#c0392b" href="{{ url_for('reset_table') }}" onclick="return confirm('Are you sure you want to clear the CLO table? This action cannot be undone.');">
-      🗑️ Reset Table
-    </a>
+    <h1>SCLOG™ — Smart CLO Generator</h1>
+    <div class="topbar-buttons">
+      <a class="btn" href="{{ url_for('download') }}">⬇️ Download CLO_Table.xlsx</a>
+      <a class="btn reset-btn" href="{{ url_for('reset_table') }}"
+         onclick="return confirm('Are you sure you want to clear the CLO table? This action cannot be undone.');">
+         🗑️ Reset Table
+      </a>
+    </div>
   </div>
-</div>
 
+  <!-- 🔹 CLO Generator Form -->
   <form method="POST" action="{{ url_for('generate') }}">
-  <label for="course">Course:</label>
-  <input type="text" id="course" name="course" placeholder="Enter course title" required>
+    <label for="course">Course:</label>
+    <input type="text" id="course" name="course" placeholder="Enter course title" required>
 
-  <label for="plo">Select PLO:</label>
-  <select id="plo" name="plo" required>
-    <option value="">-- Choose PLO --</option>
-    {% for p in plos %}
-      <option value="{{ p }}">{{ p }}</option>
-    {% endfor %}
-  </select>
+    <label for="plo">Select PLO:</label>
+    <select id="plo" name="plo" required>
+      <option value="">-- Choose PLO --</option>
+      {% for p in plos %}
+        <option value="{{ p }}">{{ p }}</option>
+      {% endfor %}
+    </select>
 
-  <label for="bloom">Bloom Level:</label>
-  <select id="bloom" name="bloom" required>
-    <option value="">-- Select Bloom --</option>
-  </select>
+    <label for="bloom">Bloom Level:</label>
+    <select id="bloom" name="bloom" required>
+      <option value="">-- Select Bloom --</option>
+    </select>
 
-  <label for="verb">Verb:</label>
-  <select id="verb" name="verb" required>
-    <option value="">-- Select Verb --</option>
-  </select>
+    <label for="verb">Verb:</label>
+    <select id="verb" name="verb" required>
+      <option value="">-- Select Verb --</option>
+    </select>
 
-  <label for="content">Content / Object:</label>
-  <input type="text" id="content" name="content"
-         placeholder="e.g., clinical assessment methods, patient safety principles, data interpretation skills"
-         required>
-  <small style="color:#555; font-size:13px;">
-    💡 <strong>Example:</strong> "ethical principles in clinical decision-making" or "motor function testing protocols"
-  </small>
+    <label for="content">Content / Object:</label>
+    <input type="text" id="content" name="content"
+           placeholder="e.g., clinical assessment methods, patient safety principles, data interpretation skills"
+           required>
+    <small>💡 <strong>Example:</strong> "ethical principles in clinical decision-making" or "motor function testing protocols"</small>
 
-  <label for="cw">Coursework %:</label>
-  <input type="number" id="cw" name="cw" placeholder="e.g., 20" min="0" max="100" step="1">
+    <label for="cw">Coursework %:</label>
+    <input type="number" id="cw" name="cw" placeholder="e.g., 20" min="0" max="100" step="1">
 
-  <button type="submit">Generate CLO</button>
-</form>
+    <button type="submit">Generate CLO</button>
+  </form>
 
-<div id="cloExample" style="
-  background:#f5f9ff;
-  border-left:4px solid #0077cc;
-  padding:10px 15px;
-  margin-top:15px;
-  border-radius:6px;
-  font-size:14px;
-  color:#333;
-">
-  <strong>🧩 Example of Generated CLO:</strong><br>
-  <em>
-    Integrate ethical principles in clinical decision-making 
-    with professionalism during clinical or group activities, 
-    demonstrating coherent organization of knowledge, 
-    guided by professional ethical standards.
-  </em>
-</div>
+  <!-- 🔹 Example Box -->
+  <div id="cloExample">
+    <strong>🧩 Example of Generated CLO:</strong><br>
+    <em>Example will appear here after selecting a PLO.</em>
+  </div>
 
-  <h2>Existing CLO Table</h2>
-  <div id="tableWrap">{{ table_html | safe }}</div>
+  <!-- 🔹 CLO Table -->
+  <div style="max-width: 900px; margin: 0 auto; padding: 0 10px;">
+    <h2>Existing CLO Table</h2>
+    <div id="tableWrap">{{ table_html | safe }}</div>
+  </div>
 
+  <!-- 🔹 Footer -->
+  <div class="footer">
+    © 2025 <strong>SCLOG™ Smart CLO Generator</strong>. Developed by 
+    <strong>Assoc. Prof. Dr. Hazwani Ahmad Yusof@Hanafi</strong>, Universiti Sains Malaysia. All rights reserved.
+  </div>
+
+  <!-- 🔹 Scripts -->
   <script>
   // ---------- Inline edit & delete ----------
   function hookTableActions() {
@@ -262,23 +303,15 @@
   }
   document.addEventListener("DOMContentLoaded", hookTableActions);
 
-  // ---------- PLO → Bloom → Verb dropdown logic ----------
+  // ---------- Dropdown logic ----------
   const ploSelect = document.getElementById("plo");
   const bloomSelect = document.getElementById("bloom");
   const verbSelect = document.getElementById("verb");
 
   async function fetchJson(url) {
     const res = await fetch(url);
-    if (!res.ok) {
-      console.error("Request failed:", res.status, url);
-      return [];
-    }
-    try {
-      return await res.json();
-    } catch {
-      console.error("Response not JSON:", url);
-      return [];
-    }
+    if (!res.ok) return [];
+    try { return await res.json(); } catch { return []; }
   }
 
   ploSelect.addEventListener("change", async () => {
@@ -287,7 +320,6 @@
     verbSelect.innerHTML = "<option value=''>-- Select Verb --</option>";
 
     if (!plo) return;
-
     const blooms = await fetchJson(`/api/get_blooms/${encodeURIComponent(plo)}`);
     bloomSelect.innerHTML = "<option value=''>-- Select Bloom --</option>";
     blooms.forEach(b => {
@@ -308,7 +340,6 @@
     verbSelect.innerHTML = "<option value=''>-- Select Verb --</option>";
     if (verbs.length === 0) {
       const opt = document.createElement("option");
-      opt.value = "";
       opt.textContent = "-- No verbs found --";
       verbSelect.appendChild(opt);
       return;
@@ -320,51 +351,21 @@
       verbSelect.appendChild(opt);
     });
   });
-  </script>
-<footer style="
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  background: #f0f4f8;
-  border-top: 1px solid #ccc;
-  text-align: center;
-  padding: 10px 0;
-  font-size: 13px;
-  color: #555;
-">
-  © 2025 <strong>SCLOG™ Smart CLO Generator</strong>. 
-  Developed by <strong>Assoc. Prof. Dr. Hazwani Ahmad Yusof@Hanafi</strong>, 
-  <em>Universiti Sains Malaysia</em>. 
-  All rights reserved.
-</footer>
 
-<script>
-const cloExampleBox = document.getElementById("cloExample");
-const ploSelect = document.getElementById("plo");
-
-const cloSamples = {
-  "PLO1": "Define key concepts of anticipatory thinking with ethics and professionalism based on case scenarios or clinical data.",
-  "PLO2": "Apply integrated problem-solving approaches with ethics and professionalism during clinical sessions, guided by integrity and ethical standards.",
-  "PLO3": "Demonstrate strategic thinking in professional practice standards during clinical applications, under supervised conditions.",
-  "PLO6": "Integrate ethical principles in clinical decision-making with professionalism during clinical or group activities, guided by ethical standards."
-};
-
-ploSelect.addEventListener("change", function() {
-  const selected = this.value;
-  if (cloSamples[selected]) {
-    cloExampleBox.querySelector("em").textContent = cloSamples[selected];
-  } else {
+  // ---------- Example CLO ----------
+  const cloExampleBox = document.getElementById("cloExample");
+  const cloSamples = {
+    "PLO1": "Define key concepts of anticipatory thinking with ethics and professionalism based on case scenarios or clinical data.",
+    "PLO2": "Apply integrated problem-solving approaches with ethics and professionalism during clinical sessions, guided by integrity and ethical standards.",
+    "PLO3": "Demonstrate strategic thinking in professional practice standards during clinical applications, under supervised conditions.",
+    "PLO6": "Integrate ethical principles in clinical decision-making with professionalism during clinical or group activities, guided by ethical standards."
+  };
+  ploSelect.addEventListener("change", function() {
+    const selected = this.value;
     cloExampleBox.querySelector("em").textContent =
-      "Example will appear here after selecting a PLO.";
-  }
-});
-</script>
-
-<div class="footer">
-  © 2025 <strong>SCLOG™ Smart CLO Generator</strong>. Developed by 
-  <strong>Dr. Hazwani Hanafi</strong>, Universiti Sains Malaysia. All rights reserved.
-</div>
+      cloSamples[selected] || "Example will appear here after selecting a PLO.";
+  });
+  </script>
 
 </body>
 </html>
