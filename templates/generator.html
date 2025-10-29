@@ -56,11 +56,42 @@
   <input type="number" id="cw" name="cw" placeholder="e.g., 20">
 
   <button type="submit">Generate CLO</button>
-  <a href="{{ url_for('download') }}" class="button">Download CLO Table</a>
 </form>
 
   <h2>Existing CLO Table</h2>
   <div id="tableWrap">{{ table_html | safe }}</div>
+  <script>
+// Enable inline editing of table cells
+document.addEventListener("DOMContentLoaded", () => {
+  document.querySelectorAll("td[contenteditable=true]").forEach(td => {
+    td.addEventListener("blur", async (e) => {
+      const row = e.target.closest("tr");
+      const rowId = row.children[0].innerText.trim();
+      const field = e.target.getAttribute("data-field");
+      const value = e.target.innerText.trim();
+
+      if (!rowId || !field) return;
+
+      await fetch(`/edit/${rowId}`, {
+        method: "POST",
+        headers: {"Content-Type":"application/x-www-form-urlencoded"},
+        body: new URLSearchParams({ field, value })
+      });
+    });
+  });
+
+  // Delete row
+  document.querySelectorAll(".delete-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.getAttribute("data-id");
+      if (confirm("Delete this row?")) {
+        window.location.href = `/delete/${id}`;
+      }
+    });
+  });
+});
+</script>
+
 
 <script>
 document.querySelectorAll("td[contenteditable=true]").forEach(td => {
