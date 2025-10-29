@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>SCLOG™ — Generator</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#111; }
+      h1 { color:#003366; }
+      form { background:white; padding:16px; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.06); max-width:900px; }
+      label { display:block; margin-top:10px; font-weight:600; }
+      select,input,textarea { width:100%; padding:8px; margin-top:6px; border-radius:6px; border:1px solid #cbd5e1; }
+      .row { display:flex; gap:12px; }
+      .col { flex:1; }
+      .small { max-width:260px; }
+      button { background:#0b5ed7; color:white; padding:10px 16px; border-radius:8px; border:none; margin-top:12px; cursor:pointer; }
+      .msg { color:green; margin:12px 0; font-weight:600; }
+      .table-wrap { margin-top:20px; }
+      table.data { border-collapse:collapse; width:100%; background:white; }
+      table.data th, table.data td { border:1px solid #e2e8f0; padding:8px; text-align:left; }
+      table.data th { background:#0b5ed7; color:white; }
+    </style>
+</head>
+<body>
+  <h1>SCLOG™ — Smart CLO Generator</h1>
+
+  <div style="max-width:1000px;">
+    {% if message %}
+      <div class="msg">{{ message }}</div>
+    {% endif %}
+
+    <form id="genForm" method="POST" action="{{ url_for('generate') }}">
+      <label>Course (optional)</label>
+      <input name="course" placeholder="Course title">
+
+      <div class="row">
+        <div class="col small">
+          <label>PLO</label>
+          <select id="ploSelect" name="plo" required>
+            <option value="">-- Select PLO --</option>
+            {% for p in plos %}
+              <option value="{{ p }}">{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="col small">
+          <label>Bloom Level</label>
+          <select id="bloomSelect" name="bloom" required>
+            <option value="">-- Select Bloom --</option>
+          </select>
+        </div>
+
+        <div class="col">
+          <label>Verb</label>
+          <select id="verbSelect" name="verb" required>
+            <option value="">-- Select Verb --</option>
+          </select>
+        </div>
+      </div>
+
+      <label>Content / Object</label>
+      <input id="contentInput" name="content" placeholder="e.g., ethical principles and professional standards" required>
+
+      <div class="row">
+        <div class="col small">
+          <label>Coursework % (optional)</label>
+          <input name="cw" placeholder="e.g., 30%">
+        </div>
+        <div class="col">
+          <label>SC Description (auto)</label>
+          <input id="scDesc" readonly>
+        </div>
+        <div class="col">
+          <label>VBE (auto)</label>
+          <input id="vbe" readonly>
+        </div>
+      </div>
+
+      <div style="margin-top:10px;">
+        <label>Auto-filled (Criterion / Condition / Assessment / Evidence)</label>
+        <div style="background:#fff;padding:8px;border-radius:6px;border:1px solid #e2e8f0;">
+          <div><strong>Criterion:</strong> <span id="criterionText"></span></div>
+          <div><strong>Condition:</strong> <span id="conditionText"></span></div>
+          <div><strong>Assessment:</strong> <span id="assessmentText"></span></div>
+          <div><strong>Evidence:</strong> <span id="evidenceText"></span></div>
+        </div>
+      </div>
+
+      <button type="submit">Generate & Save to CLO_Table</button>
+    </form>
+
+    <div class="table-wrap">
+      <h2>Existing CLO Table</h2>
+      <div id="tablePreview">
+        {{ table_html | safe }}
+      </div>
+    </div>
+  </div>
+
+<script>
+  async function fetchDetails(plo, bloom='') {
+    if (!plo) return null;
+    const q = new URLSearchParams({plo: plo});
+    if (bloom) q.set('bloom', bloom);
+    const resp = await fetch('/api/details?' + q.toString());
+    if (!resp.ok) return null;
+    return await resp.json();
+  }
+
+  const ploSelect = document.getElementById('ploSelect');
+  const bloomSelect = document.getElementById('bloomSelect');
+  const verbSelect = document.getElementById('verbSelect');
+  const scDesc = document.getElementById('scDesc');
+  const vbe = document.getElementById('vbe');
+  const criterionText = document.getElementById('criterionText');
+  const conditionText = document.getElementById('conditionText');
+  const assessmentText = document.getElementById('assessmentText');
+  const evidenceText = document.getElementById('evidenceText');
+
+  ploSelect.addEventListener('change', async (e) => {
+    const plo = e.target.value;
+    // clear fields
+    scDesc.value = '';
+    vbe.value = '';
+    criterionText.textContent = '';
+    conditionText.textContent = '';
+    assessmentText.textContent = '';
+    evidenceText.textContent = '';
+    bloomSelect.innerHTML = '<option value="">-- Select Bloom --</option>';
+    verbSelect.innerHTML = '<option value="">-- Select Verb --</option>';
+
+    if (!plo) return;
+    const data = await fetchDetails(plo);
+    if (!data) return;
+    // fill SC and VBE
+    if (data.details) {
+      scDesc.value = data.details.SC_Desc || '';
+      vbe.value = data.details.VBE || '';
+    }
+    // populate bloom options
+    const blooms = data.bloom_options || [];
+    blooms.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = b;
+      opt.textContent = b;
+      bloomSelect.appendChild(opt);
+    });
+  });
+
+  bloomSelect.addEventListener('change', async (e) => {
+    const plo = ploSelect.value;
+    const bloom = bloomSelect.value;
+    if (!plo || !bloom) return;
+    const data = await fetchDetails(plo, bloom);
+    if (!data) return;
+    // populate verbs
+    verbSelect.innerHTML = '<option value="">-- Select Verb --</option>';
+    (data.verbs || []).forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      verbSelect.appendChild(opt);
+    });
+    // fill auto texts
+    criterionText.textContent = data.criterion || '';
+    conditionText.textContent = data.condition || '';
+    assessmentText.textContent = data.assessment || '';
+    evidenceText.textContent = data.evidence || '';
+    // set SC/VBE too
+    if (data.details) {
+      document.getElementById('scDesc').value = data.details.SC_Desc || '';
+      document.getElementById('vbe').value = data.details.VBE || '';
+    }
+  });
+</script>
+
+</body>
+</html>
