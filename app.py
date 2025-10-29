@@ -214,3 +214,59 @@ def download():
 if __name__ == "__main__":
     app.run(debug=True)
 
+@app.route("/get_blooms/<plo>")
+def get_blooms(plo):
+    """Return Bloom levels list based on the PLO’s domain."""
+    details = get_plo_details(plo)
+    if not details:
+        return jsonify([])
+
+    domain = str(details.get("Domain", "")).lower()
+    if not domain:
+        return jsonify([])
+
+    # Choose sheet by domain
+    sheet_map = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }
+    sheet_name = sheet_map.get(domain)
+    if not sheet_name:
+        return jsonify([])
+
+    df = load_sheet_df(sheet_name)
+    if df.empty:
+        return jsonify([])
+
+    blooms = df.iloc[:, 0].dropna().astype(str).tolist()
+    return jsonify(blooms)
+
+
+@app.route("/get_verbs/<domain>/<bloom>")
+def get_verbs(domain, bloom):
+    """Return verb list for the selected domain and Bloom level."""
+    domain = str(domain).lower()
+    sheet_map = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }
+    sheet_name = sheet_map.get(domain)
+    if not sheet_name:
+        return jsonify([])
+
+    df = load_sheet_df(sheet_name)
+    if df.empty:
+        return jsonify([])
+
+    mask = df.iloc[:, 0].astype(str).str.lower() == str(bloom).lower()
+    if not mask.any():
+        return jsonify([])
+
+    verbs = []
+    for v in df[mask].iloc[0, 1].split(","):
+        if v.strip():
+            verbs.append(v.strip())
+    return jsonify(verbs)
+
