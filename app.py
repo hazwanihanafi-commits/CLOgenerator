@@ -97,42 +97,31 @@ def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
 
 def read_clo_table():
     try:
-        df = pd.read_excel(WORKBOOK_PATH, sheet_name="CLO_Table", engine="openpyxl")
+        return pd.read_excel(WORKBOOK_PATH, sheet_name="CLO_Table", engine="openpyxl")
     except Exception:
-        df = pd.DataFrame()
-    return df
+        return pd.DataFrame()
 
 def write_clo_table(df):
-    """Save CLO table back into Excel safely (compatible with pandas ≥ 2.1)."""
-    from openpyxl import load_workbook
-
+    """Save CLO table back into Excel safely."""
     try:
-        # Load workbook
         book = load_workbook(WORKBOOK_PATH)
-
-        # Remove existing sheet if exists
         if "CLO_Table" in book.sheetnames:
             std = book["CLO_Table"]
             book.remove(std)
-
-        # Save DataFrame as new sheet
         with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as writer:
-            writer._book = book   # ✅ internal property, not the removed setter
+            writer._book = book
             df.to_excel(writer, sheet_name="CLO_Table", index=False)
-
         print("✅ CLO_Table successfully written.")
     except Exception as e:
         print("⚠️ Error writing CLO_Table:", e)
 
 
-# --- Routes ---
+# --- Core routes ---
 
 @app.route("/")
 def index():
     df_map = get_mapping_dict()
-    plos = []
-    if not df_map.empty:
-        plos = df_map[df_map.columns[0]].dropna().astype(str).tolist()
+    plos = df_map[df_map.columns[0]].dropna().astype(str).tolist() if not df_map.empty else []
     df_ct = read_clo_table()
     table_html = df_ct.to_html(classes="data", index=False) if not df_ct.empty else "<p>No CLO records yet.</p>"
     return render_template("generator.html", plos=plos, table_html=table_html)
@@ -197,13 +186,10 @@ def download():
     df = read_clo_table()
     if df.empty:
         return "<p>No CLO table to download.</p>"
-
-    # Create a downloadable Excel file in memory
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="CLO_Table", index=False)
     output.seek(0)
-
     return send_file(
         output,
         as_attachment=True,
@@ -211,106 +197,52 @@ def download():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# --- Dynamic dropdowns ---
 
-@app.route("/get_blooms/<plo>")
-def get_blooms(plo):
-    """Return Bloom levels list based on the PLO’s domain."""
+@app.route("/api/get_blooms/<plo>")
+def api_get_blooms(plo):
     details = get_plo_details(plo)
     if not details:
         return jsonify([])
-
-    domain = str(details.get("Domain", "")).lower()
-    if not domain:
-        return jsonify([])
-
-    # Choose sheet by domain
+    domain = details.get("Domain", "").strip().lower()
     sheet_map = {
         "cognitive": "Bloom_Cognitive",
         "affective": "Bloom_Affective",
         "psychomotor": "Bloom_Psychomotor"
     }
-    sheet_name = sheet_map.get(domain)
-    if not sheet_name:
-        return jsonify([])
-
-    df = load_sheet_df(sheet_name)
-    if df.empty:
-        return jsonify([])
-
-    blooms = df.iloc[:, 0].dropna().astype(str).tolist()
-    return jsonify(blooms)
-
-
-@app.route("/get_verbs/<domain>/<bloom>")
-def get_verbs(domain, bloom):
-    """Return verb list for the selected domain and Bloom level."""
-    domain = str(domain).lower()
-    sheet_map = {
-        "cognitive": "Bloom_Cognitive",
-        "affective": "Bloom_Affective",
-        "psychomotor": "Bloom_Psychomotor"
-    }
-    sheet_name = sheet_map.get(domain)
-    if not sheet_name:
-        return jsonify([])
-
-    df = load_sheet_df(sheet_name)
-    if df.empty:
-        return jsonify([])
-
-    mask = df.iloc[:, 0].astype(str).str.lower() == str(bloom).lower()
-    if not mask.any():
-        return jsonify([])
-
-    verbs = []
-    for v in df[mask].iloc[0, 1].split(","):
-        if v.strip():
-            verbs.append(v.strip())
-    return jsonify(verbs)
-
-# ---------- verb / bloom helpers & API endpoints ----------
-
-def get_verbs_for_domain_and_bloom(domain, bloom):
-    """Return list of verbs for a given domain and bloom from Bloom_* sheets."""
-    sheet_map = {
-        "cognitive": "Bloom_Cognitive",
-        "affective": "Bloom_Affective",
-        "psychomotor": "Bloom_Psychomotor"
-    }
-
-    domain_key = str(domain).strip().lower()
-    sheet = sheet_map.get(domain_key)
+    sheet = sheet_map.get(domain)
     if not sheet:
-        print(f"⚠️ Unknown domain: {domain_key}")
-        return []
-
+        return jsonify([])
     df = load_sheet_df(sheet)
     if df.empty:
-        print(f"⚠️ Could not read sheet: {sheet}")
-        return []
+        return jsonify([])
+    blooms = df.iloc[:, 0].dropna().astype(str).str.strip().tolist()
+    return jsonify(blooms)
 
-    # Normalize column names and remove blanks
-    df.columns = [str(c).strip() for c in df.columns]
-    bloom_col = df.columns[0]
-    verb_col = df.columns[1] if len(df.columns) > 1 else None
-    if not verb_col:
-        print(f"⚠️ Verb column not found in {sheet}")
-        return []
-
-    # Find matching Bloom Level (case-insensitive)
-    mask = df[bloom_col].astype(str).str.strip().str.lower() == str(bloom).strip().lower()
+@app.route("/api/get_verbs/<plo>/<bloom>")
+def api_get_verbs(plo, bloom):
+    details = get_plo_details(plo)
+    if not details:
+        return jsonify([])
+    domain = details.get("Domain", "").strip().lower()
+    sheet_map = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }
+    sheet = sheet_map.get(domain)
+    if not sheet:
+        return jsonify([])
+    df = load_sheet_df(sheet)
+    if df.empty:
+        return jsonify([])
+    mask = df.iloc[:, 0].astype(str).str.strip().str.lower() == str(bloom).strip().lower()
     if not mask.any():
-        print(f"⚠️ No match found for Bloom '{bloom}' in {sheet}")
-        return []
-
-    raw = str(df.loc[mask, verb_col].iloc[0])
-    # Split verbs by comma and clean them up
-    verbs = [v.strip() for v in raw.split(",") if v.strip()]
-    print(f"✅ Found verbs for {domain_key}-{bloom}: {verbs[:5]}...")  # first few for debug
-    return verbs
+        return jsonify([])
+    verbs_raw = str(df.loc[mask].iloc[0, 1])
+    verbs = [v.strip() for v in verbs_raw.split(",") if v.strip()]
+    return jsonify(verbs)
 
 
-
-
+if __name__ == "__main__":
+    app.run(debug=True)
