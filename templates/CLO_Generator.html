@@ -407,3 +407,12 @@ function fnSetActiveSheet(iSh)
  </noframes>
 </frameset>
 </html>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Make all table cells editable
+  document.querySelectorAll('td, th').forEach(cell => {
+    cell.setAttribute('contenteditable', 'true');
+  });
+});
+</script>
+
