@@ -27,27 +27,37 @@
     <h1>SCLOG™ — Smart CLO Generator</h1>
     <a class="btn" href="{{ url_for('download') }}">⬇️ Download CLO_Table.xlsx</a>
   </div>
+<form method="POST" action="{{ url_for('generate') }}">
+  <label for="course">Course:</label>
+  <input type="text" id="course" name="course" placeholder="Enter course title" required>
 
-  <form method="POST" action="{{ url_for('generate') }}">
-    <label>Course:</label>
-    <input name="course" placeholder="Course title">
-    <label>PLO:</label>
-    <select name="plo" required>
-      <option value="">-- Select PLO --</option>
-      {% for p in plos %}
-        <option value="{{ p }}">{{ p }}</option>
-      {% endfor %}
-    </select>
-    <label>Bloom Level:</label>
-    <input name="bloom" placeholder="e.g., Apply" required>
-    <label>Verb:</label>
-    <input name="verb" placeholder="e.g., analyze" required>
-    <label>Content / Object:</label>
-    <input name="content" placeholder="e.g., clinical reasoning" required>
-    <label>Coursework %:</label>
-    <input name="cw" placeholder="e.g., 30%">
-    <button type="submit">Generate CLO</button>
-  </form>
+  <label for="plo">Select PLO:</label>
+  <select id="plo" name="plo" required>
+    <option value="">-- Choose PLO --</option>
+    {% for p in plos %}
+      <option value="{{ p }}">{{ p }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="bloom">Bloom Level:</label>
+  <select id="bloom" name="bloom" required>
+    <option value="">-- Select Bloom --</option>
+  </select>
+
+  <label for="verb">Verb:</label>
+  <select id="verb" name="verb" required>
+    <option value="">-- Select Verb --</option>
+  </select>
+
+  <label for="content">Content / Object:</label>
+  <input type="text" id="content" name="content" placeholder="Enter learning content" required>
+
+  <label for="cw">Coursework %:</label>
+  <input type="number" id="cw" name="cw" placeholder="e.g., 20">
+
+  <button type="submit">Generate CLO</button>
+  <a href="{{ url_for('download') }}" class="button">Download CLO Table</a>
+</form>
 
   <h2>Existing CLO Table</h2>
   <div id="tableWrap">{{ table_html | safe }}</div>
@@ -72,6 +82,48 @@ document.querySelectorAll(".delete-btn").forEach(btn => {
       window.location.href = `/delete/${id}`;
     }
   });
+});
+</script>
+<script>
+document.getElementById("plo").addEventListener("change", function() {
+  const plo = this.value;
+  const bloomSelect = document.getElementById("bloom");
+  const verbSelect = document.getElementById("verb");
+
+  bloomSelect.innerHTML = "<option>Loading...</option>";
+  verbSelect.innerHTML = "<option>-- Select Verb --</option>";
+
+  fetch(`/get_blooms/${plo}`)
+    .then(r => r.json())
+    .then(data => {
+      bloomSelect.innerHTML = "<option value=''>-- Select Bloom --</option>";
+      data.forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = b;
+        opt.textContent = b;
+        bloomSelect.appendChild(opt);
+      });
+    });
+});
+
+document.getElementById("bloom").addEventListener("change", function() {
+  const bloom = this.value;
+  const plo = document.getElementById("plo").value;
+  const verbSelect = document.getElementById("verb");
+
+  if (!bloom || !plo) return;
+
+  fetch(`/get_verbs/${plo}/${bloom}`)
+    .then(r => r.json())
+    .then(data => {
+      verbSelect.innerHTML = "<option value=''>-- Select Verb --</option>";
+      data.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v;
+        opt.textContent = v;
+        verbSelect.appendChild(opt);
+      });
+    });
 });
 </script>
 
