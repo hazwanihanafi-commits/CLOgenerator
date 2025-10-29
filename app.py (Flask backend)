@@ -1,101 +1,63 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for
+from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
 import pandas as pd
 import os
 from datetime import datetime
 from openpyxl import load_workbook
-
-# Path to your uploaded workbook (must be present in project root)
-WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
+from io import BytesIO
 
 app = Flask(__name__, template_folder="templates")
 
-# ---------- Helper functions (converted from your VBA logic) ----------
+WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
+
+# --- Helper functions ---
 
 def load_sheet_df(sheet_name):
-    """Read a sheet into a DataFrame (returns empty DF if missing)."""
     try:
         return pd.read_excel(WORKBOOK_PATH, sheet_name=sheet_name, engine="openpyxl")
     except Exception:
         return pd.DataFrame()
 
 def get_mapping_dict():
-    """Return mapping DataFrame and convenience lookup by PLO."""
     df = load_sheet_df("Mapping")
     if df.empty:
         return pd.DataFrame()
-    # Normalize column names
     df.columns = [c.strip() for c in df.columns]
     return df
 
 def get_plo_details(plo):
-    """Return SC Code, SC Description, VBE, Domain for a PLO (or None)."""
     df = get_mapping_dict()
-    if df.empty or plo is None:
+    if df.empty:
         return None
     mask = df[df.columns[0]].astype(str).str.strip().str.upper() == str(plo).strip().upper()
     if mask.any():
         row = df[mask].iloc[0]
-        # Try to find columns by name; fall back to positional
         cols = {c.lower(): c for c in df.columns}
-        result = {}
-        # PLO column name is assumed present; use common names otherwise map by index
-        result['PLO'] = row[df.columns[0]]
-        # SC Code
-        if 'sc code' in cols:
-            result['SC_Code'] = row[cols['sc code']]
-        else:
-            result['SC_Code'] = row[1] if len(df.columns) > 1 else ""
-        # SC Description
-        if 'sc description' in cols:
-            result['SC_Desc'] = row[cols['sc description']]
-        else:
-            result['SC_Desc'] = row[2] if len(df.columns) > 2 else ""
-        # VBE
-        if 'vbe' in cols:
-            result['VBE'] = row[cols['vbe']]
-        else:
-            result['VBE'] = row[3] if len(df.columns) > 3 else ""
-        # Domain
-        if 'domain' in cols:
-            result['Domain'] = row[cols['domain']]
-        else:
-            # try to find a column that looks like Domain (fallback to 5th)
-            result['Domain'] = row[5] if len(df.columns) > 5 else ""
-        return result
+        return {
+            "PLO": row[df.columns[0]],
+            "SC_Code": row.get(cols.get("sc code"), ""),
+            "SC_Desc": row.get(cols.get("sc description"), ""),
+            "VBE": row.get(cols.get("vbe"), ""),
+            "Domain": row.get(cols.get("domain"), "")
+        }
     return None
 
 def get_criterion_phrase(domain, bloom):
-    """Return Criterion from Criterion sheet matched by domain and bloom level."""
     df = load_sheet_df("Criterion")
     if df.empty:
-        return ""
-    # normalize columns
+        return "", ""
     df.columns = [c.strip() for c in df.columns]
-    cols = [c.lower() for c in df.columns]
-    # find matching row where domain and bloom level match (case-insensitive)
-    dom_col = None
-    bloom_col = None
-    crit_col = None
-    cond_col = None
-    for i, c in enumerate(cols):
-        if 'domain' in c:
-            dom_col = df.columns[i]
-        if 'bloom' in c:
-            bloom_col = df.columns[i]
-        if 'criterion' in c:
-            crit_col = df.columns[i]
-        if 'condition' in c:
-            cond_col = df.columns[i]
-    if dom_col is None or bloom_col is None:
-        return ""
-    # filter
-    mask = (df[dom_col].astype(str).str.strip().str.lower() == str(domain).strip().lower()) & \
-           (df[bloom_col].astype(str).str.strip().str.lower() == str(bloom).strip().lower())
+    dom_col, bloom_col, crit_col, cond_col = None, None, None, None
+    for c in df.columns:
+        lc = c.lower()
+        if "domain" in lc: dom_col = c
+        elif "bloom" in lc: bloom_col = c
+        elif "criterion" in lc: crit_col = c
+        elif "condition" in lc: cond_col = c
+    mask = (df[dom_col].astype(str).str.lower() == str(domain).lower()) & \
+           (df[bloom_col].astype(str).str.lower() == str(bloom).lower())
     if mask.any():
         row = df[mask].iloc[0]
-        criterion = row[crit_col] if crit_col in df.columns else ""
-        condition = row[cond_col] if cond_col in df.columns else ""
-        return str(criterion) if pd.notna(criterion) else "", str(condition) if pd.notna(condition) else ""
+        return str(row.get(crit_col, "")), str(row.get(cond_col, ""))
     return "", ""
 
 def get_default_condition(domain):
@@ -106,251 +68,125 @@ def get_default_condition(domain):
     }
     return mapping.get(str(domain).strip().lower(), "")
 
-def get_bloom_options_for_domain(domain):
-    """Return Bloom levels applicable for a domain (from Criterion sheet or Bloom_* sheets)."""
-    df = load_sheet_df("Criterion")
-    if not df.empty:
-        df.columns = [c.strip() for c in df.columns]
-        cols = [c.lower() for c in df.columns]
-        dom_col = None
-        bloom_col = None
-        for i, c in enumerate(cols):
-            if 'domain' in c:
-                dom_col = df.columns[i]
-            if 'bloom' in c:
-                bloom_col = df.columns[i]
-        if dom_col and bloom_col:
-            filtered = df[df[dom_col].astype(str).str.strip().str.lower() == str(domain).strip().lower()]
-            vals = filtered[bloom_col].dropna().astype(str).str.strip().unique().tolist()
-            if vals:
-                return vals
-    # fallback: common bloom list
-    return ["Remember","Understand","Apply","Analyze","Evaluate","Create"]
-
-def get_verb_list_for_domain_and_bloom(domain, bloom):
-    """Search sheets Bloom_Cognitive, Bloom_Affective, Bloom_Psychomotor for verbs for that bloom."""
-    domain_lower = str(domain).strip().lower()
-    sheet_choice = None
-    if "cognitive" in domain_lower:
-        sheet_choice = "Bloom_Cognitive"
-    elif "affective" in domain_lower:
-        sheet_choice = "Bloom_Affective"
-    elif "psychomotor" in domain_lower:
-        sheet_choice = "Bloom_Psychomotor"
-    verbs = []
-    if sheet_choice:
-        df = load_sheet_df(sheet_choice)
-        if not df.empty:
-            df.columns = [c.strip() for c in df.columns]
-            cols = [c.lower() for c in df.columns]
-            # assume first col is Bloom Level and second col is Verbs
-            bloom_col = df.columns[0]
-            verb_col = df.columns[1] if len(df.columns) > 1 else None
-            matches = df[df[bloom_col].astype(str).str.strip().str.lower() == str(bloom).strip().lower()]
-            if not matches.empty and verb_col:
-                raw = matches.iloc[0][verb_col]
-                if pd.notna(raw):
-                    # verbs might be comma-separated
-                    verbs = [v.strip() for v in str(raw).split(",") if v.strip()]
-    return verbs
-
 def get_assessment_and_evidence(bloom, domain):
-    """Return a tuple (assessment_example, evidence) from appropriate sheet."""
-    domain_lower = str(domain).strip().lower()
-    if domain_lower in ("affective","psychomotor"):
+    domain_lower = str(domain).lower()
+    if domain_lower in ("affective", "psychomotor"):
         df = load_sheet_df("Assess_Affective_Psychomotor")
     else:
         df = load_sheet_df("Bloom_Assessments")
     if df.empty:
         return "", ""
     df.columns = [c.strip() for c in df.columns]
-    cols = [c.lower() for c in df.columns]
-    # find bloom-level column
-    bloom_col = None
-    assess_col = None
-    evidence_col = None
-    for i,c in enumerate(cols):
-        if 'bloom' in c:
-            bloom_col = df.columns[i]
-        if 'assessment' in c and ('example' in c or 'example' in df.columns[i].lower()):
-            assess_col = df.columns[i]
-        if 'evidence' in c:
-            evidence_col = df.columns[i]
-    # fallback: try positions
-    if bloom_col is None:
-        bloom_col = df.columns[0]
-    if assess_col is None and len(df.columns) > 1:
-        assess_col = df.columns[1]
-    if evidence_col is None and len(df.columns) > 2:
-        evidence_col = df.columns[2]
-    matches = df[df[bloom_col].astype(str).str.strip().str.lower() == str(bloom).strip().lower()]
-    if not matches.empty:
-        row = matches.iloc[0]
-        a = str(row[assess_col]) if assess_col in df.columns and pd.notna(row[assess_col]) else ""
-        e = str(row[evidence_col]) if evidence_col in df.columns and pd.notna(row[evidence_col]) else ""
-        return a, e
+    bloom_col, assess_col, evidence_col = df.columns[:3]
+    mask = df[bloom_col].astype(str).str.lower() == str(bloom).lower()
+    if mask.any():
+        row = df[mask].iloc[0]
+        return str(row[assess_col]), str(row[evidence_col])
     return "", ""
 
 def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
-    parts = []
-    # verb + content
-    text = ""
-    if verb:
-        text += str(verb).strip()
-    if content:
-        if text != "":
-            text += " "
-        text += str(content).strip()
-    if sc_desc and str(sc_desc).strip() != "":
-        text += " with " + str(sc_desc).strip().lower()
-    if condition and str(condition).strip() != "":
-        text += " " + str(condition).strip()
-    if criterion and str(criterion).strip() != "":
-        text += " " + str(criterion).strip()
-    if vbe and str(vbe).strip() != "":
-        text += " guided by " + str(vbe).strip().lower()
+    text = f"{verb} {content}"
+    if sc_desc: text += f" with {sc_desc.lower()}"
+    if condition: text += f" {condition}"
+    if criterion: text += f" {criterion}"
+    if vbe: text += f" guided by {vbe.lower()}"
     text = text.strip()
-    if text:
-        # sentence case and ensure ending period
-        text = text[0].upper() + text[1:]
-        if not text.endswith("."):
-            text += "."
+    if text and not text.endswith("."):
+        text = text[0].upper() + text[1:] + "."
     return text
 
-def append_to_clo_table_row(row_dict):
-    """Append a row (dictionary) to CLO_Table sheet in the same workbook."""
-    # read workbook with openpyxl to preserve everything, and use pandas.ExcelWriter to write CLO_Table
+def read_clo_table():
     try:
-        wb = load_workbook(WORKBOOK_PATH)
-    except Exception as e:
-        raise
-
-    # read existing CLO_Table into df if present
-    try:
-        df_existing = pd.read_excel(WORKBOOK_PATH, sheet_name="CLO_Table", engine="openpyxl")
+        df = pd.read_excel(WORKBOOK_PATH, sheet_name="CLO_Table", engine="openpyxl")
     except Exception:
-        df_existing = pd.DataFrame()
+        df = pd.DataFrame()
+    return df
 
-    # create DataFrame for the new row using the header order used in VBA
-    headers = ["Time", "Course", "PLO", "Bloom", "FullCLO",
-               "Mapping (SC + VBE)", "Assessment Methods",
-               "Evidence of Assessment", "Coursework Assessment Percentage (%)"]
-    new_row = {h: "" for h in headers}
-    # fill from row_dict keys
-    new_row.update({
-        "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "Course": row_dict.get("Course", ""),
-        "PLO": row_dict.get("PLO", ""),
-        "Bloom": row_dict.get("Bloom", ""),
-        "FullCLO": row_dict.get("FullCLO", ""),
-        "Mapping (SC + VBE)": f"{row_dict.get('SC_Code','')} — {row_dict.get('VBE','')}" if row_dict.get("SC_Code","") or row_dict.get("VBE","") else "",
-        "Assessment Methods": row_dict.get("Assessment",""),
-        "Evidence of Assessment": row_dict.get("Evidence",""),
-        "Coursework Assessment Percentage (%)": row_dict.get("CW","")
-    })
-
-    if df_existing.empty:
-        df_out = pd.DataFrame([new_row], columns=headers)
-    else:
-        # ensure same columns
-        df_out = pd.concat([df_existing, pd.DataFrame([new_row], columns=headers)], ignore_index=True)
-
-    # write back to same workbook replacing/creating CLO_Table
+def write_clo_table(df):
     with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a", if_sheet_exists="replace") as writer:
         writer.book = load_workbook(WORKBOOK_PATH)
-        # remove sheet if exists
         if "CLO_Table" in writer.book.sheetnames:
             std = writer.book["CLO_Table"]
             writer.book.remove(std)
-        df_out.to_excel(writer, sheet_name="CLO_Table", index=False)
+        df.to_excel(writer, sheet_name="CLO_Table", index=False)
 
-    return df_out
-
-# -------------------- Routes --------------------
+# --- Routes ---
 
 @app.route("/")
 def index():
-    # load mapping sheet to populate PLO dropdown
     df_map = get_mapping_dict()
     plos = []
     if not df_map.empty:
-        plos = df_map[df_map.columns[0]].dropna().astype(str).str.strip().unique().tolist()
-    # show preview of CLO_Table if exists
-    try:
-        df_ct = pd.read_excel(WORKBOOK_PATH, sheet_name="CLO_Table", engine="openpyxl")
-        table_html = df_ct.to_html(classes="data", index=False)
-    except Exception:
-        table_html = "<p>No CLO Table yet.</p>"
+        plos = df_map[df_map.columns[0]].dropna().astype(str).tolist()
+    df_ct = read_clo_table()
+    table_html = df_ct.to_html(classes="data", index=False) if not df_ct.empty else "<p>No CLO records yet.</p>"
     return render_template("generator.html", plos=plos, table_html=table_html)
-
-@app.route("/api/details")
-def api_details():
-    """AJAX endpoint: given ?plo=... return SC details + domain + bloom options + verb list + default criterion/condition + assessment/evidence"""
-    plo = request.args.get("plo", "")
-    bloom = request.args.get("bloom", "")
-    details = get_plo_details(plo) or {}
-    domain = details.get("Domain", "")
-    bloom_options = get_bloom_options_for_domain(domain) if domain else []
-    # if bloom is provided, also return verb list and assessment
-    verbs = get_verb_list_for_domain_and_bloom(domain, bloom) if bloom else []
-    criterion, condition_from_sheet = ("","")
-    if bloom and domain:
-        criterion, condition_from_sheet = get_criterion_phrase(domain, bloom)
-    if not condition_from_sheet:
-        condition_from_sheet = get_default_condition(domain)
-    assessment, evidence = ("","")
-    if bloom:
-        assessment, evidence = get_assessment_and_evidence(bloom, domain)
-    return jsonify({
-        "details": details,
-        "domain": domain,
-        "bloom_options": bloom_options,
-        "verbs": verbs,
-        "criterion": criterion,
-        "condition": condition_from_sheet,
-        "assessment": assessment,
-        "evidence": evidence
-    })
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    # collect form data
-    plo = request.form.get("plo", "")
-    bloom = request.form.get("bloom", "")
-    verb = request.form.get("verb", "")
-    content = request.form.get("content", "")
-    cw = request.form.get("cw", "")
-    course = request.form.get("course", "")
-    # get plo details
+    plo = request.form.get("plo")
+    bloom = request.form.get("bloom")
+    verb = request.form.get("verb")
+    content = request.form.get("content")
+    course = request.form.get("course")
+    cw = request.form.get("cw")
+
     details = get_plo_details(plo) or {}
+    domain = details.get("Domain", "")
     sc_code = details.get("SC_Code", "")
     sc_desc = details.get("SC_Desc", "")
     vbe = details.get("VBE", "")
-    domain = details.get("Domain", "")
-    # criterion & condition
-    criterion, condition_from_sheet = get_criterion_phrase(domain, bloom)
-    if not condition_from_sheet:
-        condition_from_sheet = get_default_condition(domain)
-    # assessment & evidence
+    criterion, condition = get_criterion_phrase(domain, bloom)
+    if not condition:
+        condition = get_default_condition(domain)
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
-    # construct CLO sentence
-    clo = construct_clo_sentence(verb, content, sc_desc, condition_from_sheet, criterion, vbe)
-    # append to CLO_Table
-    row = {
+    clo = construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe)
+
+    df = read_clo_table()
+    new_row = {
+        "ID": len(df) + 1 if not df.empty else 1,
+        "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "Course": course,
         "PLO": plo,
         "Bloom": bloom,
         "FullCLO": clo,
-        "SC_Code": sc_code,
-        "VBE": vbe,
-        "Assessment": assessment,
-        "Evidence": evidence,
-        "CW": cw
+        "Mapping (SC + VBE)": f"{sc_code} — {vbe}",
+        "Assessment Methods": assessment,
+        "Evidence of Assessment": evidence,
+        "Coursework Assessment Percentage (%)": cw
     }
-    df_table = append_to_clo_table_row(row)
-    table_html = df_table.to_html(classes="data", index=False)
-    message = f"✅ CLO generated and saved to CLO_Table: {clo}"
-    return render_template("generator.html", plos=get_mapping_dict()[get_mapping_dict().columns[0]].dropna().unique().tolist() if not get_mapping_dict().empty else [], message=message, table_html=table_html)
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    write_clo_table(df)
+    return redirect(url_for("index"))
+
+@app.route("/delete/<int:row_id>")
+def delete_row(row_id):
+    df = read_clo_table()
+    if not df.empty and row_id in df["ID"].values:
+        df = df[df["ID"] != row_id]
+        write_clo_table(df)
+    return redirect(url_for("index"))
+
+@app.route("/edit/<int:row_id>", methods=["POST"])
+def edit_row(row_id):
+    field = request.form.get("field")
+    value = request.form.get("value")
+    df = read_clo_table()
+    if not df.empty and field in df.columns:
+        df.loc[df["ID"] == row_id, field] = value
+        write_clo_table(df)
+    return "Updated", 200
+
+@app.route("/download")
+def download():
+    df = read_clo_table()
+    if df.empty:
+        return "<p>No CLO table to download.</p>"
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="CLO_Table")
+    output.seek(0)
+    return send_file(output, as_attachment=True, download_name="CLO_Table.xlsx", mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 if __name__ == "__main__":
     app.run(debug=True)
