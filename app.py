@@ -270,3 +270,69 @@ def get_verbs(domain, bloom):
             verbs.append(v.strip())
     return jsonify(verbs)
 
+# ---------- verb / bloom helpers & API endpoints ----------
+
+def get_verbs_for_domain_and_bloom(domain, bloom):
+    """Return list of verbs for a given domain and bloom (reads Bloom_Cognitive/Affective/Psychomotor)."""
+    sheet_map = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }
+    domain_key = str(domain).strip().lower()
+    sheet = sheet_map.get(domain_key)
+    if not sheet:
+        return []
+    df = load_sheet_df(sheet)
+    if df.empty:
+        return []
+    # assume first column = Bloom Level, second column = Verbs (comma separated)
+    col0 = df.columns[0]
+    verb_col = df.columns[1] if len(df.columns) > 1 else None
+    if verb_col is None:
+        return []
+    # find row(s) where bloom matches
+    mask = df[col0].astype(str).str.strip().str.lower() == str(bloom).strip().lower()
+    if not mask.any():
+        return []
+    raw = df.loc[mask, verb_col].iloc[0]
+    if pd.isna(raw) or str(raw).strip()=="":
+        return []
+    # split by comma and return cleaned list
+    verbs = [v.strip() for v in str(raw).split(",") if v.strip()]
+    return verbs
+
+@app.route("/get_blooms/<plo>")
+def get_blooms(plo):
+    """Return list of bloom levels for a PLO (based on PLO -> Domain -> Criterion sheet)."""
+    details = get_plo_details(plo)
+    if not details:
+        return jsonify([])
+    domain = details.get("Domain", "")
+    if not domain:
+        return jsonify([])
+    # Try to use Criterion sheet to return available bloom levels for the domain
+    df = load_sheet_df("Criterion")
+    if not df.empty:
+        # find domain column and bloom column
+        cols = [c.strip() for c in df.columns]
+        dom_col = next((c for c in cols if 'domain' in c.lower()), None)
+        bloom_col = next((c for c in cols if 'bloom' in c.lower()), None)
+        if dom_col and bloom_col:
+            vals = df[df[dom_col].astype(str).str.strip().str.lower() == str(domain).strip().lower()][bloom_col].dropna().astype(str).str.strip().unique().tolist()
+            if vals:
+                return jsonify(vals)
+    # fallback to typical bloom list
+    return jsonify(["Remember","Understand","Apply","Analyze","Evaluate","Create"])
+
+@app.route("/get_verbs/<plo>/<bloom>")
+def get_verbs_route(plo, bloom):
+    """Return verbs list for a given plo (resolve domain from plo then find verbs)."""
+    details = get_plo_details(plo)
+    if not details:
+        return jsonify([])
+    domain = details.get("Domain", "")
+    verbs = get_verbs_for_domain_and_bloom(domain, bloom)
+    return jsonify(verbs)
+
+
