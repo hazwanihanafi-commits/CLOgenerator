@@ -119,7 +119,7 @@ ploSelect.addEventListener("change", async function() {
   }
 
   try {
-    const resp = await fetch(`/get_blooms/${encodeURIComponent(plo)}`);
+    const resp = await fetch(`/api/get_blooms/${encodeURIComponent(plo)}`);
     const blooms = await resp.json();
     bloomSelect.innerHTML = "<option value=''>-- Select Bloom --</option>";
     blooms.forEach(b => {
