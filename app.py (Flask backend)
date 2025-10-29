@@ -190,3 +190,66 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+# Replace your existing api_get_verbs function with this
+@app.route("/api/get_verbs/<plo>/<bloom>")
+def api_get_verbs(plo, bloom):
+    app.logger.info(f"api_get_verbs called plo={plo!r} bloom={bloom!r}")
+    details = get_plo_details(plo)
+    if not details:
+        app.logger.info(" -> no plo details found")
+        return jsonify([])
+
+    domain = str(details.get("Domain", "")).strip().lower()
+    app.logger.info(f" -> domain determined: {domain!r}")
+    sheet_map = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }
+    sheet = sheet_map.get(domain)
+    if not sheet:
+        app.logger.info(" -> no sheet for domain")
+        return jsonify([])
+
+    df = load_sheet_df(sheet)
+    if df.empty:
+        app.logger.info(f" -> sheet {sheet} empty or missing")
+        return jsonify([])
+
+    # Normalize columns and rows
+    df.columns = [str(c).strip() for c in df.columns]
+    # Ensure at least two columns (Bloom | Verbs)
+    if df.shape[1] < 2:
+        app.logger.info(f" -> sheet {sheet} has <2 columns")
+        return jsonify([])
+
+    bloom_col = df.columns[0]
+    verb_col = df.columns[1]
+
+    # try exact match (case-insensitive)
+    mask_exact = df[bloom_col].astype(str).str.strip().str.lower() == str(bloom).strip().lower()
+    if mask_exact.any():
+        raw = str(df.loc[mask_exact, verb_col].iloc[0])
+        verbs = [v.strip() for v in raw.split(",") if v.strip()]
+        app.logger.info(f" -> exact match verbs count: {len(verbs)}")
+        return jsonify(verbs)
+
+    # try case-insensitive contains (substring)
+    mask_contains = df[bloom_col].astype(str).str.strip().str.lower().str.contains(str(bloom).strip().lower(), na=False)
+    if mask_contains.any():
+        raw = str(df.loc[mask_contains, verb_col].iloc[0])
+        verbs = [v.strip() for v in raw.split(",") if v.strip()]
+        app.logger.info(f" -> contains match verbs count: {len(verbs)}")
+        return jsonify(verbs)
+
+    # try startswith (handles trailing spaces etc)
+    mask_start = df[bloom_col].astype(str).str.strip().str.lower().str.startswith(str(bloom).strip().lower())
+    if mask_start.any():
+        raw = str(df.loc[mask_start, verb_col].iloc[0])
+        verbs = [v.strip() for v in raw.split(",") if v.strip()]
+        app.logger.info(f" -> startswith match verbs count: {len(verbs)}")
+        return jsonify(verbs)
+
+    app.logger.info(f" -> no matching bloom row found in {sheet} for bloom={bloom!r}")
+    return jsonify([])
+
