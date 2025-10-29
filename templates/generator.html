@@ -34,39 +34,40 @@
 </div>
 
   <form method="POST" action="{{ url_for('generate') }}">
-    <label for="course">Course:</label>
-    <input type="text" id="course" name="course" placeholder="Enter course title">
+  <label for="course">Course:</label>
+  <input type="text" id="course" name="course" placeholder="Enter course title" required>
 
-    <label for="plo">Select PLO:</label>
-    <select id="plo" name="plo" required>
-      <option value="">-- Choose PLO --</option>
-      {% for p in plos %}
-        <option value="{{ p }}">{{ p }}</option>
-      {% endfor %}
-    </select>
+  <label for="plo">Select PLO:</label>
+  <select id="plo" name="plo" required>
+    <option value="">-- Choose PLO --</option>
+    {% for p in plos %}
+      <option value="{{ p }}">{{ p }}</option>
+    {% endfor %}
+  </select>
 
-    <label for="bloom">Bloom Level:</label>
-    <select id="bloom" name="bloom" required>
-      <option value="">-- Select Bloom --</option>
-    </select>
+  <label for="bloom">Bloom Level:</label>
+  <select id="bloom" name="bloom" required>
+    <option value="">-- Select Bloom --</option>
+  </select>
 
-    <label for="verb">Verb:</label>
-    <select id="verb" name="verb" required>
-      <option value="">-- Select Verb --</option>
-    </select>
+  <label for="verb">Verb:</label>
+  <select id="verb" name="verb" required>
+    <option value="">-- Select Verb --</option>
+  </select>
 
-    <label for="content">Content / Object:</label>
-    <input type="text" id="content" name="content" placeholder="e.g., clinical assessment methods, patient safety principles, data interpretation skills" required>
-    <small style="color:#555; font-size:13px;">
+  <label for="content">Content / Object:</label>
+  <input type="text" id="content" name="content"
+         placeholder="e.g., clinical assessment methods, patient safety principles, data interpretation skills"
+         required>
+  <small style="color:#555; font-size:13px;">
     💡 <strong>Example:</strong> "ethical principles in clinical decision-making" or "motor function testing protocols"
-    </small>
+  </small>
 
-    <label for="cw">Coursework %:</label>
-    <input type="text" id="cw" name="cw" placeholder="e.g., 20%">
+  <label for="cw">Coursework %:</label>
+  <input type="number" id="cw" name="cw" placeholder="e.g., 20" min="0" max="100" step="1">
 
-    <button type="submit">Generate CLO</button>
-  </form>
-<button type="submit">Generate CLO</button>
+  <button type="submit">Generate CLO</button>
+</form>
 
 <div id="cloExample" style="
   background:#f5f9ff;
