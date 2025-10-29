@@ -243,6 +243,11 @@ def api_get_verbs(plo, bloom):
     verbs = [v.strip() for v in verbs_raw.split(",") if v.strip()]
     return jsonify(verbs)
 
+@app.route("/api/debug_plo/<plo>")
+def api_debug_plo(plo):
+    details = get_plo_details(plo)
+    return jsonify({"plo": plo, "details": details or {}, "exists": bool(details)})
 
 if __name__ == "__main__":
     app.run(debug=True)
+
