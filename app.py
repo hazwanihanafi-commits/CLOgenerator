@@ -17,12 +17,19 @@ def load_sheet_df(sheet_name):
     except Exception:
         return pd.DataFrame()
 
-def get_mapping_dict():
-    df = load_sheet_df("Mapping")
-    if df.empty:
-        return pd.DataFrame()
-    df.columns = [c.strip() for c in df.columns]
-    return df
+def get_mapping_dict(profile=None):
+    # Try Mapping_<profile> first, then fallback to Mapping
+    sheet_candidates = []
+    if profile:
+        sheet_candidates.append(f"Mapping_{profile}")
+    sheet_candidates.append("Mapping")
+
+    for sh in sheet_candidates:
+        df = load_sheet_df(sh)
+        if not df.empty:
+            df.columns = [c.strip() for c in df.columns]
+            return df
+    return pd.DataFrame()
 
 def get_plo_details(plo):
     df = get_mapping_dict()
@@ -120,11 +127,12 @@ def write_clo_table(df):
 
 @app.route("/")
 def index():
-    df_map = get_mapping_dict()
+    profile = request.args.get("profile", "").strip().lower() or None
+    df_map = get_mapping_dict(profile)
     plos = df_map[df_map.columns[0]].dropna().astype(str).tolist() if not df_map.empty else []
     df_ct = read_clo_table()
-    table_html = df_ct.to_html(classes="data", index=False) if not df_ct.empty else "<p>No CLO records yet.</p>"
-    return render_template("generator.html", plos=plos, table_html=table_html)
+    table_html = df_ct.to_html(classes="table table-striped table-sm", index=False) if not df_ct.empty else "<p>No CLO records yet.</p>"
+    return render_template("generator.html", plos=plos, table_html=table_html, profile=(profile or ""))
 
 @app.route("/generate", methods=["POST"])
 def generate():
@@ -281,6 +289,7 @@ def api_debug_plo(plo):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
