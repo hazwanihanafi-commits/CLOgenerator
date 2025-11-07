@@ -1,6 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    body {
+        background: #f5f4fb;
+        font-family: 'Inter', sans-serif;
+    }
+    .navbar {
+        background: #5a2ca0;
+    }
+    .card-main {
+        max-width: 700px;
+        margin: 40px auto;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 18px rgba(0,0,0,0.08);
+    }
+    .btn-primary {
+        background: #5a2ca0 !important;
+        border-color: #5a2ca0 !important;
+    }
+    .example-box {
+        background: #ede6ff;
+        border-left: 5px solid #5a2ca0;
+        padding: 15px 20px;
+        border-radius: 10px;
+        margin-top: 30px;
+        font-size: 1rem;
+    }
+    footer {
+        text-align: center;
+        color: #666;
+        padding: 30px 0;
+        font-size: 0.9rem;
+    }
+</style>
+
   <meta charset="UTF-8">
   <title>CLO Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -398,29 +434,119 @@
         await refreshVerbs(p, b);
       }
     });
-  </document.getElementById("cloForm").addEventListener("submit", async function(e){
-  e.preventDefault();
-
-  const formData = new FormData(this);
-
-  const res = await fetch("/generate", {
-    method: "POST",
-    body: formData
+ <script>
+  // Profile/discipline switch
+  document.getElementById("profile").addEventListener("change", function() {
+    const val = this.value;
+    const url = new URL(window.location.href);
+    if (val) url.searchParams.set("profile", val);
+    else url.searchParams.delete("profile");
+    window.location.href = url.toString();
   });
 
-  const data = await res.json();
+  // History loader
+  const loadBtn = document.getElementById("loadHistoryBtn");
+  const serverTable = document.getElementById("serverTable");
+  const historyArea = document.getElementById("historyArea");
+  const historyPlaceholder = document.getElementById("historyPlaceholder");
+  const historyHTML = document.getElementById("historyHTML");
 
-  // Show CLO preview
-  document.getElementById("cloPreviewCard").style.display = "block";
-  document.getElementById("cloPreviewText").innerText = data.clo;
+  function loadHistory() {
+    historyHTML.innerHTML = serverTable.innerHTML;
+    historyPlaceholder.style.display = "none";
+    historyArea.style.display = "block";
+  }
+  loadBtn.addEventListener("click", loadHistory);
+  document.querySelector('[data-bs-target="#tabHistory"]').addEventListener("shown.bs.tab", loadHistory);
 
-  // Update assessment + evidence on screen
-  document.getElementById("assessment").value = data.assessment;
-  document.getElementById("evidence").value = data.evidence;
+  // API Fetch helper
+  async function fetchJSON(url) {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    return await r.json();
+  }
 
-  // Reset nothing else (user still sees selections)
-});
->
+  // Form controls
+  const ploSel = document.getElementById("plo");
+  const bloomSel = document.getElementById("bloom");
+  const verbSel = document.getElementById("verb");
+  const scCode = document.getElementById("sc_code");
+  const scDesc = document.getElementById("sc_desc");
+  const vbe = document.getElementById("vbe");
+  const domain = document.getElementById("domain");
+  const condition = document.getElementById("condition");
+  const criterion = document.getElementById("criterion");
+  const assess = document.getElementById("assessment");
+  const evid = document.getElementById("evidence");
 
-</body>
-</html>
+  // Refresh PLO details
+  async function refreshPLO(p) {
+    const info = await fetchJSON(`/api/debug_plo/${p}`);
+    if (info && info.exists) {
+      scCode.value = info.details.SC_Code || "";
+      scDesc.value = info.details.SC_Desc || "";
+      vbe.value = info.details.VBE || "";
+      domain.value = info.details.Domain || "";
+    }
+  }
+
+  // Refresh Bloom list
+  async function refreshBlooms(p) {
+    bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
+    const blooms = await fetchJSON(`/api/get_blooms/${p}`) || [];
+    blooms.forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = opt.textContent = b;
+      bloomSel.appendChild(opt);
+    });
+    verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
+  }
+
+  // Refresh Verb list
+  async function refreshVerbs(p, b) {
+    verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
+    const verbs = await fetchJSON(`/api/get_verbs/${p}/${b}`) || [];
+    verbs.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = opt.textContent = v;
+      verbSel.appendChild(opt);
+    });
+  }
+
+  // PLO change event
+  ploSel?.addEventListener("change", async (e) => {
+    const p = e.target.value;
+    await refreshPLO(p);
+    await refreshBlooms(p);
+  });
+
+  // Bloom change event
+  bloomSel?.addEventListener("change", async (e) => {
+    const b = e.target.value;
+    const p = ploSel.value;
+    if (p && b) {
+      await refreshVerbs(p, b);
+    }
+  });
+
+  // Submit handler: live CLO preview
+  document.getElementById("cloForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const res = await fetch("/generate", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    // Show CLO preview card
+    document.getElementById("cloPreviewCard").style.display = "block";
+    document.getElementById("cloPreviewText").innerText = data.clo;
+
+    // Update assessment & evidence
+    document.getElementById("assessment").value = data.assessment;
+    document.getElementById("evidence").value = data.evidence;
+  });
+</script>
