@@ -148,12 +148,16 @@ def generate():
     sc_code = details.get("SC_Code", "")
     sc_desc = details.get("SC_Desc", "")
     vbe = details.get("VBE", "")
+
     criterion, condition = get_criterion_phrase(domain, bloom)
     if not condition:
         condition = get_default_condition(domain)
+
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
+
     clo = construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe)
 
+    # Save to Excel
     df = read_clo_table()
     new_row = {
         "ID": len(df) + 1 if not df.empty else 1,
@@ -169,7 +173,13 @@ def generate():
     }
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     write_clo_table(df)
-    return redirect(url_for("index"))
+
+    # ✅ Return CLO text for display on the web
+    return jsonify({
+        "clo": clo,
+        "assessment": assessment,
+        "evidence": evidence
+    })
 
 @app.route("/delete/<int:row_id>")
 def delete_row(row_id):
@@ -289,6 +299,7 @@ def api_debug_plo(plo):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
