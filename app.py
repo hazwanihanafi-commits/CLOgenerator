@@ -217,33 +217,26 @@ def download():
 
 @app.route("/reset_table")
 def reset_table():
-    """Completely clear all rows in the CLO_Table sheet."""
+    """Clear the CLO_Table sheet completely."""
     try:
-        # Define empty DataFrame with same structure
         df_empty = pd.DataFrame(columns=[
             "ID", "Time", "Course", "PLO", "Bloom", "FullCLO",
             "Mapping (SC + VBE)", "Assessment Methods",
             "Evidence of Assessment", "Coursework Assessment Percentage (%)"
         ])
 
-        from openpyxl import load_workbook
         book = load_workbook(WORKBOOK_PATH)
 
-        # Remove the existing CLO_Table sheet if it exists
         if "CLO_Table" in book.sheetnames:
-            std = book["CLO_Table"]
-            book.remove(std)
+            del book["CLO_Table"]
 
-        # Write the empty DataFrame as a fresh sheet
         with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as writer:
-            writer._book = book   # ✅ use _book, not .book
+            writer._book = book
             df_empty.to_excel(writer, sheet_name="CLO_Table", index=False)
 
-        print("✅ CLO_Table reset successfully.")
         return redirect(url_for("index"))
 
     except Exception as e:
-        print(f"⚠️ Error resetting CLO_Table: {e}")
         return f"<p>Error resetting table: {e}</p>"
 
 # --- Dynamic dropdowns ---
@@ -299,6 +292,7 @@ def api_debug_plo(plo):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
