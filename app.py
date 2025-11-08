@@ -282,29 +282,34 @@ def generate():
 
     domain = details["Domain"]
 
+    # get criterion + condition from Criterion sheet
     criterion, condition = get_criterion_phrase(domain, bloom)
     if not condition:
         condition = get_default_condition(domain)
 
+    # Assessment & evidence autoload
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
+    # NEW — polished condition (Version 5)
     polished_condition = polish_condition(condition, profile=profile, bloom=bloom)
 
-clo = construct_clo_sentence(
-    verb=verb,
-    content=content,
-    sc_desc=details["SC_Desc"],
-    condition=polished_condition,
-    criterion=criterion,
-    vbe=details["VBE"],
-    profile=profile,
-    bloom=bloom
-)
+    # NEW — Version 5 elegant CLO builder
+    clo = construct_clo_sentence(
+        verb=verb,
+        content=content,
+        sc_desc=details["SC_Desc"],
+        condition=polished_condition,
+        criterion=criterion,
+        vbe=details["VBE"],
+        profile=profile,
+        bloom=bloom
+    )
 
+    # Save CLO into table
     df = read_clo_table()
 
     new_row = {
-        "ID": len(df)+1 if not df.empty else 1,
+        "ID": len(df) + 1 if not df.empty else 1,
         "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "Course": course,
         "PLO": plo,
@@ -322,58 +327,6 @@ clo = construct_clo_sentence(
 
     return jsonify({"clo": clo, "assessment": assessment, "evidence": evidence})
 
-@app.route("/api/get_blooms/<plo>")
-def api_get_blooms(plo):
-    profile = request.args.get("profile", "").strip().lower()
-    details = get_plo_details(plo, profile)
-    if not details:
-        return jsonify([])
-
-    domain = details["Domain"].lower()
-    sheetmap = {
-        "cognitive": "Bloom_Cognitive",
-        "affective": "Bloom_Affective",
-        "psychomotor": "Bloom_Psychomotor"
-    }
-
-    df = load_sheet_df(sheetmap.get(domain))
-    if df.empty:
-        return jsonify([])
-
-    return jsonify(df.iloc[:, 0].dropna().astype(str).tolist())
-
-@app.route("/api/get_verbs/<plo>/<bloom>")
-def api_get_verbs(plo, bloom):
-    profile = request.args.get("profile", "").strip().lower()
-    details = get_plo_details(plo, profile)
-    if not details:
-        return jsonify([])
-
-    domain = details["Domain"].lower()
-    sheetmap = {
-        "cognitive": "Bloom_Cognitive",
-        "affective": "Bloom_Affective",
-        "psychomotor": "Bloom_Psychomotor"
-    }
-
-    df = load_sheet_df(sheetmap.get(domain))
-    if df.empty:
-        return jsonify([])
-
-    mask = df.iloc[:,0].astype(str).str.lower() == bloom.lower()
-    if not mask.any():
-        return jsonify([])
-
-    return jsonify([v.strip() for v in str(df[mask].iloc[0,1]).split(",")])
-
-@app.route("/api/debug_plo/<plo>")
-def api_debug_plo(plo):
-    profile = request.args.get("profile","")
-    return jsonify({
-        "plo": plo,
-        "details": get_plo_details(plo, profile) or {},
-        "exists": bool(get_plo_details(plo, profile))
-    })
 
 @app.route("/reset_table")
 def reset_table():
@@ -414,5 +367,6 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
