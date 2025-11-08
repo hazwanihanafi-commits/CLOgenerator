@@ -192,9 +192,11 @@
                              placeholder="e.g., when interpreting data or case studies" readonly>
                     </div>
                     <div class="col-md-4">
-                      <label class="form-label">Criterion</label>
-                      <input id="criterion" class="form-control"
-                             placeholder="e.g., accurately / effectively / professionally" readonly>
+                      <label class="form-label">Criterion *</label>
+<select id="criterion" name="criterion" class="form-select" required>
+    <option disabled selected>Select Criterion</option>
+</select>
+
                     </div>
                     <div class="col-md-4">
                       <label class="form-label">Assessment %</label>
