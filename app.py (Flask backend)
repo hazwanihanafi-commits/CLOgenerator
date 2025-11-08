@@ -289,13 +289,52 @@ def reset_table():
         "Mapping (SC + VBE)","Assessment Methods","Evidence of Assessment",
         "Coursework Assessment Percentage (%)","Profile"
     ])
+
     book = load_workbook(WORKBOOK_PATH)
+
+    # Remove sheet if exists
     if "CLO_Table" in book.sheetnames:
         del book["CLO_Table"]
+
+    # Write new empty sheet
     with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as writer:
         writer._book = book
         df_empty.to_excel(writer, sheet_name="CLO_Table", index=False)
+
     return redirect(url_for("index"))
+
+
+# ✅ Dynamic Criterion API (returns only one criterion)
+@app.route("/api/get_criterion/<plo>/<bloom>")
+def api_get_criterion(plo, bloom):
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile)
+
+    if not details:
+        return jsonify([])
+
+    domain = details.get("Domain", "").lower()
+
+    df = load_sheet_df("Criterion")
+    if df.empty:
+        return jsonify([])
+
+    df.columns = [c.strip() for c in df.columns]
+
+    # Column 0 = Domain, Column 1 = Bloom, Column 2 = Criterion
+    mask = (
+        df[df.columns[0]].astype(str).str.lower() == domain
+    ) & (
+        df[df.columns[1]].astype(str).str.lower() == bloom.lower()
+    )
+
+    if not mask.any():
+        return jsonify([])
+
+    criterion = str(df.loc[mask].iloc[0, 2])  # Third column
+
+    return jsonify([criterion])
+
 
 if __name__ == "__main__":
     app.run(debug=True)
