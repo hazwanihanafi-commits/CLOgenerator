@@ -10,11 +10,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
 
   <style>
-    :root{
-      --brand:#5a2ca0;
-      --ink:#3b2f5b;
-      --soft:#f7f7fb;
-    }
+    :root{ --brand:#5a2ca0; --ink:#3b2f5b; --soft:#f7f7fb; }
     body{background:var(--soft);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
     .navbar-custom{background:var(--brand);color:#fff}
     .navbar-custom label,.navbar-custom .nav-link,.navbar-custom a{color:#fff!important}
@@ -27,6 +23,9 @@
     .hint{font-size:.9rem;color:#6b6b6b}
     .badge-field{position:relative}
     .badge-field .badge{position:absolute;right:10px;top:8px}
+    .option{border:1px solid #e7e7f3;border-radius:10px;padding:12px;margin-top:8px;cursor:pointer}
+    .option:hover{background:#fafaff}
+    .active-option{border-color:#5a2ca0;box-shadow:0 0 0 2px rgba(90,44,160,.15)}
   </style>
 </head>
 <body>
@@ -41,6 +40,7 @@
         <label class="me-2 fw-semibold">Discipline:</label>
         <select id="profile" class="form-select form-select-sm">
           <option value="">Medical & Health Sciences</option>
+          <option value="health">Medical & Health Sciences (explicit)</option>
           <option value="sc">Computer Science & IT</option>
           <option value="eng">Engineering & Technology</option>
           <option value="socs">Social Sciences</option>
@@ -136,6 +136,21 @@
 
                   <label class="form-label mt-3">Verb *</label>
                   <select id="verb" name="verb" class="form-select" required></select>
+
+                  <div class="row mt-3">
+                    <div class="col-md-6">
+                      <label class="form-label">VBE Phrase</label>
+                      <select id="vbe_style" name="vbe_style" class="form-select">
+                        <option value="guided" selected>guided by … (recommended)</option>
+                        <option value="accordance">in accordance with …</option>
+                        <option value="aligned">aligned with …</option>
+                      </select>
+                    </div>
+                    <div class="col-md-6 form-check" style="padding-top: 32px;">
+                      <input class="form-check-input" type="checkbox" id="include_condition" name="include_condition" value="1" checked>
+                      <label class="form-check-label" for="include_condition">Include condition (context) in CLO</label>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -148,13 +163,13 @@
                 </div>
                 <div class="card-body">
                   <p class="hint mb-2">
-                    <strong>Content</strong> = what &nbsp;•&nbsp; <strong>Condition</strong> = under what context &nbsp;•&nbsp;
-                    <strong>Criterion</strong> = level of quality &nbsp;•&nbsp; <strong>Verb</strong> = action
+                    <strong>Content</strong> = what • <strong>Condition</strong> = under what context (optional) •
+                    <strong>Criterion</strong> = level/standard • <strong>Verb</strong> = action
                   </p>
 
                   <label class="form-label">Content / Object *</label>
                   <input name="content" class="form-control"
-                         placeholder="e.g., exercise metabolism; ECG interpretation; biomechanics of gait; machine learning models"
+                         placeholder="e.g., ECG waveforms; leadership styles; biomechanics of gait; ML models"
                          required />
 
                   <div class="row mt-3">
@@ -217,11 +232,10 @@
             </button>
           </div>
           <div class="card-body">
-            <p id="cloPreviewText"></p>
-            <button id="downloadRubricBtn" class="btn btn-success btn-sm mt-2">
-  <i class="bi bi-download"></i> Download Rubric for This CLO
-</button>
-
+            <p id="cloPreviewText" class="mb-0"></p>
+            <hr>
+            <div class="mb-2 fw-semibold">Other options:</div>
+            <div id="altOptions"></div>
           </div>
         </div>
 
@@ -299,6 +313,9 @@
     const assessEl = document.getElementById('assessment');
     const evidEl   = document.getElementById('evidence');
 
+    const includeCondition = document.getElementById('include_condition');
+    const vbeStyle = document.getElementById('vbe_style');
+
     // ---------- API-driven refreshers ----------
     async function refreshPLO(plo){
       const info = await fetchJSON(`/api/debug_plo/${encodeURIComponent(plo)}${profileSuffix()}`);
@@ -350,16 +367,14 @@
       }
     }
 
-    // ---------- Wire events ----------
     ploSel?.addEventListener('change', async () => {
       const p = ploSel.value;
-      profileHidden.value = profileSel.value;  // keep in POST
+      profileHidden.value = profileSel.value;
       await refreshPLO(p);
       await refreshBlooms(p);
       bloomSel.value = ''; verbSel.value = '';
       condEl.value = critEl.value = assessEl.value = evidEl.value = '';
       document.getElementById('cloPreviewCard').style.display = 'none';
-      document.getElementById('cloPreviewText').innerText = '';
     });
 
     bloomSel?.addEventListener('change', async () => {
@@ -368,17 +383,20 @@
       if (!p || !b) return;
       profileHidden.value = profileSel.value;
       await refreshVerbs(p, b);
-      await refreshMeta(p, b);  // fills condition/criterion/assessment/evidence + mapping
+      await refreshMeta(p, b);
     });
-    document.getElementById('downloadRubricBtn').addEventListener('click', () => {
-    window.location.href = "/download_rubric" + profileSuffix();
-});
 
-    // ---------- Submit (AJAX) so preview appears without page reload ----------
+    // ---------- Submit (AJAX) ----------
     document.getElementById('cloForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       profileHidden.value = profileSel.value;
-      const res = await fetch(`/generate${profileSuffix()}`, { method:'POST', body:new FormData(e.target) });
+
+      const formData = new FormData(e.target);
+      // ensure checkbox + vbe_style included
+      formData.set('include_condition', includeCondition.checked ? '1' : '0');
+      formData.set('vbe_style', vbeStyle.value);
+
+      const res = await fetch(`/generate${profileSuffix()}`, { method:'POST', body: formData });
       const data = await res.json();
       if (data.error){ alert(data.error); return; }
 
@@ -387,9 +405,24 @@
 
       assessEl.value = data.assessment || assessEl.value;
       evidEl.value   = data.evidence   || evidEl.value;
+
+      // show variants
+      const alt = document.getElementById('altOptions');
+      alt.innerHTML = '';
+      (data.clo_options || []).forEach((t, i) => {
+        const div = document.createElement('div');
+        div.className = 'option' + (i===0 ? ' active-option' : '');
+        div.innerText = (i===0? 'A. ' : i===1? 'B. ' : 'C. ') + t;
+        div.addEventListener('click', () => {
+          document.getElementById('cloPreviewText').innerText = t;
+          document.querySelectorAll('#altOptions .option').forEach(n => n.classList.remove('active-option'));
+          div.classList.add('active-option');
+        });
+        alt.appendChild(div);
+      });
     });
 
-    // ---------- Copy button ----------
+    // ---------- Copy ----------
     document.getElementById('copyCloBtn').addEventListener('click', async () => {
       const txt = document.getElementById('cloPreviewText').innerText.trim();
       if (!txt) return;
