@@ -326,6 +326,53 @@ def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
     sentence = " ".join(sentence.split())
 
     return sentence
+def polish_condition(raw_condition, profile=None, bloom=None):
+    """
+    Refines 'Condition = under what context' into elegant, academic phrasing.
+    Produces discipline-aware polished versions.
+    """
+
+    profile = (profile or "").lower()
+    bloom   = (bloom or "").lower()
+    cond    = (raw_condition or "").strip().lower()
+
+    # Discipline-aware default contexts
+    profile_contexts = {
+        "":       "in discipline-relevant contexts",
+        "health": "in clinical or health decision-making contexts",
+        "sc":     "in computational or system-analysis contexts",
+        "eng":    "in technical or engineering problem-solving contexts",
+        "bus":    "in organisational or strategic decision-making contexts",
+        "edu":    "in teaching, learning, or pedagogical analysis contexts",
+        "socs":   "in social or behavioural evaluation contexts",
+        "arts":   "in creative or cultural interpretation contexts"
+    }
+    default_context = profile_contexts.get(profile, "in professional contexts")
+
+    # If Excel sheet already gives a specific condition
+    if cond:
+        # Soft rewrite to academic phrasing
+        if cond.startswith(("when", "while", "during")):
+            cond = f"in the context of {cond[4:].strip()}"
+        elif cond.startswith("based on"):
+            cond = f"when working with {cond[8:].strip()}"
+        else:
+            cond = f"in the context of {cond}"
+
+    else:
+        # No condition provided → generate Bloom-aligned condition
+        bloom_context_map = {
+            "remember":   "in foundational recall activities",
+            "understand": "when interpreting essential concepts",
+            "apply":      "in practical or real-world situations",
+            "analyse":    "when examining complex information or cases",
+            "evaluate":   "when making informed or evidence-based judgements",
+            "create":     "in generating new ideas, strategies, or solutions"
+        }
+        cond = bloom_context_map.get(bloom, default_context)
+
+    return cond
+
 
 if __name__ == "__main__":
     app.run(debug=True)
