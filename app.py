@@ -9,6 +9,9 @@ app = Flask(__name__, template_folder="templates")
 
 WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
 
+# ============================================================
+# ONE-WORD META (Overrides Criterion + Condition)
+# ============================================================
 ONEWORD_META = {
     "cognitive": {
         "Remember":   {"criterion": "accurately",     "condition": "recalling information"},
@@ -47,14 +50,16 @@ PROFILE_SHEET_MAP = {
     "arts": "Mapping_arts"
 }
 
-def load_sheet_df(sheet_name: str) -> pd.DataFrame:
+# ============================================================
+# EXCEL HELPERS
+# ============================================================
+def load_sheet_df(sheet_name: str):
     try:
         return pd.read_excel(WORKBOOK_PATH, sheet_name=sheet_name, engine="openpyxl")
-    except Exception:
+    except:
         return pd.DataFrame()
 
-def get_mapping_dict(profile: str | None = None) -> pd.DataFrame:
-    profile = (profile or "").strip().lower()
+def get_mapping_dict(profile):
     sheet = PROFILE_SHEET_MAP.get(profile, "Mapping")
     df = load_sheet_df(sheet)
     if df.empty:
@@ -62,12 +67,13 @@ def get_mapping_dict(profile: str | None = None) -> pd.DataFrame:
     df.columns = [str(c).strip() for c in df.columns]
     return df
 
-def get_plo_details(plo: str, profile: str | None = None) -> dict | None:
+def get_plo_details(plo, profile):
     df = get_mapping_dict(profile)
     if df.empty:
         return None
 
     colmap = {c.strip().lower().replace(" ", ""): c for c in df.columns}
+
     col_plo = list(df.columns)[0]
     col_sc = colmap.get("sccode")
     col_desc = colmap.get("scdescription")
@@ -79,133 +85,192 @@ def get_plo_details(plo: str, profile: str | None = None) -> dict | None:
         return None
 
     row = df[mask].iloc[0]
+
     return {
         "PLO": row[col_plo],
-        "SC_Code": row.get(col_sc, "") if col_sc else "",
-        "SC_Desc": row.get(col_desc, "") if col_desc else "",
-        "VBE": row.get(col_vbe, "") if col_vbe else "",
-        "Domain": row.get(col_domain, "") if col_domain else ""
+        "SC_Code": row.get(col_sc, ""),
+        "SC_Desc": row.get(col_desc, ""),
+        "VBE": row.get(col_vbe, ""),
+        "Domain": row.get(col_domain, "")
     }
 
-def get_criterion_phrase(domain: str, bloom: str):
+# ============================================================
+# CRITERION + CONDITION
+# ============================================================
+def get_criterion_phrase(domain, bloom):
     df = load_sheet_df("Criterion")
     if df.empty:
         return "", ""
     df.columns = [c.strip() for c in df.columns]
     dom_col, bloom_col, crit_col, cond_col = df.columns[:4]
-    mask = (df[dom_col].astype(str).str.lower() == str(domain).lower()) &            (df[bloom_col].astype(str).str.lower() == str(bloom).lower())
+    mask = (
+        (df[dom_col].astype(str).str.lower() == domain.lower()) &
+        (df[bloom_col].astype(str).str.lower() == bloom.lower())
+    )
     if not mask.any():
         return "", ""
     row = df[mask].iloc[0]
     return str(row[crit_col]).strip(), str(row[cond_col]).strip()
 
-def get_default_condition(domain: str) -> str:
+def get_default_condition(domain):
     return {
         "cognitive": "interpreting case tasks",
         "affective": "engaging with peers or stakeholders",
         "psychomotor": "executing practical procedures"
-    }.get(domain.lower(), "")
+    }.get(domain, "")
 
-def get_assessment_and_evidence(bloom: str, domain: str):
-    domain = domain.lower()
-    sheet = "Assess_Affective_Psychomotor" if domain in ("affective", "psychomotor") else "Bloom_Assessments"
+# ============================================================
+# ASSESSMENT & EVIDENCE
+# ============================================================
+def get_assessment_and_evidence(bloom, domain):
+    sheet = "Assess_Affective_Psychomotor" if domain in ("affective","psychomotor") else "Bloom_Assessments"
     df = load_sheet_df(sheet)
     if df.empty:
         return "", ""
     df.columns = [c.strip() for c in df.columns]
     bloom_col, assess_col, evid_col = df.columns[:3]
+
     mask = df[bloom_col].astype(str).str.lower() == bloom.lower()
     if not mask.any():
         return "", ""
+
     row = df[mask].iloc[0]
-    return str(row[assess_col]).strip(), str(row[evid_col]).strip()
+    return row[assess_col], row[evid_col]
 
-def decide_connector(domain: str) -> str:
-    return "by" if domain.lower() == "psychomotor" else "when"
+# ============================================================
+# CLO CONSTRUCTION
+# ============================================================
+def decide_connector(domain):
+    return "by" if domain == "psychomotor" else "when"
 
-def sc_snippet(sc_desc: str) -> str:
+def sc_snippet(sc_desc):
     if not sc_desc:
         return ""
     desc = sc_desc.lower().strip()
     return desc if desc.startswith("using ") else f"using {desc}"
 
-def vbe_phrase(vbe: str, style="guided"):
-    vbe = vbe.strip()
+def vbe_phrase(vbe, style):
     if not vbe:
         return ""
+    vbe = vbe.lower()
     style = style.lower()
     if style == "accordance":
-        return f"in accordance with {vbe.lower()}"
+        return f"in accordance with {vbe}"
     if style == "aligned":
-        return f"aligned with {vbe.lower()}"
-    return f"guided by {vbe.lower()}"
+        return f"aligned with {vbe}"
+    return f"guided by {vbe}"
 
 def construct_clo_sentence(verb, content, sc_desc, condition_core, criterion, vbe, domain, vbe_style="guided"):
-    verb = (verb or "").strip().lower()
-    content = (content or "").strip()
-    criterion = (criterion or "").strip().rstrip(".")
-    condition_core = (condition_core or "").strip()
+    verb = verb.lower().strip()
+    content = content.strip()
+    criterion = criterion.strip().rstrip(".")
+    condition_core = condition_core.strip()
 
-    for lead in ("when ", "by "):
+    for lead in ("when ","by "):
         if condition_core.lower().startswith(lead):
             condition_core = condition_core[len(lead):].strip()
             break
 
-    connector = decide_connector(domain)
-    condition = f"{connector} {condition_core}" if condition_core else ""
+    condition = f"{decide_connector(domain)} {condition_core}" if condition_core else ""
 
     parts = [
-        f"{verb} {content}".strip(),
+        f"{verb} {content}",
         sc_snippet(sc_desc),
         condition,
         criterion,
         vbe_phrase(vbe, vbe_style)
     ]
     s = " ".join([p for p in parts if p]).strip()
-    if s and not s.endswith("."):
+    if not s.endswith("."):
         s += "."
     return s.capitalize()
 
+# ============================================================
+# RUBRIC
+# ============================================================
 def rubric_generator(clo, verb, criterion, condition_core, sc_desc, vbe):
     connector = "by" if "perform" in clo.lower() else "when"
-    cond = condition_core
-    if not cond.lower().startswith(("when ", "by ")):
+
+    if condition_core.lower().startswith(("when ","by ")):
+        cond = condition_core
+    else:
         cond = f"{connector} {condition_core}"
-    indicator = f"Ability to {verb.lower()} {sc_desc.lower()} {cond} {criterion} while demonstrating {vbe.lower()}."
+
+    indicator = f"Ability to {verb.lower()} {sc_desc.lower()} {cond} {criterion.lower()} while demonstrating {vbe.lower()}."
+
     return {
         "indicator": indicator,
-        "excellent": f"Consistently {criterion} and applies {sc_desc.lower()} {cond} with clear adherence to {vbe.lower()}.",
-        "good": f"Generally {criterion} and applies {sc_desc.lower()} {cond} with minor gaps in {vbe.lower()}.",
-        "satisfactory": f"Partially {criterion}; applies {sc_desc.lower()} {cond} but inconsistently demonstrates {vbe.lower()}.",
-        "poor": f"Does not {criterion}; unable to apply {sc_desc.lower()} {cond}; lacks adherence to {vbe.lower()}."
+        "excellent": f"Consistently {criterion.lower()} and applies {sc_desc.lower()} {cond} with clear adherence to {vbe.lower()}.",
+        "good": f"Generally {criterion.lower()} and applies {sc_desc.lower()} {cond} with minor gaps in {vbe.lower()}.",
+        "satisfactory": f"Partially {criterion.lower()}; applies {sc_desc.lower()} {cond} but inconsistently demonstrates {vbe.lower()}.",
+        "poor": f"Does not {criterion.lower()}; unable to apply {sc_desc.lower()} {cond}; lacks adherence to {vbe.lower()}."
     }
 
+# ============================================================
+# CLO TABLE (Excel)
+# ============================================================
 def read_clo_table():
     try:
         return pd.read_excel(WORKBOOK_PATH, sheet_name="CLO_Table", engine="openpyxl")
-    except Exception:
+    except:
         return pd.DataFrame()
 
 def write_clo_table(df):
     book = load_workbook(WORKBOOK_PATH)
     if "CLO_Table" in book.sheetnames:
         del book["CLO_Table"]
-    with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as w:
-        w._book = book
-        df.to_excel(w, sheet_name="CLO_Table", index=False)
 
+    with pd.ExcelWriter(WORKBOOK_PATH, mode="a", engine="openpyxl") as w:
+        w._book = book
+        df.to_excel(w, index=False, sheet_name="CLO_Table")
+
+# ============================================================
+# ROUTES
+# ============================================================
 @app.route("/")
 def index():
-    profile = request.args.get("profile", "").strip().lower()
+    profile = request.args.get("profile","").lower()
     df_map = get_mapping_dict(profile)
+
     plos = df_map[df_map.columns[0]].dropna().astype(str).tolist() if not df_map.empty else []
+
     df_ct = read_clo_table()
-    table_html = df_ct.to_html(classes="table table-striped table-sm", index=False) if not df_ct.empty else "<p>No CLO records yet.</p>"
+    table_html = df_ct.to_html(classes="table table-sm table-striped", index=False) if not df_ct.empty else "<p>No CLO records yet.</p>"
+
     return render_template("generator.html", plos=plos, table_html=table_html, profile=profile)
 
+# ============================================================
+# FIXED: RESET TABLE (MISSING ROUTE)
+# ============================================================
+@app.route("/reset_table")
+def reset_table():
+    empty_df = pd.DataFrame(columns=[
+        "ID","Time","Course","PLO","Bloom","FullCLO",
+        "Mapping (SC + VBE)","Assessment Methods","Evidence of Assessment",
+        "Coursework Assessment Percentage (%)","Profile"
+    ])
+
+    try:
+        book = load_workbook(WORKBOOK_PATH)
+        if "CLO_Table" in book.sheetnames:
+            del book["CLO_Table"]
+
+        with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as w:
+            w._book = book
+            empty_df.to_excel(w, index=False, sheet_name="CLO_Table")
+
+    except Exception as e:
+        return f"<p>Error resetting table: {e}</p>"
+
+    return redirect(url_for("index"))
+
+# ============================================================
+# GENERATE CLO
+# ============================================================
 @app.route("/generate", methods=["POST"])
 def generate():
     profile = request.args.get("profile", "").strip().lower()
+
     plo = request.form.get("plo")
     bloom = request.form.get("bloom")
     verb = request.form.get("verb")
@@ -216,7 +281,7 @@ def generate():
 
     details = get_plo_details(plo, profile)
     if not details:
-        return jsonify({"error": "PLO not found"}), 400
+        return jsonify({"error":"PLO not found"}), 400
 
     domain = details["Domain"].lower()
 
@@ -236,7 +301,7 @@ def generate():
     )
 
     pure_condition = condition_core.lower().strip()
-    for lead in ("when ", "by "):
+    for lead in ("when ","by "):
         if pure_condition.startswith(lead):
             pure_condition = pure_condition[len(lead):].strip()
             break
@@ -244,8 +309,6 @@ def generate():
     clo_a = construct_clo_sentence(verb, content, details["SC_Desc"], pure_condition, criterion, details["VBE"], "cognitive", vbe_style)
     clo_b = construct_clo_sentence(verb, content, details["SC_Desc"], pure_condition, criterion, details["VBE"], "psychomotor", vbe_style)
     clo_c = construct_clo_sentence(verb, content, details["SC_Desc"], pure_condition, criterion, details["VBE"], domain, vbe_style)
-
-    clo_options = {"A": clo_a, "B": clo_b, "C": clo_c}
 
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
@@ -258,7 +321,7 @@ def generate():
 
     df = read_clo_table()
     new_row = {
-        "ID": len(df) + 1 if not df.empty else 1,
+        "ID": len(df)+1 if not df.empty else 1,
         "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "Course": course,
         "PLO": plo,
@@ -276,7 +339,7 @@ def generate():
 
     return jsonify({
         "clo": clo,
-        "clo_options": clo_options,
+        "clo_options": {"A": clo_a, "B": clo_b, "C": clo_c},
         "assessment": assessment,
         "evidence": evidence,
         "rubric": rubric,
@@ -286,6 +349,9 @@ def generate():
         "domain": domain
     })
 
+# ============================================================
+# DOWNLOAD CLO TABLE
+# ============================================================
 @app.route("/download")
 def download():
     df = read_clo_table()
@@ -297,6 +363,9 @@ def download():
     out.seek(0)
     return send_file(out, as_attachment=True, download_name="CLO_Table.xlsx")
 
+# ============================================================
+# DOWNLOAD RUBRIC TABLE
+# ============================================================
 @app.route("/download_rubric")
 def download_rubric():
     df = read_clo_table()
@@ -309,8 +378,9 @@ def download_rubric():
         plo = row.get("PLO", "")
         bloom = row.get("Bloom", "")
         profile = row.get("Profile", "")
+
         details = get_plo_details(str(plo), profile) or {}
-        domain = (details.get("Domain","") or "").lower()
+        domain = details.get("Domain","").lower()
         sc_desc = details.get("SC_Desc","")
         vbe = details.get("VBE","")
 
@@ -323,7 +393,6 @@ def download_rubric():
             condition_core = cond or get_default_condition(domain)
 
         verb = clo_text.split(" ")[0].lower() if clo_text else ""
-
         rub = rubric_generator(clo_text, verb, criterion, condition_core, sc_desc, vbe)
 
         rows.append({
@@ -341,5 +410,8 @@ def download_rubric():
     out.seek(0)
     return send_file(out, as_attachment=True, download_name="Rubric.xlsx")
 
+# ============================================================
+# RUN APP
+# ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
