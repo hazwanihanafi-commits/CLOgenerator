@@ -550,3 +550,87 @@
     document.getElementById("evidence").value = data.evidence;
   });
 </script>
+  <script>
+  const profileSel = document.getElementById("profile");
+  const profileHidden = document.getElementById("profileHidden");
+
+  function getProfileSuffix() {
+      const p = profileSel.value;
+      return p ? `?profile=${p}` : "";
+  }
+
+  profileSel.addEventListener("change", function () {
+      const val = this.value;
+      const url = new URL(window.location.href);
+      if (val) url.searchParams.set("profile", val);
+      else url.searchParams.delete("profile");
+      window.location.href = url.toString();
+  });
+
+  async function fetchJSON(url) {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      return await res.json();
+  }
+
+  const ploSel = document.getElementById("plo");
+  const bloomSel = document.getElementById("bloom");
+  const verbSel = document.getElementById("verb");
+  const scCode = document.getElementById("sc_code");
+  const scDesc = document.getElementById("sc_desc");
+  const vbe = document.getElementById("vbe");
+  const domain = document.getElementById("domain");
+  const condition = document.getElementById("condition");
+  const criterion = document.getElementById("criterion");
+  const assess = document.getElementById("assessment");
+  const evid = document.getElementById("evidence");
+
+  async function refreshPLO(plo) {
+      const suffix = getProfileSuffix();
+      const info = await fetchJSON(`/api/debug_plo/${plo}${suffix}`);
+      if (info && info.exists) {
+          scCode.value = info.details.SC_Code || "";
+          scDesc.value = info.details.SC_Desc || "";
+          vbe.value = info.details.VBE || "";
+          domain.value = info.details.Domain || "";
+      }
+  }
+
+  async function refreshBlooms(plo) {
+      bloomSel.innerHTML = `<option disabled selected>Select Bloom</option>`;
+      verbSel.innerHTML = `<option disabled selected>Select Verb</option>`;
+      const suffix = getProfileSuffix();
+      const blooms = await fetchJSON(`/api/get_blooms/${plo}${suffix}`) || [];
+      blooms.forEach(b => {
+          const o = document.createElement("option");
+          o.value = b; o.textContent = b;
+          bloomSel.appendChild(o);
+      });
+  }
+
+  async function refreshVerbs(plo, bloom) {
+      verbSel.innerHTML = `<option disabled selected>Select Verb</option>`;
+      const suffix = getProfileSuffix();
+      const verbs = await fetchJSON(`/api/get_verbs/${plo}/${bloom}${suffix}`) || [];
+      verbs.forEach(v => {
+          const o = document.createElement("option");
+          o.value = v; o.textContent = v;
+          verbSel.appendChild(o);
+      });
+  }
+
+  ploSel.addEventListener("change", async () => {
+      const p = ploSel.value;
+      profileHidden.value = profileSel.value;  
+      await refreshPLO(p);
+      await refreshBlooms(p);
+  });
+
+  bloomSel.addEventListener("change", async () => {
+      const b = bloomSel.value;
+      const p = ploSel.value;
+      profileHidden.value = profileSel.value;
+      if (p && b) await refreshVerbs(p, b);
+  });
+</script>
+
