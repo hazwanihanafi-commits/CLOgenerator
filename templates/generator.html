@@ -1,74 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>SCLOG — Course Learning Outcome Generator</title>
 
-<a class="navbar-brand brand-title" href="#">
-  <i class="bi bi-magic me-2"></i>SCLOG — Course Learning Outcome Generator
-</a>
-</title>
+  <meta charset="UTF-8" />
+  <title>SCLOG Course Learning Outcome Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Bootstrap + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
-    body{background:#f5f4fb;font-family:'Inter',system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    .navbar-custom{background:#5a2ca0}
-    .navbar-custom .navbar-brand,.navbar-custom .nav-link,.navbar-custom label{color:#fff}
-    .brand-title{font-weight:700;letter-spacing:.5px}
-    .dev-credit{background:#ede6ff;color:#3b2f5b}
-    .card{border:0;border-radius:1rem;box-shadow:0 6px 18px rgba(0,0,0,.08)}
-    .card-header{background:#fff;border-bottom:0;font-weight:600;font-size:1.05rem;display:flex;align-items:center;gap:.6rem;color:#3b2f5b}
-    .icon-badge{width:40px;height:40px;border-radius:10px;background:#ede6ff;color:#5a2ca0;display:inline-flex;justify-content:center;align-items:center;font-size:18px}
-    .btn-primary{background:#5a2ca0!important;border-color:#5a2ca0!important}
-    .nav-pills .nav-link.active{background-color:#5a2ca0}
-    .nav-pills .nav-link{color:#3b2f5b}
-    .sticky-actions{position:sticky;bottom:0;background:#fff;padding:1rem;border-radius:1rem;box-shadow:0 -6px 18px rgba(0,0,0,.06);margin-top:1rem}
-    .table-container{overflow-x:auto}
+    body {
+      background: #f4f2fb;
+      font-family: 'Inter', sans-serif;
+    }
+    .navbar-custom {
+      background-color: #5a2ca0;
+    }
+    .navbar-custom .navbar-brand, 
+    .navbar-custom .nav-link,
+    .navbar-custom label {
+      color: #fff !important;
+    }
+
+    .brand-title {
+      font-weight: 700;
+      font-size: 1.25rem;
+    }
+
+    #developerNote {
+      color: #ddd;
+      font-size: 0.8rem;
+      margin-top: -8px;
+    }
+
+    .card {
+      border: 0;
+      border-radius: 1rem;
+      box-shadow: 0 6px 18px rgba(0,0,0,.08);
+    }
+    .card-header {
+      background: #fff;
+      border-bottom: 0;
+      font-weight: 600;
+      font-size: 1.05rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      color: #3b2f5b;
+    }
+    .icon-badge {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: #ede6ff;
+      color: #5a2ca0;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 18px;
+    }
+
+    .btn-primary {
+      background: #5a2ca0 !important;
+      border-color: #5a2ca0 !important;
+    }
+
+    .sticky-actions {
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 1rem;
+      box-shadow: 0 -6px 18px rgba(0,0,0,.06);
+      margin-top: 1rem;
+    }
+
   </style>
+
 </head>
+
 <body>
 
-  <!-- Top Navbar -->
+  <!-- NAVBAR -->
   <nav class="navbar navbar-custom navbar-expand-lg">
     <div class="container">
-      <a class="navbar-brand brand-title" href="#">
-        <i class="bi bi-magic me-2"></i>CLO Generator
-      </a>
 
-      <!-- Discipline dropdown -->
-      <div class="d-flex align-items-center ms-auto">
+      <div>
+        <a class="navbar-brand brand-title" href="#">
+          <i class="bi bi-magic me-2"></i>SCLOG Course Learning Outcome Generator
+        </a>
+        <div id="developerNote">Developed by Assoc Prof Dr Hazwani Ahmad Yusof @ Hanafi (AMDI, USM)</div>
+      </div>
+
+      <div class="d-flex align-items-center">
         <form id="profileForm" class="d-flex align-items-center text-white">
           <label class="me-2">Discipline:</label>
           <select id="profile" class="form-select form-select-sm">
-            <option value="">Medical &amp; Health Sciences</option>
-            <option value="sc">Computer Science &amp; IT</option>
-            <option value="eng">Engineering &amp; Technology</option>
+            <option value="">Medical & Health Sciences</option>
+            <option value="sc">Computer Science & IT</option>
+            <option value="eng">Engineering & Technology</option>
             <option value="socs">Social Sciences</option>
             <option value="edu">Education</option>
-            <option value="bus">Business &amp; Management</option>
-            <option value="arts">Arts &amp; Humanities</option>
+            <option value="bus">Business & Management</option>
+            <option value="arts">Arts & Humanities</option>
           </select>
         </form>
       </div>
+
     </div>
   </nav>
 
-  <!-- Developer credit -->
-  <div class="dev-credit py-2">
-    <div class="container small">
-      <i class="bi bi-person-badge me-1"></i>
-      This app was developed by <strong>Assoc Prof Dr Hazwani Ahmad Yuso@Hanafi</strong> (AMDI, USM).
-    </div>
-  </div>
-
   <main class="container my-4">
 
-    <!-- Tabs -->
-    <ul class="nav nav-pills mb-3" id="cloTabs">
+    <!-- TABS -->
+    <ul class="nav nav-pills mb-3">
       <li class="nav-item">
         <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabGenerate">
           <i class="bi bi-pencil-square me-1"></i>Generate CLO
@@ -83,23 +128,24 @@
 
     <div class="tab-content">
 
-      <!-- GENERATE TAB -->
+      <!-- =================== GENERATE TAB =================== -->
       <div class="tab-pane fade show active" id="tabGenerate">
 
-        <form method="POST" action="{{ url_for('generate') }}" id="cloForm">
-          <!-- keep profile in form for POST fallback -->
-          <input type="hidden" id="profileHidden" name="profile" value="{{ profile|default('') }}"/>
+        <form id="cloForm" method="POST">
+
+          <input type="hidden" name="profile" id="profileHidden" value="{{ profile }}">
 
           <div class="row g-3">
 
-            <!-- Course + Mapping -->
+            <!-- COURSE + PLO -->
             <div class="col-lg-6">
               <div class="card">
                 <div class="card-header">
                   <span class="icon-badge"><i class="bi bi-journal-text"></i></span>
-                  Course &amp; Mapping
+                  Course & Mapping
                 </div>
                 <div class="card-body">
+
                   <label class="form-label">Course Code / Name *</label>
                   <input name="course" class="form-control" required>
 
@@ -132,115 +178,92 @@
                       <input id="domain" class="form-control" readonly>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
 
-            <!-- Bloom + Verb + Meta -->
+            <!-- BLOOM + VERB -->
             <div class="col-lg-6">
               <div class="card">
                 <div class="card-header">
                   <span class="icon-badge"><i class="bi bi-bar-chart-steps"></i></span>
-                  Domain · Bloom · Criterion · Condition
+                  Bloom & Verbs
                 </div>
                 <div class="card-body">
-                  <div class="row g-3">
-                    <div class="col-md-6">
-                      <label class="form-label">Bloom Level *</label>
-                      <select id="bloom" name="bloom" class="form-select" required></select>
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label">Criterion (Auto-fill list)</label>
-                      <select id="criterion" class="form-select">
-                        <!-- populated by JS from static list; auto-selected by /api/get_meta when available -->
-                      </select>
-                    </div>
-                    <div class="col-md-12">
-                      <label class="form-label">Condition (Universal list)</label>
-                      <select id="condition" class="form-select">
-                        <!-- populated by JS from static list; auto-selected by /api/get_meta when available -->
-                      </select>
-                    </div>
-                    <div class="col-md-12">
-                      <label class="form-label">Verb *</label>
-                      <select id="verb" name="verb" class="form-select" required></select>
-                    </div>
-                  </div>
+
+                  <label class="form-label">Bloom Level *</label>
+                  <select id="bloom" name="bloom" class="form-select" required></select>
+
+                  <label class="form-label mt-3">Verb *</label>
+                  <select id="verb" name="verb" class="form-select" required></select>
+
                 </div>
               </div>
             </div>
 
-            <!-- CLO Builder -->
-            def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
-    """Construct a grammatically polished CLO sentence."""
+            <!-- CLO BUILDER -->
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <span class="icon-badge"><i class="bi bi-pencil"></i></span>
+                  CLO Builder
+                </div>
+                <div class="card-body">
 
-    # --- Normalize inputs ---
-    verb = verb.strip().lower()
-    content = content.strip()
+                  <label class="form-label">Content / Object *</label>
+                  <input name="content" class="form-control" required>
 
-    # Convert content to lowercase except when capitalized words appear
-    if content and not content[0].isupper():
-        content = content.lower()
+                  <div class="row mt-3">
+                    <div class="col-md-4">
+                      <label class="form-label">Condition</label>
+                      <input id="condition" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Criterion</label>
+                      <input id="criterion" class="form-control" readonly>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">Assessment %</label>
+                      <input name="cw" type="number" min="0" max="100" class="form-control">
+                    </div>
+                  </div>
 
-    parts = []
+                </div>
+              </div>
+            </div>
 
-    # 1. Verb + content
-    base = f"{verb} {content}".strip()
-    parts.append(base)
+            <!-- ASSESSMENT -->
+            <div class="col-12">
+              <div class="card">
+                <div class="card-header">
+                  <span class="icon-badge"><i class="bi bi-clipboard-check"></i></span>
+                  Assessment
+                </div>
+                <div class="card-body">
+                  <label class="form-label">Assessment Suggestion</label>
+                  <input id="assessment" class="form-control" readonly>
 
-    # 2. SC Description
-    if sc_desc:
-        sc_piece = f"using {sc_desc.lower()}"
-        parts.append(sc_piece)
+                  <label class="form-label mt-3">Evidence of Assessment</label>
+                  <input id="evidence" class="form-control" readonly>
+                </div>
+              </div>
+            </div>
 
-    # 3. Condition (when..., during..., based on..., etc.)
-    if condition:
-        cond = condition.strip()
-        # Ensure condition starts with a connector
-        if not cond.lower().startswith(("when", "during", "in", "based", "under")):
-            cond = "when " + cond
-        parts.append(cond)
-
-    # 4. Criterion (accurately, effectively, professionally, etc.)
-    if criterion:
-        crit = criterion.strip()
-        parts.append(crit)
-
-    # 5. VBE (guided by…)
-    if vbe:
-        parts.append(f"guided by {vbe.lower()}")
-
-    # --- Join parts logically ---
-    sentence = " ".join(parts)
-
-    # Capitalize first letter
-    if sentence:
-        sentence = sentence[0].upper() + sentence[1:]
-
-    # Remove double spaces
-    while "  " in sentence:
-        sentence = sentence.replace("  ", " ")
-
-    # Add period at end
-    if not sentence.endswith("."):
-        sentence += "."
-
-    return sentence
-
-
-            <!-- Actions -->
+            <!-- ACTION BUTTONS -->
             <div class="col-12">
               <div class="sticky-actions d-flex justify-content-between">
-                <div class="text-muted">
-                  <i class="bi bi-info-circle"></i> Complete required fields then click Generate.
-                </div>
+                <div class="text-muted"><i class="bi bi-info-circle"></i> Complete fields then click Generate.</div>
+
                 <div class="d-flex gap-2">
                   <a href="{{ url_for('reset_table') }}" class="btn btn-outline-danger">
                     <i class="bi bi-trash"></i> Reset History
                   </a>
+
                   <a href="{{ url_for('download') }}" class="btn btn-outline-secondary">
                     <i class="bi bi-download"></i> Download
                   </a>
+
                   <button class="btn btn-primary">
                     <i class="bi bi-rocket-takeoff"></i> Generate
                   </button>
@@ -251,27 +274,30 @@
           </div>
         </form>
 
-        <!-- Preview -->
+        <!-- PREVIEW -->
         <div class="card mt-4" id="cloPreviewCard" style="display:none;">
           <div class="card-header">
             <span class="icon-badge"><i class="bi bi-lightbulb"></i></span>
             Generated CLO
           </div>
           <div class="card-body">
-            <p id="cloPreviewText" style="font-size:1.05rem;color:#3b2f5b;font-weight:500;"></p>
+            <p id="cloPreviewText" style="font-size: 1.1rem; color:#3b2f5b; font-weight: 500;"></p>
           </div>
         </div>
+
       </div>
 
-      <!-- HISTORY TAB -->
+      <!-- =================== HISTORY TAB =================== -->
       <div class="tab-pane fade" id="tabHistory">
         <div class="card mt-3">
           <div class="card-header">
             <span class="icon-badge"><i class="bi bi-clock-history"></i></span>
             CLO History
           </div>
+
           <div class="card-body">
-            <div id="historyPlaceholder" class="text-muted text-center">
+
+            <div id="historyPlaceholder" class="text-center text-muted">
               <i class="bi bi-eye"></i> Click to load history.
               <div class="mt-2">
                 <button id="loadHistoryBtn" class="btn btn-outline-primary btn-sm">Show History</button>
@@ -285,195 +311,160 @@
             <template id="serverTable">
               {{ table_html|safe }}
             </template>
+
           </div>
         </div>
       </div>
 
     </div>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+  <!-- =============================================== -->
+  <!--                MAIN JAVASCRIPT                 -->
+  <!-- =============================================== -->
   <script>
-    // ---------- Profile handling ----------
+
+    /* -------- Discipline Switch -------- */
     const profileSel = document.getElementById("profile");
-    profileSel.value = "{{ profile|default('') }}";
+    profileSel.value = "{{ profile }}";
+
     profileSel.addEventListener("change", () => {
-      const val = profileSel.value;
+      const v = profileSel.value;
       const url = new URL(window.location.href);
-      if (val) url.searchParams.set("profile", val);
+      if (v) url.searchParams.set("profile", v);
       else url.searchParams.delete("profile");
       window.location.href = url.toString();
     });
+
     function profileSuffix() {
-      const p = profileSel.value || "{{ profile|default('') }}";
+      const p = profileSel.value;
       return p ? `?profile=${encodeURIComponent(p)}` : "";
     }
 
-    // ---------- Static lists ----------
-    const CRITERIA_LIST = [
-      "accurately","appropriately","safely","independently","efficiently",
-      "comprehensively","critically","ethically","consistently","effectively"
-    ];
-
-    const UNIVERSAL_CONDITIONS = [
-      "when recalling theoretical concepts",
-      "when explaining physiological mechanisms",
-      "in clinical or exercise scenarios",
-      "when interpreting data or case studies",
-      "during problem-solving or reflection",
-      "when designing exercise programs or interventions",
-      "during discussions or peer activities",
-      "when engaging in teamwork or feedback",
-      "in ethical or professional contexts",
-      "when integrating multiple perspectives",
-      "throughout clinical or professional practice",
-      "during demonstration or observation",
-      "before performing a skill",
-      "during skill acquisition or practice",
-      "in executing learned motor tasks",
-      "during continuous performance",
-      "when adjusting to new conditions",
-      "when developing new movement patterns"
-    ];
-
-    // Populate static dropdowns once
-    const criterionSel = document.getElementById("criterion");
-    const conditionSel = document.getElementById("condition");
-    function fillStaticLists() {
-      criterionSel.innerHTML = "";
-      CRITERIA_LIST.forEach(c => {
-        const o = document.createElement("option"); o.value = o.textContent = c; criterionSel.appendChild(o);
-      });
-      conditionSel.innerHTML = "";
-      UNIVERSAL_CONDITIONS.forEach(c => {
-        const o = document.createElement("option"); o.value = o.textContent = c; conditionSel.appendChild(o);
-      });
-    }
-    fillStaticLists();
-
-    // ---------- Helpers ----------
+    /* -------- Fetch Helper -------- */
     async function fetchJSON(url) {
       const r = await fetch(url);
       if (!r.ok) return null;
       return await r.json();
     }
 
-    // ---------- Elements ----------
-    const ploSel   = document.getElementById("plo");
+    /* -------- Elements -------- */
+    const ploSel = document.getElementById("plo");
     const bloomSel = document.getElementById("bloom");
     const verbSel  = document.getElementById("verb");
     const scCode   = document.getElementById("sc_code");
     const scDesc   = document.getElementById("sc_desc");
     const vbe      = document.getElementById("vbe");
     const domain   = document.getElementById("domain");
+    const condEl   = document.getElementById("condition");
+    const critEl   = document.getElementById("criterion");
     const assessEl = document.getElementById("assessment");
     const evidEl   = document.getElementById("evidence");
     const profileHidden = document.getElementById("profileHidden");
 
-    // ---------- PLO -> details + blooms ----------
+    /* -------- Autofill PLO details -------- */
     async function refreshPLO(plo) {
-      const info = await fetchJSON(`/api/debug_plo/${encodeURIComponent(plo)}${profileSuffix()}`);
+      const info = await fetchJSON(`/api/debug_plo/${plo}${profileSuffix()}`);
       if (info && info.exists) {
         scCode.value = info.details.SC_Code || "";
         scDesc.value = info.details.SC_Desc || "";
         vbe.value    = info.details.VBE || "";
         domain.value = info.details.Domain || "";
-      } else {
-        scCode.value = scDesc.value = vbe.value = domain.value = "";
       }
     }
+
+    /* -------- Get Blooms -------- */
     async function refreshBlooms(plo) {
       bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
       verbSel.innerHTML  = '<option disabled selected>Select Verb</option>';
-      const blooms = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}${profileSuffix()}`) || [];
+
+      const blooms = await fetchJSON(`/api/get_blooms/${plo}${profileSuffix()}`) || [];
       blooms.forEach(b => {
-        const o = document.createElement("option");
-        o.value = o.textContent = b;
-        bloomSel.appendChild(o);
+        const opt = document.createElement("option");
+        opt.value = opt.textContent = b;
+        bloomSel.appendChild(opt);
       });
     }
 
-    // ---------- Bloom -> verbs + meta ----------
+    /* -------- Get Verbs -------- */
     async function refreshVerbs(plo, bloom) {
       verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
-      const verbs = await fetchJSON(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${profileSuffix()}`) || [];
+
+      const verbs = await fetchJSON(`/api/get_verbs/${plo}/${bloom}${profileSuffix()}`) || [];
       verbs.forEach(v => {
-        const o = document.createElement("option");
-        o.value = o.textContent = v;
-        verbSel.appendChild(o);
+        const opt = document.createElement("option");
+        opt.value = opt.textContent = v;
+        verbSel.appendChild(opt);
       });
     }
+
+    /* -------- Criterion + Condition + Assessment + Evidence -------- */
     async function refreshMeta(plo, bloom) {
-      const m = await fetchJSON(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${profileSuffix()}`);
+      const m = await fetchJSON(`/api/get_meta/${plo}/${bloom}${profileSuffix()}`);
       if (!m) return;
-      // Try to auto-select matching options if present
-      if (m.criterion) {
-        const idx = CRITERIA_LIST.findIndex(x => x.toLowerCase() === m.criterion.toLowerCase());
-        criterionSel.selectedIndex = idx >= 0 ? idx : 0;
-      }
-      if (m.condition) {
-        const idx2 = UNIVERSAL_CONDITIONS.findIndex(x => x.toLowerCase() === m.condition.toLowerCase());
-        conditionSel.selectedIndex = idx2 >= 0 ? idx2 : 0;
-      }
+      condEl.value   = m.condition || "";
+      critEl.value   = m.criterion || "";
       assessEl.value = m.assessment || "";
       evidEl.value   = m.evidence || "";
     }
 
-    // ---------- Events ----------
+    /* -------- Events -------- */
     ploSel.addEventListener("change", async () => {
       const p = ploSel.value;
-      profileHidden.value = profileSel.value || "{{ profile|default('') }}";
+      profileHidden.value = profileSel.value;
+
       await refreshPLO(p);
       await refreshBlooms(p);
-      // clear dependent
-      bloomSel.value = ""; verbSel.value = "";
-      assessEl.value = evidEl.value = "";
+
+      bloomSel.value = "";
+      verbSel.value  = "";
+
+      condEl.value = "";
+      critEl.value = "";
+      assessEl.value = "";
+      evidEl.value = "";
     });
 
     bloomSel.addEventListener("change", async () => {
-      const b = bloomSel.value;
       const p = ploSel.value;
-      if (!p || !b) return;
+      const b = bloomSel.value;
+
       await refreshVerbs(p, b);
       await refreshMeta(p, b);
     });
 
-    // ---------- AJAX submit: generate + preview ----------
+    /* -------- AJAX Submit -------- */
     document.getElementById("cloForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      profileHidden.value = profileSel.value || "{{ profile|default('') }}";
+      profileHidden.value = profileSel.value;
 
-      // send chosen criterion/condition along with form (add to FormData)
-      const fd = new FormData(e.target);
-      fd.set("criterion", criterionSel.value);
-      fd.set("condition", conditionSel.value);
+      const res = await fetch(`/generate${profileSuffix()}`, {
+        method: "POST",
+        body: new FormData(e.target)
+      });
 
-      const res = await fetch(`/generate${profileSuffix()}`, { method: "POST", body: fd });
       const data = await res.json();
-      if (data.error) { alert(data.error); return; }
+      if (data.error) return alert(data.error);
 
       document.getElementById("cloPreviewCard").style.display = "block";
       document.getElementById("cloPreviewText").innerText = data.clo;
-
-      // make sure these are set even if backend recomputed
-      assessEl.value = data.assessment || assessEl.value;
-      evidEl.value   = data.evidence   || evidEl.value;
     });
 
-    // ---------- History loader ----------
-    const loadBtn = document.getElementById("loadHistoryBtn");
-    const serverTable = document.getElementById("serverTable");
-    const historyArea = document.getElementById("historyArea");
-    const historyPlaceholder = document.getElementById("historyPlaceholder");
-    const historyHTML = document.getElementById("historyHTML");
-    function loadHistory() {
-      historyHTML.innerHTML = serverTable.innerHTML;
-      historyPlaceholder.style.display = "none";
-      historyArea.style.display = "block";
-    }
-    loadBtn?.addEventListener("click", loadHistory);
+    /* -------- History Viewer -------- */
+    document.getElementById("loadHistoryBtn")?.addEventListener("click", loadHistory);
     document.querySelector('[data-bs-target="#tabHistory"]')?.addEventListener("shown.bs.tab", loadHistory);
+
+    function loadHistory() {
+      const html = document.getElementById("serverTable").innerHTML;
+      document.getElementById("historyHTML").innerHTML = html;
+      document.getElementById("historyPlaceholder").style.display = "none";
+      document.getElementById("historyArea").style.display = "block";
+    }
+
   </script>
+
 </body>
 </html>
