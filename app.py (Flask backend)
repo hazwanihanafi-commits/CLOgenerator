@@ -98,28 +98,51 @@ def get_assessment_and_evidence(bloom, domain):
     return str(row.get(assess_col, "")), str(row.get(evid_col, ""))
 
 def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
-    # polished, accreditation-friendly sentence
-    verb = (verb or "").strip().lower()
-    content = (content or "").strip()
+    """
+    Generate an accreditation-ready MQF-aligned CLO:
+    Students will be able to [Verb] [Content] using [SC Description] [Condition] [Criterion] guided by [VBE].
+    """
+
+    verb = verb.strip().lower()
+    content = content.strip()
+
+    # Normalize content
+    if content and not content[0].isupper():
+        content = content.lower()
+
     parts = []
-    if verb or content:
-        parts.append(f"{verb} {content}".strip())
+
+    # 1. Verb + content
+    base = f"{verb} {content}".strip()
+    parts.append(base)
+
+    # 2. SC Description
     if sc_desc:
-        parts.append(f"using {str(sc_desc).lower()}")
+        parts.append(f"using {sc_desc.lower()}")
+
+    # 3. Condition — ensure “when / during / in …”
     if condition:
         c = condition.strip()
-        if not c.lower().startswith(("when", "during", "in", "based", "under")):
+        if not c.lower().startswith(("when", "during", "in", "under", "based")):
             c = "when " + c
         parts.append(c)
+
+    # 4. Criterion — quality of performance
     if criterion:
         parts.append(criterion.strip())
+
+    # 5. VBE — ethics / professionalism / values
     if vbe:
-        parts.append(f"guided by {str(vbe).lower()}")
+        parts.append(f"guided by {vbe.lower()}")
+
     sentence = " ".join(parts).strip()
+
+    # Capitalize + add period
     if sentence:
         sentence = sentence[0].upper() + sentence[1:]
     if not sentence.endswith("."):
         sentence += "."
+
     return sentence
 
 def read_clo_table():
@@ -338,3 +361,31 @@ def api_get_criterion(plo, bloom):
 
 if __name__ == "__main__":
     app.run(debug=True)
+@app.route("/api/get_meta/<plo>/<bloom>")
+def api_get_meta(plo, bloom):
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile)
+
+    if not details:
+        return jsonify({})
+
+    domain = details.get("Domain", "")
+
+    # 1. Criterion & Condition
+    criterion, condition = get_criterion_phrase(domain, bloom)
+    if not condition:
+        condition = get_default_condition(domain)
+
+    # 2. Assessment & Evidence
+    assessment, evidence = get_assessment_and_evidence(bloom, domain)
+
+    return jsonify({
+        "domain": domain,
+        "criterion": criterion,
+        "condition": condition,
+        "assessment": assessment,
+        "evidence": evidence,
+        "sc_code": details.get("SC_Code", ""),
+        "sc_desc": details.get("SC_Desc", ""),
+        "vbe": details.get("VBE", "")
+    })
