@@ -239,33 +239,33 @@ def index():
 
 @app.route("/api/get_meta/<plo>/<bloom>")
 def api_get_meta(plo, bloom):
-    profile = request.args.get("profile", "")
-    details = get_plo_details(plo, profile) or {}
+    profile = request.args.get("profile", "").strip().lower()
 
-    domain = details.get("Domain", "").lower()
-    bloom_key = bloom.strip()
+    # 1. Load SC/VBE/Domain from PLO mapping
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify({})
 
-    # One-word override
-    if domain in ONEWORD_META and bloom_key in ONEWORD_META[domain]:
-        meta = ONEWORD_META[domain][bloom_key]
-        criterion = meta["criterion"]
-        cond_word = meta["condition"]
-    else:
-        criterion, cond_word = get_criterion_phrase(domain, bloom_key)
+    domain = (details.get("Domain") or "").strip()
 
-    condition = build_condition(cond_word or get_default_condition(domain), domain)
+    # 2. Criterion + Condition from Excel
+    criterion, condition = get_criterion_phrase(domain, bloom)
+    if not condition:
+        condition = get_default_condition(domain)
 
-    assess, evid = get_assessment_and_evidence(bloom_key, domain)
+    # 3. Assessment + Evidence from Excel
+    assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
+    # 4. Return all meta for auto-fill
     return jsonify({
         "sc_code": details.get("SC_Code", ""),
         "sc_desc": details.get("SC_Desc", ""),
         "vbe": details.get("VBE", ""),
-        "domain": domain,
-        "criterion": criterion,
+        "domain": details.get("Domain", ""),
         "condition": condition,
-        "assessment": assess,
-        "evidence": evid
+        "criterion": criterion,
+        "assessment": assessment,
+        "evidence": evidence
     })
 
 @app.route("/generate", methods=["POST"])
@@ -424,3 +424,4 @@ def download_rubric():
 # ------------------------------------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
