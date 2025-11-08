@@ -527,14 +527,15 @@ def download_rubric():
             criterion = crit or ""
             condition_core = cond or get_default_condition(domain)
 
-        rub = rubric_generator(
-            clo=row.get("FullCLO", ""),
-            verb="perform",
-            criterion=criterion,
-            condition_core=condition_core,
-            sc_desc=details.get("SC_Desc", ""),
-            vbe=details.get("VBE", "")
+        rubric = rubric_generator(
+        clo,
+        verb,
+        criterion,
+        condition,
+        details["SC_Desc"],
+        details["VBE"]
         )
+
         rows.append({
             "CLO": row.get("FullCLO", ""),
             "Performance Indicator": rub["indicator"],
@@ -560,5 +561,6 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
