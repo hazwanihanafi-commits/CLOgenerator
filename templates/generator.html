@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -68,6 +69,9 @@
       <!-- GENERATE TAB -->
       <div class="tab-pane fade show active" id="tabGenerate">
 
+        <!-- ----------------------------------------------------- -->
+        <!-- FORM START -->
+        <!-- ----------------------------------------------------- -->
         <form id="cloForm" method="POST">
 
           <input type="hidden" id="profileHidden" name="profile" value="{{ profile }}" />
@@ -205,7 +209,7 @@
 
             <!-- BUTTONS -->
             <div class="col-12 d-flex justify-content-between">
-              <a href="{{ url_for('reset_table', profile=profile) }}" class="btn btn-outline-danger">
+              <a href="{{ url_for('reset_table') }}" class="btn btn-outline-danger">
                 Reset Table
               </a>
 
@@ -217,7 +221,9 @@
           </div>
         </form>
 
+        <!-- ----------------------------------------------------- -->
         <!-- CLO PREVIEW -->
+        <!-- ----------------------------------------------------- -->
         <div class="card mt-4" id="cloPreviewCard" style="display:none;">
           <div class="card-header d-flex justify-content-between align-items-center">
             <div>
@@ -237,7 +243,9 @@
           </div>
         </div>
 
+        <!-- ----------------------------------------------------- -->
         <!-- RUBRIC PREVIEW -->
+        <!-- ----------------------------------------------------- -->
         <div class="card mt-4" id="rubricCard" style="display:none;">
           <div class="card-header">
             <span class="icon-badge"><i class="bi bi-list-check"></i></span> CLO Rubric
@@ -274,7 +282,7 @@
             </div>
 
             <template id="serverTable">
-              {{ table_html|safe if table_html else "" }}
+              {{ table_html|safe }}
             </template>
 
           </div>
@@ -288,13 +296,190 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    /* All JS remains the same as your version */
+    /* --------------------------------------------------
+       ELEMENTS
+    -------------------------------------------------- */
+    const profileSel = document.getElementById('profile');
+    const profileHidden = document.getElementById('profileHidden');
+    const ploSel = document.getElementById('plo');
+    const bloomSel = document.getElementById('bloom');
+    const verbSel = document.getElementById('verb');
+
+    const scCode = document.getElementById('sc_code');
+    const scDesc = document.getElementById('sc_desc');
+    const vbe = document.getElementById('vbe');
+    const domain = document.getElementById('domain');
+
+    const condEl = document.getElementById('condition');
+    const critEl = document.getElementById('criterion');
+    const assessEl = document.getElementById('assessment');
+    const evidEl   = document.getElementById('evidence');
+
+    const form = document.getElementById("cloForm");
+
+    /* --------------------------------------------------
+       HELPERS
+    -------------------------------------------------- */
+    function suffix() {
+      const p = profileHidden.value || profileSel.value;
+      return p ? `?profile=${encodeURIComponent(p)}` : "";
+    }
+
+    async function fetchJSON(url) {
+      const r = await fetch(url);
+      return r.ok ? r.json() : null;
+    }
+
+    /* --------------------------------------------------
+       REFRESH FUNCTIONS
+    -------------------------------------------------- */
+    async function refreshBlooms(plo) {
+      bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
+      verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
+
+      const data = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}${suffix()}`);
+      if (data) data.forEach(b => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = b;
+        bloomSel.appendChild(opt);
+      });
+    }
+
+    async function refreshVerbs(plo, bloom) {
+      verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
+      const data = await fetchJSON(`/api/get_verbs/${plo}/${bloom}${suffix()}`);
+      if (data) data.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = v;
+        verbSel.appendChild(opt);
+      });
+    }
+
+    async function refreshMeta(plo, bloom) {
+      const m = await fetchJSON(`/api/get_meta/${plo}/${bloom}${suffix()}`);
+      if (!m) return;
+
+      scCode.value = m.sc_code;
+      scDesc.value = m.sc_desc;
+      vbe.value = m.vbe;
+      domain.value = m.domain;
+
+      condEl.value = m.condition;
+      critEl.value = m.criterion;
+
+      assessEl.value = m.assessment;
+      evidEl.value = m.evidence;
+    }
+
+    /* --------------------------------------------------
+       UI EVENT HANDLERS
+    -------------------------------------------------- */
+    profileSel.addEventListener('change', () => {
+      const url = new URL(window.location.href);
+      if (profileSel.value)
+        url.searchParams.set('profile', profileSel.value);
+      else 
+        url.searchParams.delete('profile');
+      window.location.href = url.toString();
+    });
+
+    ploSel.addEventListener('change', async () => {
+      const p = ploSel.value;
+      profileHidden.value = profileSel.value;
+
+      await refreshBlooms(p);
+      bloomSel.value = "";
+      verbSel.value = "";
+
+      condEl.value = critEl.value = assessEl.value = evidEl.value = "";
+      document.getElementById('cloPreviewCard').style.display = 'none';
+    });
+
+    bloomSel.addEventListener('change', async () => {
+      const p = ploSel.value;
+      const b = bloomSel.value;
+      if (!p || !b) return;
+
+      await refreshVerbs(p, b);
+      await refreshMeta(p, b);
+    });
+
+    /* --------------------------------------------------
+       RUBRIC POPULATE
+    -------------------------------------------------- */
+    function populateRubric(r) {
+      if (!r) return;
+      document.getElementById('rubricCard').style.display = 'block';
+      document.getElementById('r_indicator').innerText = r.indicator;
+      document.getElementById('r_excellent').innerText = r.excellent;
+      document.getElementById('r_good').innerText = r.good;
+      document.getElementById('r_satisfactory').innerText = r.satisfactory;
+      document.getElementById('r_poor').innerText = r.poor;
+    }
+
+    /* --------------------------------------------------
+       SUBMIT FORM (AJAX)
+    -------------------------------------------------- */
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const data = await (await fetch("/generate" + suffix(), {
+        method: "POST",
+        body: new FormData(form)
+      })).json();
+
+      // Main CLO
+      document.getElementById('cloPreviewCard').style.display = 'block';
+      document.getElementById('cloPreviewText').innerText = data.clo;
+
+      // Options A/B/C
+      const alt = document.getElementById('altOptions');
+      alt.innerHTML = "";
+      Object.entries(data.clo_options).forEach(([k, txt]) => {
+        const div = document.createElement("div");
+        div.className = "option";
+        div.innerText = `${k}. ${txt}`;
+        div.onclick = () => {
+          document.querySelectorAll("#altOptions .option").forEach(n => n.classList.remove("active-option"));
+          div.classList.add("active-option");
+          document.getElementById("cloPreviewText").innerText = txt;
+        };
+        alt.appendChild(div);
+      });
+
+      // Rubric
+      populateRubric(data.rubric);
+
+      // Assessment
+      assessEl.value = data.assessment;
+      evidEl.value   = data.evidence;
+    });
+
+    /* --------------------------------------------------
+       COPY BUTTON
+    -------------------------------------------------- */
+    document.getElementById('copyCloBtn').addEventListener('click', async () => {
+      const text = document.getElementById('cloPreviewText').innerText.trim();
+      if (!text) return;
+      try { await navigator.clipboard.writeText(text); } catch {}
+    });
+
+    /* --------------------------------------------------
+       HISTORY
+    -------------------------------------------------- */
+    document.getElementById('loadHistoryBtn')?.addEventListener("click", () => {
+      document.getElementById("historyHTML").innerHTML =
+        document.getElementById("serverTable").innerHTML;
+      document.getElementById("historyArea").style.display = "block";
+      document.getElementById("historyPlaceholder").style.display = "none";
+    });
+
   </script>
 
   <footer class="text-center mt-5 mb-4" style="opacity:0.7;">
     <strong>SCLOG Generator</strong><br>
     Developed by Assoc. Prof. Dr. Hazwani Ahmad Yusof@Hanafi, Advanced Medical and Dental Institute, Universiti Sains Malaysia (USM)
-  </footer>
+</footer>
 
 </body>
 </html>
