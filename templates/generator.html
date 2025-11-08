@@ -464,6 +464,140 @@
     document.querySelector('[data-bs-target="#tabHistory"]').addEventListener("shown.bs.tab", loadHistory);
 
   </script>
+<script>
+  // ---- Profile drop-down (navbar) ----
+  const profileSel = document.getElementById("profile");
+  if (profileSel) {
+    profileSel.value = "{{ profile }}";
+    profileSel.addEventListener("change", () => {
+      const val = profileSel.value;
+      const url = new URL(window.location.href);
+      if (val) url.searchParams.set("profile", val);
+      else url.searchParams.delete("profile");
+      window.location.href = url.toString();
+    });
+  }
+
+  // ---- Helpers ----
+  function profileSuffix() {
+    const p = (profileSel && profileSel.value) || "{{ profile }}";
+    return p ? `?profile=${encodeURIComponent(p)}` : "";
+  }
+
+  async function fetchJSON(url) {
+    const r = await fetch(url);
+    if (!r.ok) return null;
+    return await r.json();
+  }
+
+  // ---- Form elements ----
+  const ploSel = document.getElementById("plo");
+  const bloomSel = document.getElementById("bloom");
+  const verbSel  = document.getElementById("verb");
+  const scCode   = document.getElementById("sc_code");
+  const scDesc   = document.getElementById("sc_desc");
+  const vbe      = document.getElementById("vbe");
+  const domain   = document.getElementById("domain");
+  const condEl   = document.getElementById("condition");
+  const critEl   = document.getElementById("criterion");
+  const assessEl = document.getElementById("assessment");
+  const evidEl   = document.getElementById("evidence");
+  const profileHidden = document.getElementById("profileHidden");
+
+  // ---- PLO change: fill mapping & blooms ----
+  async function refreshPLO(plo) {
+    const info = await fetchJSON(`/api/debug_plo/${encodeURIComponent(plo)}${profileSuffix()}`);
+    if (info && info.exists) {
+      scCode.value = info.details.SC_Code || "";
+      scDesc.value = info.details.SC_Desc || "";
+      vbe.value    = info.details.VBE || "";
+      domain.value = info.details.Domain || "";
+    } else {
+      scCode.value = scDesc.value = vbe.value = domain.value = "";
+    }
+  }
+
+  async function refreshBlooms(plo) {
+    bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
+    verbSel.innerHTML  = '<option disabled selected>Select Verb</option>';
+    const blooms = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}${profileSuffix()}`) || [];
+    blooms.forEach(b => {
+      const opt = document.createElement("option");
+      opt.value = opt.textContent = b;
+      bloomSel.appendChild(opt);
+    });
+  }
+
+  async function refreshVerbs(plo, bloom) {
+    verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
+    const verbs = await fetchJSON(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${profileSuffix()}`) || [];
+    verbs.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = opt.textContent = v;
+      verbSel.appendChild(opt);
+    });
+  }
+
+  async function refreshMeta(plo, bloom) {
+    const m = await fetchJSON(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${profileSuffix()}`);
+    if (!m) return;
+    condEl.value   = m.condition || "";
+    critEl.value   = m.criterion || "";
+    assessEl.value = m.assessment || "";
+    evidEl.value   = m.evidence || "";
+  }
+
+  // ---- Wire events ----
+  ploSel?.addEventListener("change", async (e) => {
+    const p = e.target.value;
+    profileHidden.value = (profileSel && profileSel.value) || "{{ profile }}";
+    await refreshPLO(p);
+    await refreshBlooms(p);
+    // clear dependent fields
+    bloomSel.value = ""; verbSel.value = "";
+    condEl.value = critEl.value = assessEl.value = evidEl.value = "";
+  });
+
+  bloomSel?.addEventListener("change", async (e) => {
+    const b = e.target.value;
+    const p = ploSel.value;
+    if (!p || !b) return;
+    await refreshVerbs(p, b);
+    await refreshMeta(p, b);
+  });
+
+  // ---- AJAX submit so CLO preview appears on page ----
+  document.getElementById("cloForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    profileHidden.value = (profileSel && profileSel.value) || "{{ profile }}";
+    const res = await fetch(`/generate${profileSuffix()}`, { method: "POST", body: new FormData(this) });
+    const data = await res.json();
+    if (data.error) {
+      alert(data.error);
+      return;
+    }
+    // preview
+    document.getElementById("cloPreviewCard").style.display = "block";
+    document.getElementById("cloPreviewText").innerText = data.clo;
+    // assessment/evidence already set via /api/get_meta, but ensure again from /generate response
+    assessEl.value = data.assessment || assessEl.value;
+    evidEl.value   = data.evidence   || evidEl.value;
+  });
+
+  // ---- History tab: lazy-load server-rendered table ----
+  const loadBtn = document.getElementById("loadHistoryBtn");
+  const serverTable = document.getElementById("serverTable");
+  const historyArea = document.getElementById("historyArea");
+  const historyPlaceholder = document.getElementById("historyPlaceholder");
+  const historyHTML = document.getElementById("historyHTML");
+  function loadHistory() {
+    historyHTML.innerHTML = serverTable.innerHTML;
+    historyPlaceholder.style.display = "none";
+    historyArea.style.display = "block";
+  }
+  loadBtn?.addEventListener("click", loadHistory);
+  document.querySelector('[data-bs-target="#tabHistory"]')?.addEventListener("shown.bs.tab", loadHistory);
+</script>
 
 </body>
 </html>
