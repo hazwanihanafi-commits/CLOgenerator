@@ -119,6 +119,7 @@
       <div class="tab-pane fade show active" id="tabGenerate">
 
         <form method="POST" id="cloForm">
+        <input type="hidden" id="profileHidden" name="profile" value="{{ profile }}">
 
           <div class="row g-3">
 
@@ -323,10 +324,11 @@
       window.location.href = url.toString();
     });
 
-    function profileSuffix(){
-      const p = profileSel.value;
-      return p ? `?profile=${p}` : "";
+    function profileSuffix() {
+    const p = profileHidden.value || profileSel.value;
+    return p ? `?profile=${encodeURIComponent(p)}` : "";
     }
+
 
     async function fetchJSON(url){
       const r = await fetch(url);
@@ -350,7 +352,14 @@
 
     // Populate BLOOMS after PLO
     ploSel.addEventListener("change", async () => {
-      const p = ploSel.value;
+    const p = ploSel.value;
+
+    // ensure profile stays consistent
+    profileHidden.value = profileSel.value;
+
+    await refreshPLO(p);
+    await refreshBlooms(p);
+});
 
       bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
       verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
@@ -376,6 +385,13 @@
     bloomSel.addEventListener("change", async () => {
       const p = ploSel.value;
       const b = bloomSel.value;
+      
+    profileHidden.value = profileSel.value;
+
+    await refreshVerbs(p, b);
+    await refreshMeta(p, b);
+});
+
 
       const verbs = await fetchJSON(`/api/get_verbs/${p}/${b}${profileSuffix()}`) || [];
       verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
