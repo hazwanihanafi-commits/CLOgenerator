@@ -493,6 +493,20 @@ darkToggle?.addEventListener("click", () => {
     root.classList.toggle("dark-mode");
     localStorage.setItem("theme", isDark ? "dark" : "light");
 });
+    /* =======================
+   COPY CLO
+=========================*/
+document.getElementById("copyCLO")?.addEventListener("click", () => {
+    const text = document.getElementById("cloPreviewText").innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById("copyCLO");
+        btn.innerHTML = '<i class="bi bi-check2-circle"></i> Copied!';
+        setTimeout(() => {
+            btn.innerHTML = '<i class="bi bi-clipboard"></i> Copy';
+        }, 1500);
+    });
+});
+
 
   </script>
 
