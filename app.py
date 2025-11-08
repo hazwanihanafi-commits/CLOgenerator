@@ -361,7 +361,7 @@ def generate():
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
     # Polish condition or remove if requested
-    polished_condition = polish_condition(condition, remove_condition=not include_condition, profile=profile, bloom=bloom)
+    polished_condition = polish_oneword_condition(domain, mapping_condition)
 
     # Build variants (A/B/C)
     clo_options = variants(
@@ -496,4 +496,5 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
