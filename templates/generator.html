@@ -89,7 +89,7 @@
         <a class="navbar-brand brand-title" href="#">
           <i class="bi bi-magic me-2"></i>SCLOG Course Learning Outcome Generator
         </a>
-        <div id="developerNote">Developed by Assoc Prof Dr Hazwani Ahmad Yusof @ Hanafi (AMDI, USM)</div>
+        <div id="developerNote">Developed by Assoc Prof Dr Hazwani Ahmad Yusof@Hanafi (AMDI, USM)</div>
       </div>
 
       <div class="d-flex align-items-center">
@@ -108,7 +108,9 @@
       </div>
 
     </div>
-  </nav>
+  </nav><button id="darkToggle" class="btn btn-sm btn-outline-light ms-3">
+   <i class="bi bi-moon-stars"></i>
+</button>
 
   <main class="container my-4">
 
@@ -197,6 +199,12 @@
 
                   <label class="form-label mt-3">Verb *</label>
                   <select id="verb" name="verb" class="form-select" required></select>
+                  <!-- BADGES for SC Code + Domain -->
+<div id="mappingBadges" class="mt-2" style="display:none;">
+   <span class="badge bg-primary me-2" id="badgeSC">SC: -</span>
+   <span class="badge bg-dark" id="badgeDomain">Domain: -</span>
+</div>
+
 
                 </div>
               </div>
@@ -274,18 +282,22 @@
           </div>
         </form>
 
-        <!-- PREVIEW -->
-        <div class="card mt-4" id="cloPreviewCard" style="display:none;">
-          <div class="card-header">
-            <span class="icon-badge"><i class="bi bi-lightbulb"></i></span>
-            Generated CLO
-          </div>
-          <div class="card-body">
-            <p id="cloPreviewText" style="font-size: 1.1rem; color:#3b2f5b; font-weight: 500;"></p>
-          </div>
-        </div>
-
+       <!-- CLO PREVIEW CARD -->
+<div class="card mt-4" id="cloPreviewCard" style="display:none;">
+  <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+         <span class="icon-badge"><i class="bi bi-lightbulb"></i></span>
+         Generated CLO
       </div>
+      <button id="copyCLO" class="btn btn-sm btn-outline-primary">
+         <i class="bi bi-clipboard"></i> Copy
+      </button>
+  </div>
+
+  <div class="card-body">
+    <p id="cloPreviewText" class="fs-5 fw-semibold text-primary"></p>
+  </div>
+</div>
 
       <!-- =================== HISTORY TAB =================== -->
       <div class="tab-pane fade" id="tabHistory">
