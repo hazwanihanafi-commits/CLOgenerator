@@ -29,7 +29,7 @@ PROFILE_SHEET_MAP = {
 def load_sheet_df(sheet_name):
     try:
         return pd.read_excel(WORKBOOK_PATH, sheet_name=sheet_name, engine="openpyxl")
-    except:
+    except Exception:
         return pd.DataFrame()
 
 # ------------------------------------------------------------
@@ -52,29 +52,27 @@ def get_plo_details(plo, profile=None):
     if df.empty:
         return None
 
-    # Normalize column names (remove spaces, lowercase)
+    # Normalize column names
     colmap = {c.strip().lower().replace(" ", ""): c for c in df.columns}
 
-    # Identify columns regardless of format in Excel
-    col_plo = list(df.columns)[0]                 # first column is always PLO
+    # First column is PLO by design
+    col_plo = list(df.columns)[0]
     col_sc = colmap.get("sccode")
     col_desc = colmap.get("scdescription")
     col_vbe = colmap.get("vbe")
     col_domain = colmap.get("domain")
 
-    # Match PLO
     mask = df[col_plo].astype(str).str.strip().str.upper() == str(plo).strip().upper()
     if not mask.any():
         return None
 
     row = df[mask].iloc[0]
-
     return {
         "PLO": row[col_plo],
-        "SC_Code": row.get(col_sc, ""),
-        "SC_Desc": row.get(col_desc, ""),
-        "VBE": row.get(col_vbe, ""),
-        "Domain": row.get(col_domain, "")
+        "SC_Code": row.get(col_sc, "") if col_sc else "",
+        "SC_Desc": row.get(col_desc, "") if col_desc else "",
+        "VBE": row.get(col_vbe, "") if col_vbe else "",
+        "Domain": row.get(col_domain, "") if col_domain else ""
     }
 
 # ------------------------------------------------------------
@@ -88,14 +86,14 @@ def get_criterion_phrase(domain, bloom):
     df.columns = [c.strip() for c in df.columns]
     dom_col, bloom_col, crit_col, cond_col = df.columns[:4]
 
-    mask = (df[dom_col].astype(str).str.lower() == domain.lower()) & \
-           (df[bloom_col].astype(str).str.lower() == bloom.lower())
+    mask = (df[dom_col].astype(str).str.lower() == str(domain).lower()) & \
+           (df[bloom_col].astype(str).str.lower() == str(bloom).lower())
 
     if not mask.any():
         return "", ""
 
     row = df[mask].iloc[0]
-    return str(row[crit_col]), str(row[cond_col])
+    return str(row[crit_col]).strip(), str(row[cond_col]).strip()
 
 def get_default_condition(domain):
     mapping = {
@@ -103,138 +101,124 @@ def get_default_condition(domain):
         "affective": "during clinical or group activities",
         "psychomotor": "under supervised practical conditions"
     }
-    return mapping.get(domain.lower(), "")
+    return mapping.get(str(domain).lower(), "")
 
 # ------------------------------------------------------------
 # ASSESSMENT & EVIDENCE
 # ------------------------------------------------------------
 def get_assessment_and_evidence(bloom, domain):
-    domain = domain.lower()
+    domain = str(domain).lower()
     sheet = "Assess_Affective_Psychomotor" if domain in ("affective", "psychomotor") else "Bloom_Assessments"
     df = load_sheet_df(sheet)
-
     if df.empty:
         return "", ""
-
     df.columns = [c.strip() for c in df.columns]
     bloom_col, assess_col, evid_col = df.columns[:3]
-
-    mask = df[bloom_col].astype(str).str.lower() == bloom.lower()
-
+    mask = df[bloom_col].astype(str).str.lower() == str(bloom).lower()
     if not mask.any():
         return "", ""
-
     row = df[mask].iloc[0]
-    return str(row[assess_col]), str(row[evid_col])
+    return str(row[assess_col]).strip(), str(row[evid_col]).strip()
 
 # ------------------------------------------------------------
-# POLISHED CONDITION REWRITER (Version 5)
+# AUTO-POLISHING
 # ------------------------------------------------------------
-def polish_condition(raw_condition, profile=None, bloom=None):
-    profile = (profile or "").lower()
-    bloom   = (bloom or "").lower()
-    cond    = (raw_condition or "").strip().lower()
+def tidy_spaces(s):
+    return " ".join(str(s or "").split())
 
-    profile_contexts = {
-        "":       "in discipline-relevant contexts",
-        "health": "in clinical or health decision-making contexts",
-        "sc":     "in computational or system-analysis contexts",
-        "eng":    "in technical or engineering problem-solving contexts",
-        "bus":    "in organisational or strategic decision-making contexts",
-        "edu":    "in teaching, learning, or pedagogical analysis contexts",
-        "socs":   "in social or behavioural evaluation contexts",
-        "arts":   "in creative or cultural interpretation contexts"
-    }
-    default_context = profile_contexts.get(profile, "in professional contexts")
+def polish_condition(condition, profile="", bloom="", domain=""):
+    """
+    Light normalizer so 'Condition = under what context' reads naturally and specifically.
+    Keeps your sheet-driven phrasing but adds specificity keywords per profile/domain.
+    """
+    base = tidy_spaces(condition)
+    if not base:
+        base = get_default_condition(domain)
 
-    if cond:
-        if cond.startswith(("when", "while", "during")):
-            cond = f"in the context of {cond[4:].strip()}"
-        elif cond.startswith("based on"):
-            cond = f"when working with {cond[8:].strip()}"
-        else:
-            cond = f"in the context of {cond}"
+    # Ensure it starts with a context preposition
+    lowers = base.lower()
+    if not lowers.startswith(("in ", "within ", "during ", "under ", "based ", "using ", "when ")):
+        base = "in " + base
+
+    # Profile-specific nudge (non-destructive)
+    p = (profile or "").lower()
+    d = (domain or "").lower()
+
+    if p in ("", "health"):
+        base = base.replace("case scenarios", "authentic patient case scenarios")
+        base = base.replace("clinical data", "clinic and EMR data")
+
+    if p == "sc":
+        base = base.replace("case scenarios", "realistic problem sets or datasets")
+
+    if p == "eng":
+        base = base.replace("case scenarios", "design briefs or test rigs")
+
+    if p == "socs":
+        base = base.replace("case scenarios", "community or policy case scenarios")
+
+    if p == "edu":
+        base = base.replace("case scenarios", "lesson or classroom scenarios")
+
+    if p == "bus":
+        base = base.replace("case scenarios", "market or business case scenarios")
+
+    if p == "arts":
+        base = base.replace("case scenarios", "studio or performance briefs")
+
+    # Domain gentle tweak
+    if d == "psychomotor" and not any(w in lowers for w in ["simulated", "lab", "station", "practical"]):
+        base += " in simulated lab/practical stations"
+
+    return tidy_spaces(base)
+
+def polish_sentence(s):
+    s = tidy_spaces(s)
+    if not s:
+        return s
+    s = s[0].upper() + s[1:]
+    if not s.endswith("."):
+        s += "."
+    return s
+
+# ------------------------------------------------------------
+# CLO SENTENCE BUILDER
+# ------------------------------------------------------------
+def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
+    parts = []
+
+    # Verb + content
+    if verb and content:
+        base = f"{verb.strip().lower()} {content.strip()}"
+    elif content:
+        base = content.strip()
     else:
-        bloom_contexts = {
-            "remember":   "in foundational recall activities",
-            "understand": "when interpreting essential concepts",
-            "apply":      "in practical or real-world situations",
-            "analyse":    "when examining complex information or cases",
-            "evaluate":   "when making informed or evidence-based judgements",
-            "create":     "in generating new ideas, strategies, or solutions"
-        }
-        cond = bloom_contexts.get(bloom, default_context)
+        base = ""
+    base = base.strip()
+    if base:
+        parts.append(base)
 
-    return cond
+    # SC description (skills/competencies)
+    if sc_desc:
+        parts.append(f"using {str(sc_desc).strip().lower()}")
 
+    # Condition (context)
+    if condition:
+        c = condition.strip()
+        if not c.lower().startswith(("when", "during", "in", "within", "based", "under", "using")):
+            c = "in " + c
+        parts.append(c)
 
-# ------------------------------------------------------------
-# VERSION 5 – INTELLIGENT, POLISHED, ACADEMIC CLO REWRITER
-# ------------------------------------------------------------
-def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe, profile=None, bloom=None):
-    verb      = (verb or "").strip().capitalize()
-    content   = (content or "").strip()
-    sc_desc   = (sc_desc or "").strip()
-    condition = (condition or "").strip()
-    criterion = (criterion or "").strip()
-    vbe       = (vbe or "").strip()
-    profile   = (profile or "").strip().lower()
-    bloom     = (bloom or "").strip().lower()
-
-    # SC → elegant action phrase
-    sc_lower = sc_desc.lower()
-    if sc_lower.startswith("integrated"):
-        sc_phrase = "through integrated problem solving"
-    elif sc_lower.startswith("leadership"):
-        sc_phrase = "by exercising leadership, autonomy, and responsibility"
-    elif sc_lower.startswith("communication"):
-        sc_phrase = "using effective communication skills"
-    elif sc_lower.startswith("critical"):
-        sc_phrase = "through critical and analytical reasoning"
-    elif sc_lower.startswith("creative") or "creativity" in sc_lower:
-        sc_phrase = "through creative and innovative thinking"
-    else:
-        sc_phrase = f"using {sc_lower}"
-
-    # Bloom → sentence depth phrase
-    bloom_map = {
-        "remember":   "in demonstrating foundational recall",
-        "understand": "in demonstrating conceptual understanding",
-        "apply":      "in applying knowledge to practical situations",
-        "analyse":    "in examining relationships, patterns, or structures",
-        "evaluate":   "in making informed judgements or decisions",
-        "create":     "in synthesising ideas into coherent solutions"
-    }
-    bloom_phrase = bloom_map.get(bloom, "")
-
-    # Criterion → quality phrase
+    # Criterion (quality/level)
     if criterion:
-        if criterion.lower().startswith(("demonstrating", "showing", "exhibiting")):
-            criterion_phrase = criterion
-        else:
-            criterion_phrase = f"demonstrating {criterion.lower()}"
-    else:
-        criterion_phrase = ""
+        parts.append(str(criterion).strip())
 
-    # VBE → ethical frame
-    vbe_phrase = f"in a manner guided by {vbe.lower()}" if vbe else ""
+    # VBE (values)
+    if vbe:
+        parts.append(f"guided by {str(vbe).strip().lower()}")
 
-    # Build CLO
-    parts = [
-        f"{verb} {content}",
-        sc_phrase,
-        condition,
-        bloom_phrase,
-        criterion_phrase,
-        vbe_phrase
-    ]
-    sentence = " ".join([p for p in parts if p]).strip()
-    sentence = sentence[0].upper() + sentence[1:]
-    if not sentence.endswith("."):
-        sentence += "."
-
-    return " ".join(sentence.split())
-
+    sentence = " ".join([tidy_spaces(p) for p in parts if tidy_spaces(p)])
+    return polish_sentence(sentence)
 
 # ------------------------------------------------------------
 # CLO TABLE
@@ -242,14 +226,13 @@ def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe, pr
 def read_clo_table():
     try:
         return pd.read_excel(WORKBOOK_PATH, sheet_name="CLO_Table", engine="openpyxl")
-    except:
+    except Exception:
         return pd.DataFrame()
 
 def write_clo_table(df):
     book = load_workbook(WORKBOOK_PATH)
     if "CLO_Table" in book.sheetnames:
         del book["CLO_Table"]
-
     with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as writer:
         writer._book = book
         df.to_excel(writer, sheet_name="CLO_Table", index=False)
@@ -282,32 +265,28 @@ def generate():
 
     domain = details["Domain"]
 
-    # get criterion + condition from Criterion sheet
     criterion, condition = get_criterion_phrase(domain, bloom)
     if not condition:
         condition = get_default_condition(domain)
 
-    # Assessment & evidence autoload
+    # auto-assessment/evidence by bloom & domain
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
-    # NEW — polished condition (Version 5)
-    polished_condition = polish_condition(condition, profile=profile, bloom=bloom)
+    # auto-polish condition
+    polished_condition = polish_condition(condition, profile=profile, bloom=bloom, domain=domain)
 
-    # NEW — Version 5 elegant CLO builder
+    # build CLO
     clo = construct_clo_sentence(
         verb=verb,
         content=content,
         sc_desc=details["SC_Desc"],
         condition=polished_condition,
         criterion=criterion,
-        vbe=details["VBE"],
-        profile=profile,
-        bloom=bloom
+        vbe=details["VBE"]
     )
 
     # Save CLO into table
     df = read_clo_table()
-
     new_row = {
         "ID": len(df) + 1 if not df.empty else 1,
         "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -321,12 +300,90 @@ def generate():
         "Coursework Assessment Percentage (%)": cw,
         "Profile": profile
     }
-
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     write_clo_table(df)
 
     return jsonify({"clo": clo, "assessment": assessment, "evidence": evidence})
 
+@app.route("/api/get_meta/<plo>/<bloom>")
+def api_get_meta(plo, bloom):
+    """Single call the frontend uses to auto-fill everything after PLO + Bloom."""
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify({})
+
+    domain = details["Domain"]
+    criterion, condition = get_criterion_phrase(domain, bloom)
+    if not condition:
+        condition = get_default_condition(domain)
+    condition = polish_condition(condition, profile=profile, bloom=bloom, domain=domain)
+
+    assessment, evidence = get_assessment_and_evidence(bloom, domain)
+
+    return jsonify({
+        "sc_code": details.get("SC_Code", ""),
+        "sc_desc": details.get("SC_Desc", ""),
+        "vbe": details.get("VBE", ""),
+        "domain": domain,
+        "criterion": criterion,
+        "condition": condition,
+        "assessment": assessment,
+        "evidence": evidence
+    })
+
+@app.route("/api/get_blooms/<plo>")
+def api_get_blooms(plo):
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify([])
+
+    domain = str(details["Domain"]).lower()
+    sheetmap = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }
+    df = load_sheet_df(sheetmap.get(domain))
+    if df.empty:
+        return jsonify([])
+
+    return jsonify(df.iloc[:, 0].dropna().astype(str).tolist())
+
+@app.route("/api/get_verbs/<plo>/<bloom>")
+def api_get_verbs(plo, bloom):
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify([])
+
+    domain = str(details["Domain"]).lower()
+    sheetmap = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }
+    df = load_sheet_df(sheetmap.get(domain))
+    if df.empty:
+        return jsonify([])
+
+    mask = df.iloc[:, 0].astype(str).str.lower() == str(bloom).lower()
+    if not mask.any():
+        return jsonify([])
+
+    # verbs assumed in 2nd column comma-separated
+    return jsonify([v.strip() for v in str(df[mask].iloc[0, 1]).split(",") if v.strip()])
+
+@app.route("/api/debug_plo/<plo>")
+def api_debug_plo(plo):
+    profile = request.args.get("profile","")
+    det = get_plo_details(plo, profile)
+    return jsonify({
+        "plo": plo,
+        "details": det or {},
+        "exists": bool(det)
+    })
 
 @app.route("/reset_table")
 def reset_table():
@@ -355,7 +412,6 @@ def download():
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="CLO_Table")
-
     output.seek(0)
 
     return send_file(
@@ -367,6 +423,3 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
