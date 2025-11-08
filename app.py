@@ -250,21 +250,87 @@ def index():
 
 @app.route("/api/get_meta/<plo>/<bloom>")
 def api_get_meta(plo, bloom):
-    """Meta endpoint the UI calls to auto-fill mapping + condition/criterion + assessment/evidence."""
+    """
+    Meta endpoint used by UI to auto-fill:
+    - SC Code / SC Description
+    - VBE
+    - Domain
+    - ONE-WORD criterion
+    - ONE-WORD condition (auto 'when' or 'by')
+    - Assessment & Evidence
+    """
+
     profile = request.args.get("profile", "").strip().lower()
     details = get_plo_details(plo, profile) or {}
-    domain = details.get("Domain", "")
-    criterion, condition = get_criterion_phrase(domain, bloom)
-    if not condition:
-        condition = get_default_condition(domain)
-    assessment, evidence = get_assessment_and_evidence(bloom, domain)
+
+    domain = (details.get("Domain", "") or "").strip().lower()
+    bloom_key = (bloom or "").strip()
+
+    # ------------------------------------------------------------
+    # ✅ One-word Criterion + Condition mapping (universal)
+    # ------------------------------------------------------------
+    ONEWORD_META = {
+        "cognitive": {
+            "Remember":   {"criterion": "accurately",    "condition": "interpreting"},
+            "Understand": {"criterion": "coherently",    "condition": "interpreting"},
+            "Apply":      {"criterion": "effectively",   "condition": "interpreting"},
+            "Analyze":    {"criterion": "critically",    "condition": "interpreting"},
+            "Evaluate":   {"criterion": "independently", "condition": "interpreting"},
+            "Create":     {"criterion": "innovatively",  "condition": "interpreting"}
+        },
+        "affective": {
+            "Receive":         {"criterion": "openly",         "condition": "engaging"},
+            "Respond":         {"criterion": "responsibly",    "condition": "engaging"},
+            "Value":           {"criterion": "sincerely",      "condition": "engaging"},
+            "Organization":    {"criterion": "constructively", "condition": "engaging"},
+            "Characterization":{"criterion": "ethically",      "condition": "engaging"}
+        },
+        "psychomotor": {
+            "Perception":            {"criterion": "attentively", "condition": "performing"},
+            "Set":                   {"criterion": "precisely",    "condition": "performing"},
+            "Guided Response":       {"criterion": "controlled",   "condition": "performing"},
+            "Mechanism":             {"criterion": "competently",  "condition": "performing"},
+            "Complex Overt Response":{"criterion": "confidently",  "condition": "performing"},
+            "Adaptation":            {"criterion": "safely",       "condition": "performing"},
+            "Origination":           {"criterion": "creatively",   "condition": "performing"}
+        }
+    }
+
+    # ------------------------------------------------------------
+    # ✅ Decide "when" vs "by" automatically
+    # ------------------------------------------------------------
+    def choose_prefix(domain):
+        if domain == "psychomotor":
+            return "by"
+        return "when"
+
+    # ------------------------------------------------------------
+    # ✅ Try one-word mapping first
+    # ------------------------------------------------------------
+    if domain in ONEWORD_META and bloom_key in ONEWORD_META[domain]:
+        meta = ONEWORD_META[domain][bloom_key]
+        oneword_criterion = meta["criterion"]
+        oneword_condition = meta["condition"]
+        prefix = choose_prefix(domain)
+        polished_condition = f"{prefix} {oneword_condition}"
+    else:
+        # fallback to your Excel sheet Criterion
+        crit, cond = get_criterion_phrase(domain, bloom_key)
+        oneword_criterion = crit
+        polished_condition = cond or get_default_condition(domain)
+
+    # ------------------------------------------------------------
+    # ✅ Assessment & Evidence (unchanged)
+    # ------------------------------------------------------------
+    assessment, evidence = get_assessment_and_evidence(bloom_key, domain)
+
     return jsonify({
         "sc_code": details.get("SC_Code", ""),
         "sc_desc": details.get("SC_Desc", ""),
         "vbe": details.get("VBE", ""),
         "domain": domain,
-        "condition": condition,
-        "criterion": criterion,
+        "criterion": oneword_criterion,
+        "condition": polished_condition,
         "assessment": assessment,
         "evidence": evidence
     })
@@ -430,3 +496,4 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
