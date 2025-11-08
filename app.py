@@ -106,7 +106,7 @@ def get_assessment_and_evidence(bloom, domain):
     df = load_sheet_df(sheet)
     if df.empty:
         return "", ""
-    df.columns = [str(c).strip() for c in df.columns]
+    df.columns = [c.strip() for c in df.columns]
     bloom_col, assess_col, evid_col = df.columns[:3]
     mask = df[bloom_col].astype(str).str.strip().str.lower() == str(bloom).strip().lower()
     if not mask.any():
@@ -364,5 +364,6 @@ def download():
     )
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
