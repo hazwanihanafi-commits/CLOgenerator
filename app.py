@@ -323,6 +323,85 @@ def generate():
         "vbe": details["VBE"],
         "domain": domain
     })
+# ============================================================
+# API ROUTES (BLOOMS, VERBS, META)
+# ============================================================
+
+@app.route("/api/get_blooms/<plo>")
+def api_get_blooms(plo):
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify([])
+    domain = (details["Domain"] or "").lower()
+
+    sheetmap = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }
+    df = load_sheet_df(sheetmap.get(domain, "Bloom_Cognitive"))
+    if df.empty:
+        return jsonify([])
+
+    blooms = df.iloc[:, 0].dropna().astype(str).tolist()
+    return jsonify(blooms)
+
+
+@app.route("/api/get_verbs/<plo>/<bloom>")
+def api_get_verbs(plo, bloom):
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify([])
+
+    domain = (details["Domain"] or "").lower()
+    sheetmap = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }
+    df = load_sheet_df(sheetmap.get(domain, "Bloom_Cognitive"))
+    if df.empty:
+        return jsonify([])
+
+    mask = df.iloc[:, 0].astype(str).str.lower() == bloom.lower()
+    if not mask.any():
+        return jsonify([])
+
+    verbs = [v.strip() for v in str(df[mask].iloc[0, 1]).split(",") if v.strip()]
+    return jsonify(verbs)
+
+
+@app.route("/api/get_meta/<plo>/<bloom>")
+def api_get_meta(plo, bloom):
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile) or {}
+    domain = (details.get("Domain", "") or "").lower()
+
+    if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
+        criterion = ONEWORD_META[domain][bloom]["criterion"]
+        condition_core = ONEWORD_META[domain][bloom]["condition"]
+    else:
+        crit, cond = get_criterion_phrase(domain, bloom)
+        criterion = crit or ""
+        condition_core = cond or get_default_condition(domain)
+
+    connector = "by" if domain == "psychomotor" else "when"
+    condition = f"{connector} {condition_core}"
+
+    assessment, evidence = get_assessment_and_evidence(bloom, domain)
+
+    return jsonify({
+        "sc_code": details.get("SC_Code", ""),
+        "sc_desc": details.get("SC_Desc", ""),
+        "vbe": details.get("VBE", ""),
+        "domain": domain,
+        "criterion": criterion,
+        "condition": condition,
+        "assessment": assessment,
+        "evidence": evidence
+    })
 
 # ============================================================
 # DOWNLOAD CLO TABLE
@@ -390,4 +469,5 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
