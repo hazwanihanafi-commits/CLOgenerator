@@ -1,75 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="UTF-8" />
   <title>SCLOG Course Learning Outcome Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Bootstrap + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
   <style>
-    body{background:#f5f4fb;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-    .navbar-custom{background:#5a2ca0}
-    .navbar-custom .navbar-brand,.navbar-custom .nav-link,.navbar-custom label{color:#fff}
-    .brand-sub{font-size:.8rem;opacity:.85}
-    .card{border:0;border-radius:1rem;box-shadow:0 6px 18px rgba(0,0,0,.08)}
-    .card-header{background:#fff;border-bottom:0;font-weight:600;color:#3b2f5b;display:flex;align-items:center;gap:.6rem}
-    .icon-badge{width:40px;height:40px;border-radius:10px;background:#ede6ff;color:#5a2ca0;display:inline-flex;align-items:center;justify-content:center}
-    .nav-pills .nav-link.active{background:#5a2ca0}
-    .sticky-actions{position:sticky;bottom:0;background:#fff;padding:1rem;border-radius:1rem;box-shadow:0 -6px 18px rgba(0,0,0,.06);margin-top:1rem}
-    .badge-k{font-size:.8rem}
+    :root {
+      --brand:#5a2ca0;
+      --ink:#3b2f5b;
+      --card:#ffffff;
+      --bg:#f5f4fb;
+    }
+    .dark {
+      --brand:#8f7ae6;
+      --ink:#e9e7ff;
+      --card:#1e1e27;
+      --bg:#111118;
+    }
+    body { background:var(--bg); font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+    .navbar-custom { background:var(--brand); }
+    .navbar-custom .navbar-brand, .navbar-custom label, .navbar-custom .nav-link { color:#fff; }
+    .brand-title { font-weight:700; letter-spacing:.3px; }
+    .card { border:0; border-radius:1rem; background:var(--card); box-shadow:0 6px 18px rgba(0,0,0,.08); }
+    .card-header { background:var(--card); border-bottom:0; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:.6rem; }
+    .icon-badge { width:40px; height:40px; border-radius:10px; background:#ede6ff; color:var(--brand); display:inline-flex; justify-content:center; align-items:center; }
+    .btn-primary { background:var(--brand)!important; border-color:var(--brand)!important; }
+    .nav-pills .nav-link.active { background:var(--brand); }
+    .nav-pills .nav-link { color:var(--ink); }
+    .sticky-actions { position:sticky; bottom:0; background:var(--card); padding:1rem; border-radius:1rem; box-shadow:0 -6px 18px rgba(0,0,0,.06); }
+    .badge-soft { background:#e8f0fe; color:#1a73e8; }
+    .badge-ink { background:#fff2; color:#fff; border:1px solid #fff3; }
+    footer { color:#888; font-size:.9rem; }
+    .dark footer { color:#aaa; }
+    .form-text { color:#6e6b7a; }
+    .dark .form-text { color:#b8b6c4; }
   </style>
 </head>
+
 <body>
-  <!-- NAV -->
-  <nav class="navbar navbar-custom">
-    <div class="container d-flex align-items-center justify-content-between">
-      <div>
-        <a class="navbar-brand fw-bold" href="#">
-          <i class="bi bi-stars me-2"></i>SCLOG Course Learning Outcome Generator
-        </a>
-        <div class="brand-sub">
-          Developed by Assoc Prof Dr Hazwani Ahmad Yusof @ Hanafi (AMDI, USM)
+  <!-- Navbar -->
+  <nav class="navbar navbar-custom navbar-expand-lg">
+    <div class="container">
+      <a class="navbar-brand brand-title" href="#">
+        <i class="bi bi-magic me-2"></i>SCLOG Course Learning Outcome Generator
+      </a>
+
+      <div class="d-flex align-items-center gap-2">
+        <div class="text-white d-none d-md-flex align-items-center">
+          <label class="me-2 mb-0">Discipline:</label>
+          <select id="profile" class="form-select form-select-sm">
+            <option value="">Medical & Health Sciences</option>
+            <option value="sc">Computer Science & IT</option>
+            <option value="eng">Engineering & Technology</option>
+            <option value="socs">Social Sciences</option>
+            <option value="edu">Education</option>
+            <option value="bus">Business & Management</option>
+            <option value="arts">Arts & Humanities</option>
+          </select>
         </div>
-      </div>
-      <div class="text-white d-flex align-items-center gap-2">
-        <label class="mb-0">Discipline:</label>
-        <select id="profile" class="form-select form-select-sm">
-          <option value="">Medical & Health Sciences</option>
-          <option value="sc">Computer Science & IT</option>
-          <option value="eng">Engineering & Technology</option>
-          <option value="socs">Social Sciences</option>
-          <option value="edu">Education</option>
-          <option value="bus">Business & Management</option>
-          <option value="arts">Arts & Humanities</option>
-        </select>
+        <button id="themeBtn" class="btn btn-sm btn-light">
+          <i class="bi bi-moon-stars"></i>
+        </button>
       </div>
     </div>
   </nav>
 
   <main class="container my-4">
-    <ul class="nav nav-pills mb-3">
-      <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabGen"><i class="bi bi-pencil-square me-1"></i>Generate CLO</button></li>
-      <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabHistory"><i class="bi bi-table me-1"></i>History</button></li>
+
+    <!-- Tabs -->
+    <ul class="nav nav-pills mb-3" id="cloTabs">
+      <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabGenerate">
+          <i class="bi bi-pencil-square me-1"></i>Generate CLO
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabHistory">
+          <i class="bi bi-table me-1"></i>History
+        </button>
+      </li>
     </ul>
 
     <div class="tab-content">
-      <!-- Generate -->
-      <div class="tab-pane fade show active" id="tabGen">
-        <form id="cloForm">
-          <input type="hidden" name="profile" id="profileHidden" value="{{ profile }}">
+
+      <!-- GENERATE -->
+      <div class="tab-pane fade show active" id="tabGenerate">
+        <form method="POST" action="{{ url_for('generate') }}" id="cloForm">
+          <!-- keep profile for POST -->
+          <input type="hidden" name="profile" id="profileHidden" value="{{ profile }}"/>
+
           <div class="row g-3">
+
             <!-- Course & Mapping -->
             <div class="col-lg-6">
               <div class="card">
-                <div class="card-header"><span class="icon-badge"><i class="bi bi-journal-text"></i></span>Course & Mapping</div>
+                <div class="card-header">
+                  <span class="icon-badge"><i class="bi bi-journal-text"></i></span>
+                  Course & Mapping
+                </div>
                 <div class="card-body">
                   <label class="form-label">Course Code / Name *</label>
-                  <input name="course" class="form-control" required>
+                  <input name="course" class="form-control" placeholder="EXS302 Exercise Physiology" required>
 
                   <label class="form-label mt-3">PLO *</label>
                   <select name="plo" id="plo" class="form-select" required>
                     <option value="" disabled selected>Select PLO</option>
-                    {% for p in plos %}<option value="{{ p }}">{{ p }}</option>{% endfor %}
+                    {% for p in plos %}
+                      <option value="{{ p }}">{{ p }}</option>
+                    {% endfor %}
                   </select>
 
                   <div class="row mt-3">
@@ -90,9 +133,13 @@
                     </div>
                     <div class="col-md-6">
                       <label class="form-label">Domain</label>
-                      <input id="domain" class="form-control" readonly>
+                      <div class="d-flex align-items-center gap-2">
+                        <input id="domain" class="form-control" readonly>
+                        <span id="domainBadge" class="badge badge-soft d-none">Domain</span>
+                      </div>
                     </div>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -100,13 +147,28 @@
             <!-- Bloom & Verbs -->
             <div class="col-lg-6">
               <div class="card">
-                <div class="card-header"><span class="icon-badge"><i class="bi bi-bar-chart-steps"></i></span>Bloom & Verbs</div>
+                <div class="card-header">
+                  <span class="icon-badge"><i class="bi bi-bar-chart-steps"></i></span>
+                  Bloom & Verbs
+                </div>
                 <div class="card-body">
                   <label class="form-label">Bloom Level *</label>
                   <select id="bloom" name="bloom" class="form-select" required></select>
 
                   <label class="form-label mt-3">Verb *</label>
                   <select id="verb" name="verb" class="form-select" required></select>
+
+                  <div class="form-text mt-3">
+                    <strong>Criterion (static dropdown)</strong> — choose one best-fit quality:
+                    <select id="criterionStatic" class="form-select mt-1">
+                      <option value="">Select a criterion</option>
+                      <option>accurately</option>
+                      <option>effectively</option>
+                      <option>professionally</option>
+                      <option>ethically</option>
+                      <option>comprehensively</option>
+                    </select>
+                  </div>
                 </div>
               </div>
             </div>
@@ -114,51 +176,29 @@
             <!-- CLO Builder -->
             <div class="col-12">
               <div class="card">
-                <div class="card-header"><span class="icon-badge"><i class="bi bi-pencil"></i></span>CLO Builder</div>
+                <div class="card-header">
+                  <span class="icon-badge"><i class="bi bi-pencil"></i></span>
+                  CLO Builder
+                </div>
                 <div class="card-body">
                   <label class="form-label">Content / Object *</label>
-                  <input name="content" class="form-control" required>
+                  <input name="content" id="content" class="form-control" required
+                         placeholder="e.g., exercise metabolism; ECG interpretation; machine learning models; biomechanics of gait">
 
                   <div class="row mt-3">
                     <div class="col-md-4">
                       <label class="form-label">Condition</label>
-                      <input id="condition" class="form-control" list="condList">
-                      <!-- universal suggestions -->
-                      <datalist id="condList">
-                        <option value="when recalling theoretical concepts">
-                        <option value="when explaining physiological mechanisms">
-                        <option value="when interpreting data or case studies">
-                        <option value="during problem-solving or reflection">
-                        <option value="when designing exercise programs or interventions">
-                        <option value="during discussions or peer activities">
-                        <option value="when engaging in teamwork or feedback">
-                        <option value="in ethical or professional contexts">
-                        <option value="when integrating multiple perspectives">
-                        <option value="throughout clinical or professional practice">
-                        <option value="during demonstration or observation">
-                        <option value="before performing a skill">
-                        <option value="during skill acquisition or practice">
-                        <option value="in executing learned motor tasks">
-                        <option value="during continuous performance">
-                        <option value="when adjusting to new conditions">
-                        <option value="when developing new movement patterns">
-                      </datalist>
+                      <input id="condition" class="form-control"
+                             placeholder="e.g., when interpreting data or case studies" readonly>
                     </div>
                     <div class="col-md-4">
                       <label class="form-label">Criterion</label>
-                      <input id="criterion" class="form-control" list="critList">
-                      <datalist id="critList">
-                        <option value="accurately">
-                        <option value="effectively">
-                        <option value="appropriately and safely">
-                        <option value="professionally">
-                        <option value="with minimal errors">
-                        <option value="within allotted time">
-                      </datalist>
+                      <input id="criterion" class="form-control"
+                             placeholder="e.g., accurately / effectively / professionally" readonly>
                     </div>
                     <div class="col-md-4">
                       <label class="form-label">Assessment %</label>
-                      <input type="number" min="0" max="100" step="1" name="cw" class="form-control">
+                      <input type="number" min="0" max="100" step="1" name="cw" class="form-control" placeholder="e.g., 40">
                     </div>
                   </div>
                 </div>
@@ -168,161 +208,245 @@
             <!-- Assessment -->
             <div class="col-12">
               <div class="card">
-                <div class="card-header"><span class="icon-badge"><i class="bi bi-clipboard-check"></i></span>Assessment</div>
+                <div class="card-header">
+                  <span class="icon-badge"><i class="bi bi-clipboard-check"></i></span>
+                  Assessment
+                </div>
                 <div class="card-body">
                   <label class="form-label">Assessment Suggestion</label>
-                  <input id="assessment" class="form-control" readonly>
+                  <input name="assessment" id="assessment" class="form-control" readonly
+                         placeholder="e.g., quiz / lab practical / project / OSCE">
+
                   <label class="form-label mt-3">Evidence of Assessment</label>
-                  <input id="evidence" class="form-control" readonly>
+                  <input name="evidence" id="evidence" class="form-control" readonly
+                         placeholder="e.g., exam paper & key / rubric & report / checklist">
                 </div>
               </div>
             </div>
 
             <!-- Actions -->
             <div class="col-12">
-              <div class="sticky-actions d-flex justify-content-between">
-                <span class="text-muted"><i class="bi bi-info-circle"></i> Complete required fields then click Generate.</span>
+              <div class="sticky-actions d-flex justify-content-between align-items-center">
+                <div class="text-muted">
+                  <span id="scBadge" class="badge bg-secondary d-none me-2"></span>
+                  <small><i class="bi bi-info-circle"></i> Select PLO → Bloom → Verb, then Generate.</small>
+                </div>
                 <div class="d-flex gap-2">
-                  <a href="{{ url_for('reset_table') }}" class="btn btn-outline-danger"><i class="bi bi-trash"></i> Reset History</a>
-                  <a href="{{ url_for('download') }}" class="btn btn-outline-secondary"><i class="bi bi-download"></i> Download</a>
-                  <button id="btnGen" type="submit" class="btn btn-primary"><i class="bi bi-rocket-takeoff"></i> Generate</button>
+                  <a href="{{ url_for('reset_table') }}" class="btn btn-outline-danger">
+                    <i class="bi bi-trash"></i> Reset History
+                  </a>
+                  <a href="{{ url_for('download') }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-download"></i> Download
+                  </a>
+                  <button class="btn btn-primary" id="btnGenerate">
+                    <i class="bi bi-rocket-takeoff"></i> Generate
+                  </button>
                 </div>
               </div>
             </div>
+
           </div>
         </form>
 
-        <!-- Preview -->
+        <!-- CLO Preview -->
         <div class="card mt-4" id="cloPreviewCard" style="display:none;">
-          <div class="card-header d-flex w-100 justify-content-between align-items-center">
-            <div><span class="icon-badge"><i class="bi bi-lightbulb"></i></span>Generated CLO</div>
-            <button id="copyBtn" class="btn btn-sm btn-outline-secondary"><i class="bi bi-clipboard"></i> Copy</button>
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <span class="icon-badge"><i class="bi bi-lightbulb"></i></span>
+              Generated CLO
+            </div>
+            <button id="copyBtn" class="btn btn-sm btn-outline-primary">
+              <i class="bi bi-clipboard"></i> Copy
+            </button>
           </div>
           <div class="card-body">
-            <p id="cloPreviewText" class="mb-0" style="font-size:1.05rem;color:#3b2f5b;font-weight:500;"></p>
+            <p id="cloPreviewText" class="mb-0" style="font-size:1.08rem; color:var(--ink);"></p>
           </div>
         </div>
+
       </div>
 
-      <!-- History -->
+      <!-- HISTORY -->
       <div class="tab-pane fade" id="tabHistory">
         <div class="card mt-3">
-          <div class="card-header"><span class="icon-badge"><i class="bi bi-clock-history"></i></span>History</div>
+          <div class="card-header">
+            <span class="icon-badge"><i class="bi bi-clock-history"></i></span>
+            CLO History
+          </div>
           <div class="card-body">
             <div id="historyPlaceholder" class="text-muted text-center">
               <i class="bi bi-eye"></i> Click to load history.
-              <div class="mt-2"><button id="loadHistoryBtn" class="btn btn-outline-primary btn-sm">Show History</button></div>
+              <div class="mt-2">
+                <button id="loadHistoryBtn" class="btn btn-outline-primary btn-sm">Show History</button>
+              </div>
             </div>
-            <div id="historyArea" class="table-container" style="display:none;"><div id="historyHTML"></div></div>
-            <template id="serverTable">{{ table_html|safe }}</template>
+            <div id="historyArea" class="table-container" style="display:none;">
+              <div id="historyHTML"></div>
+            </div>
+            <template id="serverTable">
+              {{ table_html|safe }}
+            </template>
           </div>
         </div>
       </div>
+
     </div>
+
   </main>
 
+  <footer class="container my-4 text-center">
+    Developed by <strong>Assoc Prof Dr Hazwani Ahmad Yusof @ Hanafi</strong> (AMDI, USM)
+  </footer>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
-    // Profile dropdown
-    const profileSel = document.getElementById('profile');
-    profileSel.value = "{{ profile }}";
-    profileSel.addEventListener('change', () => {
-      const v = profileSel.value, u = new URL(window.location.href);
-      if (v) u.searchParams.set('profile', v); else u.searchParams.delete('profile');
-      window.location.href = u.toString();
+    // --- Theme toggle ---
+    const themeBtn = document.getElementById('themeBtn');
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark');
     });
-    const qs = () => { const p = profileSel.value || "{{ profile }}"; return p ? `?profile=${encodeURIComponent(p)}` : ""; };
 
-    // Short fetch helper
-    async function jget(url){ const r = await fetch(url); if(!r.ok) return null; return await r.json(); }
+    // --- Profile sync ---
+    const profileSel = document.getElementById("profile");
+    profileSel.value = "{{ profile }}";
+    profileSel.addEventListener("change", () => {
+      const val = profileSel.value;
+      const url = new URL(window.location.href);
+      if (val) url.searchParams.set("profile", val);
+      else url.searchParams.delete("profile");
+      window.location.href = url.toString();
+    });
+    function profileSuffix() {
+      const p = profileSel.value || "{{ profile }}";
+      return p ? `?profile=${encodeURIComponent(p)}` : "";
+    }
 
-    // Elements
-    const ploSel = document.getElementById('plo');
-    const bloomSel = document.getElementById('bloom');
-    const verbSel  = document.getElementById('verb');
-    const scCode = document.getElementById('sc_code');
-    const scDesc = document.getElementById('sc_desc');
-    const vbe    = document.getElementById('vbe');
-    const domain = document.getElementById('domain');
-    const condEl = document.getElementById('condition');
-    const critEl = document.getElementById('criterion');
-    const assess = document.getElementById('assessment');
-    const evid   = document.getElementById('evidence');
+    // --- Helpers ---
+    async function fetchJSON(url) {
+      const r = await fetch(url);
+      if (!r.ok) return null;
+      return await r.json();
+    }
 
-    async function refreshPLO(plo){
-      const info = await jget(`/api/debug_plo/${encodeURIComponent(plo)}${qs()}`);
-      if(info && info.exists){
+    // --- Elements ---
+    const ploSel = document.getElementById("plo");
+    const bloomSel = document.getElementById("bloom");
+    const verbSel  = document.getElementById("verb");
+    const scCode   = document.getElementById("sc_code");
+    const scDesc   = document.getElementById("sc_desc");
+    const vbe      = document.getElementById("vbe");
+    const domain   = document.getElementById("domain");
+    const domainBadge = document.getElementById("domainBadge");
+    const scBadge  = document.getElementById("scBadge");
+
+    const condEl   = document.getElementById("condition");
+    const critEl   = document.getElementById("criterion");
+    const critStatic = document.getElementById("criterionStatic");
+    const assessEl = document.getElementById("assessment");
+    const evidEl   = document.getElementById("evidence");
+
+    // Auto-set Criterion from static dropdown into readonly box
+    critStatic.addEventListener('change', () => {
+      critEl.value = critStatic.value || "";
+    });
+
+    // PLO change → fill mapping + blooms (and show badges)
+    ploSel?.addEventListener("change", async () => {
+      const p = ploSel.value;
+      const info = await fetchJSON(`/api/debug_plo/${encodeURIComponent(p)}${profileSuffix()}`);
+      if (info && info.exists) {
         scCode.value = info.details.SC_Code || "";
         scDesc.value = info.details.SC_Desc || "";
         vbe.value    = info.details.VBE || "";
         domain.value = info.details.Domain || "";
-      }else{
+
+        // badges
+        scBadge.classList.remove('d-none');
+        scBadge.textContent = (info.details.SC_Code || "").toString();
+        domainBadge.classList.remove('d-none');
+        domainBadge.textContent = (info.details.Domain || "").toString();
+      } else {
         scCode.value = scDesc.value = vbe.value = domain.value = "";
+        scBadge.classList.add('d-none');
+        domainBadge.classList.add('d-none');
       }
-    }
-    async function refreshBlooms(plo){
+
+      // load blooms
       bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
       verbSel.innerHTML  = '<option disabled selected>Select Verb</option>';
-      const arr = await jget(`/api/get_blooms/${encodeURIComponent(plo)}${qs()}`) || [];
-      arr.forEach(b => { const o=document.createElement('option'); o.value=b; o.textContent=b; bloomSel.appendChild(o); });
-    }
-    async function refreshVerbs(plo,bloom){
+      const blooms = await fetchJSON(`/api/get_blooms/${encodeURIComponent(p)}${profileSuffix()}`) || [];
+      blooms.forEach(b => {
+        const opt = document.createElement("option");
+        opt.value = opt.textContent = b;
+        bloomSel.appendChild(opt);
+      });
+
+      // clear meta
+      condEl.value = critEl.value = assessEl.value = evidEl.value = "";
+    });
+
+    // Bloom change → fill verbs + meta (condition/criterion/assessment/evidence)
+    bloomSel?.addEventListener("change", async () => {
+      const b = bloomSel.value;
+      const p = ploSel.value;
+      if (!p || !b) return;
+
+      // verbs
       verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
-      const arr = await jget(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${qs()}`) || [];
-      arr.forEach(v => { const o=document.createElement('option'); o.value=v; o.textContent=v; verbSel.appendChild(o); });
-    }
-    async function refreshMeta(plo,bloom){
-      const m = await jget(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${qs()}`);
-      if(!m) return;
-      condEl.value = m.condition || condEl.value;
-      critEl.value = m.criterion || critEl.value;
-      assess.value = m.assessment || "";
-      evid.value   = m.evidence || "";
-    }
+      const verbs = await fetchJSON(`/api/get_verbs/${encodeURIComponent(p)}/${encodeURIComponent(b)}${profileSuffix()}`) || [];
+      verbs.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = opt.textContent = v;
+        verbSel.appendChild(opt);
+      });
 
-    ploSel?.addEventListener('change', async e => {
-      const p = e.target.value;
-      await refreshPLO(p);
-      await refreshBlooms(p);
-      condEl.value = critEl.value = assess.value = evid.value = "";
+      // meta
+      const meta = await fetchJSON(`/api/get_meta/${encodeURIComponent(p)}/${encodeURIComponent(b)}${profileSuffix()}`);
+      if (meta) {
+        condEl.value   = meta.condition || condEl.value;
+        // only set criterion if user hasn't chosen from static dropdown
+        if (!critEl.value) critEl.value = meta.criterion || "";
+        assessEl.value = meta.assessment || "";
+        evidEl.value   = meta.evidence || "";
+      }
     });
 
-    bloomSel?.addEventListener('change', async e => {
-      const b = e.target.value, p = ploSel.value;
-      if(p && b){ await refreshVerbs(p,b); await refreshMeta(p,b); }
-    });
-
-    // Generate
-    document.getElementById('cloForm').addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const btn = document.getElementById('btnGen');
-      btn.disabled = true;
-      try{
-        const res = await fetch(`/generate${qs()}`, { method:'POST', body:new FormData(ev.target) });
-        const data = await res.json();
-        if(!res.ok || data.error){ alert(data.error || 'Failed generating CLO'); return; }
-        document.getElementById('cloPreviewCard').style.display='block';
-        document.getElementById('cloPreviewText').innerText = data.clo;
-        assess.value = data.assessment || assess.value;
-        evid.value   = data.evidence   || evid.value;
-      }catch(err){ alert('Network error'); } finally{ btn.disabled=false; }
+    // Generate (AJAX) → preview + copy
+    document.getElementById("cloForm").addEventListener("submit", async function(e){
+      e.preventDefault();
+      document.getElementById("profileHidden").value = profileSel.value || "{{ profile }}";
+      const res = await fetch(`/generate${profileSuffix()}`, { method: "POST", body: new FormData(this) });
+      const data = await res.json();
+      if (data.error) { alert(data.error); return; }
+      document.getElementById("cloPreviewCard").style.display = "block";
+      document.getElementById("cloPreviewText").innerText = data.clo;
+      // keep assessment/evidence in sync
+      if (data.assessment) assessEl.value = data.assessment;
+      if (data.evidence)   evidEl.value   = data.evidence;
     });
 
     // Copy button
-    document.getElementById('copyBtn').addEventListener('click', async () => {
-      const t = document.getElementById('cloPreviewText').innerText.trim();
-      if(t){ await navigator.clipboard.writeText(t); }
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      const txt = document.getElementById("cloPreviewText").innerText.trim();
+      if (!txt) return;
+      try { await navigator.clipboard.writeText(txt); }
+      catch(e){ console.log(e); }
     });
 
-    // History lazy load
-    const loadBtn = document.getElementById('loadHistoryBtn');
-    const serverTable = document.getElementById('serverTable');
-    const historyArea = document.getElementById('historyArea');
-    const historyPlaceholder = document.getElementById('historyPlaceholder');
-    const historyHTML = document.getElementById('historyHTML');
-    function loadHistory(){ historyHTML.innerHTML = serverTable.innerHTML; historyPlaceholder.style.display='none'; historyArea.style.display='block'; }
-    loadBtn?.addEventListener('click', loadHistory);
-    document.querySelector('[data-bs-target="#tabHistory"]')?.addEventListener('shown.bs.tab', loadHistory);
+    // History lazy-load
+    const loadBtn = document.getElementById("loadHistoryBtn");
+    const serverTable = document.getElementById("serverTable");
+    const historyArea = document.getElementById("historyArea");
+    const historyPlaceholder = document.getElementById("historyPlaceholder");
+    const historyHTML = document.getElementById("historyHTML");
+    function loadHistory() {
+      historyHTML.innerHTML = serverTable.innerHTML;
+      historyPlaceholder.style.display = "none";
+      historyArea.style.display = "block";
+    }
+    loadBtn?.addEventListener("click", loadHistory);
+    document.querySelector('[data-bs-target="#tabHistory"]')?.addEventListener("shown.bs.tab", loadHistory);
   </script>
 </body>
 </html>
