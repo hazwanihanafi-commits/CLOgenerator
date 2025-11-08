@@ -34,6 +34,117 @@ ONEWORD_META = {
         "Origination":           {"criterion": "creatively",       "condition": "developing procedures"}
     }
 }
+def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe_text):
+    """
+    Build a clean, polished CLO sentence with correct grammar and ordering.
+    Ensures no double 'using', no awkward condition phrasing, and clean VBE ending.
+    """
+
+    verb = verb.strip()
+    content = content.strip()
+
+    # -------------------------------------------------
+    # 1. Clean SC phrase
+    # -------------------------------------------------
+    sc_phrase = ""
+    if sc_desc:
+        sc_desc_clean = sc_desc.strip().lower()
+        # avoid "using using"
+        if not sc_desc_clean.startswith("using"):
+            sc_phrase = f"using {sc_desc_clean}"
+        else:
+            sc_phrase = sc_desc_clean
+
+    # -------------------------------------------------
+    # 2. Clean condition phrase
+    #    Condition SHOULD NOT come with "when/by"
+    # -------------------------------------------------
+    condition = condition.strip()
+    # If user accidentally typed "when"/"by", remove it
+    if condition.lower().startswith(("when ", "by ")):
+        condition = condition.split(" ", 1)[1].strip()
+
+    # Apply the correct connector:
+    # Psychomotor = "by", others = "when"
+    connector = "by" if "technique" in condition or "perform" in content.lower() else "when"
+    condition_phrase = f"{connector} {condition}"
+
+    # -------------------------------------------------
+    # 3. Clean criterion phrase
+    # -------------------------------------------------
+    criterion = criterion.strip()
+    # Ensure criterion ends with no full stop at the start
+    criterion = criterion.rstrip(".")
+
+    # -------------------------------------------------
+    # 4. VBE ending
+    # -------------------------------------------------
+    vbe_phrase = ""
+    if vbe_text:
+        vbe_phrase = f"guided by {vbe_text.lower()}"
+
+    # -------------------------------------------------
+    # 5. Assemble in correct CLO order
+    # -------------------------------------------------
+    parts = [verb, content]
+
+    if sc_phrase:
+        parts.append(sc_phrase)
+
+    parts.append(condition_phrase)
+    parts.append(criterion)
+
+    if vbe_phrase:
+        parts.append(vbe_phrase)
+
+    # -------------------------------------------------
+    # 6. Join, capitalize, and finalize
+    # -------------------------------------------------
+    sentence = " ".join(parts).strip()
+    sentence = sentence[0].upper() + sentence[1:]
+
+    if not sentence.endswith("."):
+        sentence += "."
+
+    return sentence
+def make_clo_variants(verb, content, sc_desc, condition_word, criterion, domain, vbe_text):
+    """
+    Build 3 CLO variants:
+    A = SC after content
+    B = Condition first
+    C = Emphasize SC competencies
+    """
+
+    # Clean SC description
+    sc = sc_desc.strip().lower()
+    sc_use = f"using {sc}" if not sc.startswith("using") else sc
+
+    # Decide connector
+    connector = "by" if domain == "psychomotor" else "when"
+    cond = f"{connector} {condition_word}"
+
+    # Clean VBE
+    vbe_phrase = f"guided by {vbe_text.lower()}" if vbe_text else ""
+
+    # Variant A — Standard, normal reading sequence
+    clo_a = f"{verb} {content} {sc_use} {cond} {criterion} {vbe_phrase}".strip()
+
+    # Variant B — Condition brought earlier
+    clo_b = f"{verb} {content} {cond} {sc_use} {criterion} {vbe_phrase}".strip()
+
+    # Variant C — SC moved earlier to emphasize applied skill component
+    clo_c = f"{verb} {content} {sc_use} {criterion} {cond} {vbe_phrase}".strip()
+
+    # Capitalization and full stop cleanup
+    final = []
+    for s in (clo_a, clo_b, clo_c):
+        s = s.strip()
+        s = s[0].upper() + s[1:]
+        if not s.endswith("."):
+            s += "."
+        final.append(s)
+
+    return final[0], final[1], final[2]
 
 app = Flask(__name__, template_folder="templates")
 
@@ -136,22 +247,77 @@ def get_default_condition(domain):
     return mapping.get(str(domain).lower(), "")
 
 # ---------- Polishing helpers ----------
-def polish_condition(condition: str, remove_condition: bool, profile: str = "", bloom: str = "") -> str:
+def polish_condition(condition, domain="", bloom="", remove_condition=False):
+    """
+    Cleans, simplifies, and standardizes CLO condition phrases.
+    - Removes duplicated 'when/by'
+    - Selects the correct connector (when/by)
+    - Supports removal if user disables condition
+    """
+
     if remove_condition:
         return ""
-    c = (condition or "").strip()
-    if not c:
+
+    if not condition:
         return ""
-    # normalise opener (prefer “in/when/during/under/by” once only)
-    starters = ("in ", "when ", "during ", "under ", "by ", "based ")
-    if not c.lower().startswith(starters):
-        # heuristic: analysis/synthesis → “when”, practice → “in/under”
-        if str(bloom).lower() in ("analyze", "analyse", "evaluate", "evaluation", "create", "synthesize", "synthesis"):
-            c = "when " + c
-        else:
-            c = "in " + c
-    # spacing
-    return " ".join(c.split())
+
+    c = condition.strip()
+
+    # Remove leading when/by if user typed manually
+    if c.lower().startswith(("when ", "by ")):
+        c = c.split(" ", 1)[1].strip()
+
+    # Auto-decide connector
+    connector = "by" if domain.lower() == "psychomotor" else "when"
+
+    # If condition is one word like "evaluating"
+    if " " not in c:
+        return f"{connector} {c}"
+
+    # Normal multi-word condition
+    return f"{connector} {c}"
+
+def rubric_generator(clo, verb, criterion, condition, sc_desc, vbe):
+    """
+    Builds a complete rubric block for the CLO.
+    Returns dictionary structured for Excel autofill.
+    """
+
+    # Clean components
+    verb = verb.strip().capitalize()
+    criterion = criterion.strip()
+    sc_desc = sc_desc.strip()
+    vbe = vbe.strip()
+
+    # Build a performance indicator text
+    performance_indicator = (
+        f"Ability to {verb.lower()} {sc_desc.lower()} {condition} {criterion} "
+        f"while demonstrating {vbe.lower()}."
+    ).strip()
+
+    # Build rubric levels
+    rubric = {
+        "indicator": performance_indicator,
+        "excellent": (
+            f"Consistently {criterion} and highly proficient in applying {sc_desc.lower()} "
+            f"{condition}, with clear adherence to {vbe.lower()}."
+        ),
+        "good": (
+            f"Generally {criterion} and competent in applying {sc_desc.lower()} "
+            f"{condition}, with minor gaps in demonstrating {vbe.lower()}."
+        ),
+        "satisfactory": (
+            f"Shows partial ability to apply {sc_desc.lower()} {condition}, "
+            f"but performance is inconsistent and only moderately {criterion}."
+        ),
+        "poor": (
+            f"Unable to adequately apply {sc_desc.lower()} {condition}; "
+            f"does not meet expected standards for {vbe.lower()}."
+        )
+    }
+
+    return rubric
+
 
 def vbe_phrase(vbe: str, style: str = "guided") -> str:
     vbe = (vbe or "").strip()
@@ -436,6 +602,19 @@ def generate():
     # ASSESSMENT + EVIDENCE AUTOFILL
     # ----------------------------------------------------
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
+    
+    # ----------------------------------------------------
+    # RUBRIC GENERATOR (AUTO-POPULATED)
+    # ----------------------------------------------------
+    rubric = rubric_generator(
+        clo=clo,
+        verb=verb,
+        criterion=criterion,
+        condition=condition,
+        sc_desc=details["SC_Desc"],
+        vbe=details["VBE"]
+    )
+
 
     # ----------------------------------------------------
     # SAVE TO EXCEL TABLE
@@ -461,15 +640,16 @@ def generate():
     # RETURN TO FRONTEND
     # ----------------------------------------------------
     return jsonify({
-        "clo": clo,
-        "clo_options": clo_options,
-        "assessment": assessment,
-        "evidence": evidence,
-        "sc_code": details["SC_Code"],
-        "sc_desc": details["SC_Desc"],
-        "vbe": details["VBE"],
-        "domain": domain
-    })
+    "clo": clo,
+    "clo_options": clo_options,
+    "assessment": assessment,
+    "evidence": evidence,
+    "rubric": rubric,
+    "sc_code": details["SC_Code"],
+    "sc_desc": details["SC_Desc"],
+    "vbe": details["VBE"],
+    "domain": domain
+})
 
 @app.route("/api/get_blooms/<plo>")
 def api_get_blooms(plo):
@@ -563,6 +743,62 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+@app.route("/download_rubric")
+def download_rubric():
+    df = read_clo_table()
+
+    if df.empty:
+        return "<p>No CLO table available.</p>"
+
+    # Build rubric DataFrame
+    rubric_rows = []
+    for idx, row in df.iterrows():
+        clo = row["FullCLO"]
+        plo = row["PLO"]
+
+        # Extract CLO components
+        details = get_plo_details(plo, row.get("Profile", ""))
+        domain = details.get("Domain", "").lower()
+        bloom = row["Bloom"]
+
+        # Rebuild condition & criterion
+        criterion, condition = get_criterion_phrase(domain, bloom)
+        if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
+            criterion = ONEWORD_META[domain][bloom]["criterion"]
+            condition = ONEWORD_META[domain][bloom]["condition"]
+
+        rubric = rubric_generator(
+            clo=clo,
+            verb="N/A",
+            criterion=criterion,
+            condition=condition,
+            sc_desc=details["SC_Desc"],
+            vbe=details["VBE"]
+        )
+
+        rubric_rows.append({
+            "CLO": clo,
+            "Performance Indicator": rubric["indicator"],
+            "Excellent": rubric["excellent"],
+            "Good": rubric["good"],
+            "Satisfactory": rubric["satisfactory"],
+            "Poor": rubric["poor"]
+        })
+
+    rub_df = pd.DataFrame(rubric_rows)
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        rub_df.to_excel(writer, sheet_name="Rubric", index=False)
+
+    output.seek(0)
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="Rubric.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
 
 
 
