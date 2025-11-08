@@ -289,29 +289,57 @@ def generate():
     else:
         condition_core = condition_raw
 
-    # Construct CLO
+    # Main CLO
     clo = construct_clo_sentence(
         verb, content, details["SC_Desc"], condition_core,
         criterion, details["VBE"], domain, vbe_style
     )
 
-    # Variants
-    clo_a, clo_b, clo_c = make_clo_variants(
-        verb, content, details["SC_Desc"], condition_core,
-        criterion, domain, details["VBE"], vbe_style
+    # ----------------------------------------------------
+    # VARIANTS (A/B/C)
+    # ----------------------------------------------------
+    pure_condition = (condition_core or "").lower().strip()
+    for lead in ("when ", "by "):
+        if pure_condition.startswith(lead):
+            pure_condition = pure_condition[len(lead):].strip()
+            break
+
+    clo_a = construct_clo_sentence(
+        verb, content, details["SC_Desc"],
+        pure_condition, criterion,
+        details["VBE"], domain="cognitive", vbe_style=vbe_style
     )
+
+    clo_b = construct_clo_sentence(
+        verb, content, details["SC_Desc"],
+        pure_condition, criterion,
+        details["VBE"], domain="psychomotor", vbe_style=vbe_style
+    )
+
+    clo_c = construct_clo_sentence(
+        verb, content, details["SC_Desc"],
+        pure_condition, criterion,
+        details["VBE"], domain=domain, vbe_style=vbe_style
+    )
+
     clo_options = {"A": clo_a, "B": clo_b, "C": clo_c}
 
+    # ----------------------------------------------------
     # Assessment + Evidence
+    # ----------------------------------------------------
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
+    # ----------------------------------------------------
     # Rubric
+    # ----------------------------------------------------
     rubric = rubric_generator(
         clo, verb, criterion, condition_core,
         details["SC_Desc"], details["VBE"]
     )
 
-    # Save record
+    # ----------------------------------------------------
+    # Save record to Excel
+    # ----------------------------------------------------
     df = read_clo_table()
     new_row = {
         "ID": len(df) + 1 if not df.empty else 1,
@@ -329,6 +357,9 @@ def generate():
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     write_clo_table(df)
 
+    # ----------------------------------------------------
+    # Return JSON to frontend
+    # ----------------------------------------------------
     return jsonify({
         "clo": clo,
         "clo_options": clo_options,
@@ -528,3 +559,4 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
