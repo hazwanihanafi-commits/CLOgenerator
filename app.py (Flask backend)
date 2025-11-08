@@ -55,36 +55,35 @@ def get_mapping_dict(profile):
 # PLO LOOKUP
 # ============================================================
 
-def get_plo_details(plo, profile):
+def get_plo_details(plo, profile=None):
     df = get_mapping_dict(profile)
     if df.empty:
         return None
 
-    keycol = df.columns[0]
+    # Normalize column names (remove spaces, lowercase)
+    norm_cols = {c.strip().lower().replace(" ", ""): c for c in df.columns}
 
-    mask = df[keycol].astype(str).str.strip().str.upper() == str(plo).strip().upper()
+    # Identify actual Excel column names
+    col_plo = list(df.columns)[0]  # first column is PLO
+    col_sc = norm_cols.get("sccode")
+    col_desc = norm_cols.get("scdescription")
+    col_vbe = norm_cols.get("vbe")
+    col_domain = norm_cols.get("domain")
 
+    # Match the selected PLO
+    mask = df[col_plo].astype(str).str.strip().str.upper() == str(plo).upper()
     if not mask.any():
         return None
 
     row = df[mask].iloc[0]
 
-    # Robust column matching
-    colmap = {c.lower().replace(" ", ""): c for c in df.columns}
-
-    sc_code = row.get(colmap.get("sccode"), "")
-    sc_desc = row.get(colmap.get("scdescription"), "")
-    vbe = row.get(colmap.get("vbe"), "")
-    domain = row.get(colmap.get("domain"), "")
-
     return {
-        "PLO": row[keycol],
-        "SC_Code": sc_code,
-        "SC_Desc": sc_desc,
-        "VBE": vbe,
-        "Domain": domain
+        "PLO": row[col_plo],
+        "SC_Code": row.get(col_sc, ""),
+        "SC_Desc": row.get(col_desc, ""),
+        "VBE": row.get(col_vbe, ""),
+        "Domain": row.get(col_domain, "")
     }
-
 
 # ============================================================
 # CRITERION / CONDITION / ASSESSMENT
