@@ -128,36 +128,113 @@ def get_assessment_and_evidence(bloom, domain):
     return str(row[assess_col]), str(row[evid_col])
 
 # ------------------------------------------------------------
-# CLO SENTENCE BUILDER
+# POLISHED CONDITION REWRITER (Version 5)
 # ------------------------------------------------------------
-def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
-    parts = []
+def polish_condition(raw_condition, profile=None, bloom=None):
+    profile = (profile or "").lower()
+    bloom   = (bloom or "").lower()
+    cond    = (raw_condition or "").strip().lower()
 
-    base = f"{verb.strip().lower()} {content.strip()}".strip()
-    parts.append(base)
+    profile_contexts = {
+        "":       "in discipline-relevant contexts",
+        "health": "in clinical or health decision-making contexts",
+        "sc":     "in computational or system-analysis contexts",
+        "eng":    "in technical or engineering problem-solving contexts",
+        "bus":    "in organisational or strategic decision-making contexts",
+        "edu":    "in teaching, learning, or pedagogical analysis contexts",
+        "socs":   "in social or behavioural evaluation contexts",
+        "arts":   "in creative or cultural interpretation contexts"
+    }
+    default_context = profile_contexts.get(profile, "in professional contexts")
 
-    if sc_desc:
-        parts.append(f"using {sc_desc.lower()}")
+    if cond:
+        if cond.startswith(("when", "while", "during")):
+            cond = f"in the context of {cond[4:].strip()}"
+        elif cond.startswith("based on"):
+            cond = f"when working with {cond[8:].strip()}"
+        else:
+            cond = f"in the context of {cond}"
+    else:
+        bloom_contexts = {
+            "remember":   "in foundational recall activities",
+            "understand": "when interpreting essential concepts",
+            "apply":      "in practical or real-world situations",
+            "analyse":    "when examining complex information or cases",
+            "evaluate":   "when making informed or evidence-based judgements",
+            "create":     "in generating new ideas, strategies, or solutions"
+        }
+        cond = bloom_contexts.get(bloom, default_context)
 
-    if condition:
-        c = condition.strip()
-        if not c.lower().startswith(("when", "during", "in", "based", "under")):
-            c = "when " + c
-        parts.append(c)
+    return cond
 
+
+# ------------------------------------------------------------
+# VERSION 5 – INTELLIGENT, POLISHED, ACADEMIC CLO REWRITER
+# ------------------------------------------------------------
+def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe, profile=None, bloom=None):
+    verb      = (verb or "").strip().capitalize()
+    content   = (content or "").strip()
+    sc_desc   = (sc_desc or "").strip()
+    condition = (condition or "").strip()
+    criterion = (criterion or "").strip()
+    vbe       = (vbe or "").strip()
+    profile   = (profile or "").strip().lower()
+    bloom     = (bloom or "").strip().lower()
+
+    # SC → elegant action phrase
+    sc_lower = sc_desc.lower()
+    if sc_lower.startswith("integrated"):
+        sc_phrase = "through integrated problem solving"
+    elif sc_lower.startswith("leadership"):
+        sc_phrase = "by exercising leadership, autonomy, and responsibility"
+    elif sc_lower.startswith("communication"):
+        sc_phrase = "using effective communication skills"
+    elif sc_lower.startswith("critical"):
+        sc_phrase = "through critical and analytical reasoning"
+    elif sc_lower.startswith("creative") or "creativity" in sc_lower:
+        sc_phrase = "through creative and innovative thinking"
+    else:
+        sc_phrase = f"using {sc_lower}"
+
+    # Bloom → sentence depth phrase
+    bloom_map = {
+        "remember":   "in demonstrating foundational recall",
+        "understand": "in demonstrating conceptual understanding",
+        "apply":      "in applying knowledge to practical situations",
+        "analyse":    "in examining relationships, patterns, or structures",
+        "evaluate":   "in making informed judgements or decisions",
+        "create":     "in synthesising ideas into coherent solutions"
+    }
+    bloom_phrase = bloom_map.get(bloom, "")
+
+    # Criterion → quality phrase
     if criterion:
-        parts.append(criterion.strip())
+        if criterion.lower().startswith(("demonstrating", "showing", "exhibiting")):
+            criterion_phrase = criterion
+        else:
+            criterion_phrase = f"demonstrating {criterion.lower()}"
+    else:
+        criterion_phrase = ""
 
-    if vbe:
-        parts.append(f"guided by {vbe.lower()}")
+    # VBE → ethical frame
+    vbe_phrase = f"in a manner guided by {vbe.lower()}" if vbe else ""
 
-    sentence = " ".join(parts)
+    # Build CLO
+    parts = [
+        f"{verb} {content}",
+        sc_phrase,
+        condition,
+        bloom_phrase,
+        criterion_phrase,
+        vbe_phrase
+    ]
+    sentence = " ".join([p for p in parts if p]).strip()
     sentence = sentence[0].upper() + sentence[1:]
-
     if not sentence.endswith("."):
         sentence += "."
 
-    return sentence
+    return " ".join(sentence.split())
+
 
 # ------------------------------------------------------------
 # CLO TABLE
@@ -328,3 +405,4 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
