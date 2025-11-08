@@ -31,8 +31,8 @@ def get_mapping_dict(profile=None):
             return df
     return pd.DataFrame()
 
-def get_plo_details(plo):
-    df = get_mapping_dict()
+def get_plo_details(plo, profile=None):
+    df = get_mapping_dict(profile)
     if df.empty:
         return None
     mask = df[df.columns[0]].astype(str).str.strip().str.upper() == str(plo).strip().upper()
@@ -292,6 +292,7 @@ def api_debug_plo(plo):
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
