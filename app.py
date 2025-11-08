@@ -283,65 +283,6 @@ def reset_table():
     return redirect(url_for("index"))
 
 # -----------------------------
-# API ENDPOINTS
-# -----------------------------
-@app.route("/api/get_blooms/<plo>")
-def api_get_blooms(plo):
-    profile = request.args.get("profile", "").strip().lower() or ""
-    details = get_plo_details(plo, profile)
-    if not details:
-        return jsonify([])
-
-    domain = details.get("Domain", "").lower()
-    sheet = {
-        "cognitive": "Bloom_Cognitive",
-        "affective": "Bloom_Affective",
-        "psychomotor": "Bloom_Psychomotor"
-    }.get(domain)
-
-    df = load_sheet_df(sheet)
-    if df.empty:
-        return jsonify([])
-
-    blooms = df.iloc[:, 0].dropna().astype(str).tolist()
-    return jsonify(blooms)
-
-
-@app.route("/api/get_verbs/<plo>/<bloom>")
-def api_get_verbs(plo, bloom):
-    profile = request.args.get("profile", "").strip().lower() or ""
-    details = get_plo_details(plo, profile)
-    if not details:
-        return jsonify([])
-
-    domain = details.get("Domain", "").lower()
-    sheet = {
-        "cognitive": "Bloom_Cognitive",
-        "affective": "Bloom_Affective",
-        "psychomotor": "Bloom_Psychomotor"
-    }.get(domain)
-
-    df = load_sheet_df(sheet)
-    if df.empty:
-        return jsonify([])
-
-    mask = df.iloc[:, 0].astype(str).str.lower() == bloom.lower()
-    if not mask.any():
-        return jsonify([])
-
-    raw = str(df.loc[mask].iloc[0, 1])
-    verbs = [v.strip() for v in raw.split(",") if v.strip()]
-    return jsonify(verbs)
-
-
-@app.route("/api/debug_plo/<plo>")
-def api_debug_plo(plo):
-    profile = request.args.get("profile", "").strip().lower() or ""
-    details = get_plo_details(plo, profile)
-    return jsonify({"plo": plo, "details": details or {}, "exists": bool(details)})
-
-
-# -----------------------------
 # Run App
 # -----------------------------
 @app.route("/download")
@@ -364,6 +305,7 @@ def download():
     )
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
