@@ -419,14 +419,46 @@ def generate():
     # ----------------------------------------------------
     # RUBRIC
     # ----------------------------------------------------
-    rubric = rubric_generator(
-        clo=clo,
-        verb=verb,
-        criterion=criterion,
-        condition=condition_core,
-        sc_desc=details["SC_Desc"],
-        vbe=details["VBE"]
-    )
+    def rubric_generator(clo, verb, criterion, condition, sc_desc, vbe):
+    """
+    Builds a complete rubric block for the CLO.
+    Returns dictionary structured for Excel and frontend display.
+    """
+
+    verb = (verb or "").strip()
+    criterion = (criterion or "").strip()
+    condition = (condition or "").strip()
+    sc_desc = (sc_desc or "").strip()
+    vbe = (vbe or "").strip()
+
+    # Performance indicator
+    indicator = (
+        f"Ability to {verb.lower()} {sc_desc.lower()} {condition} "
+        f"{criterion} while demonstrating {vbe.lower()}."
+    ).strip()
+
+    rubric = {
+        "indicator": indicator,
+        "excellent": (
+            f"Consistently {criterion} and highly proficient in applying "
+            f"{sc_desc.lower()} {condition}, with clear adherence to {vbe.lower()}."
+        ),
+        "good": (
+            f"Generally {criterion} and competent in applying {sc_desc.lower()} "
+            f"{condition}, with minor gaps in demonstrating {vbe.lower()}."
+        ),
+        "satisfactory": (
+            f"Shows partial ability to apply {sc_desc.lower()} {condition}, "
+            f"but performance is inconsistent and only moderately {criterion}."
+        ),
+        "poor": (
+            f"Unable to adequately apply {sc_desc.lower()} {condition}; "
+            f"does not meet expected standards for {vbe.lower()}."
+        )
+    }
+
+    return rubric
+
 
     # ----------------------------------------------------
     # SAVE TABLE
@@ -561,6 +593,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
