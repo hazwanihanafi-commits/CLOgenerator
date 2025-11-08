@@ -1,407 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>SCLOG Course Learning Outcome Generator</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8">
+    <title>SCLOG CLO Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Bootstrap + Icons -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-  <style>
-    :root{
-      --brand:#5a2ca0;
-      --ink:#3b2f5b;
-      --soft:#f7f7fb;
-    }
-    body{background:var(--soft);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    .navbar-custom{background:var(--brand);color:#fff}
-    .navbar-custom label,.navbar-custom .nav-link,.navbar-custom a{color:#fff!important}
-    .card{border:0;border-radius:1rem;box-shadow:0 6px 18px rgba(0,0,0,.08)}
-    .card-header{background:#fff;border-bottom:0;font-weight:600;display:flex;gap:.6rem;color:var(--ink)}
-    .icon-badge{width:40px;height:40px;border-radius:10px;background:#ede6ff;color:var(--brand);display:inline-flex;align-items:center;justify-content:center}
-    .nav-pills .nav-link.active{background:var(--brand)}
-    #cloPreviewText{font-size:1.1rem;font-weight:600;color:#1a1a80;line-height:1.6}
-    .footer-text{color:#666;font-size:.9rem;text-align:center;margin:40px 0}
-    .hint{font-size:.9rem;color:#6b6b6b}
-    .badge-field{position:relative}
-    .badge-field .badge{position:absolute;right:10px;top:8px}
-  </style>
+    <style>
+        body { background: #f8f9fa; }
+        .card-header { font-weight: 600; }
+        #clo_output { font-size: 1.05rem; font-weight: 600; padding: 12px; }
+    </style>
 </head>
-<body>
 
-  <!-- NAVBAR -->
-  <nav class="navbar navbar-custom p-3">
-    <div class="container d-flex justify-content-between align-items-center">
-      <div class="text-white fw-bold">
-        <i class="bi bi-stars me-2"></i> SCLOG Course Learning Outcome Generator
-      </div>
-      <div class="d-flex align-items-center">
-        <label class="me-2 fw-semibold">Discipline:</label>
-        <select id="profile" class="form-select form-select-sm">
-          <option value="">Medical & Health Sciences</option>
-          <option value="sc">Computer Science & IT</option>
-          <option value="eng">Engineering & Technology</option>
-          <option value="socs">Social Sciences</option>
-          <option value="edu">Education</option>
-          <option value="bus">Business & Management</option>
-          <option value="arts">Arts & Humanities</option>
-        </select>
-      </div>
-    </div>
-  </nav>
+<body class="container py-4">
 
-  <main class="container my-4">
+    <h3 class="mb-4">SCLOG Course Learning Outcome Generator</h3>
 
-    <!-- Tabs -->
-    <ul class="nav nav-pills mb-3">
-      <li class="nav-item">
-        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabGenerate">
-          <i class="bi bi-pencil-square me-1"></i>Generate CLO
-        </button>
-      </li>
-      <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabHistory">
-          <i class="bi bi-table me-1"></i>History
-        </button>
-      </li>
-    </ul>
+    <!-- Profile (hidden but required by JS and Flask) -->
+    <input type="hidden" id="profile" value="{{ profile }}">
 
-    <div class="tab-content">
+    <!-- ================================
+         CLO Generator Form
+    ================================= -->
+    <div class="card mb-4">
+        <div class="card-header">Generate CLO</div>
+        <div class="card-body">
+            <form id="cloForm">
 
-      <!-- GENERATE TAB -->
-      <div class="tab-pane fade show active" id="tabGenerate">
-
-        <form id="cloForm" method="POST" action="{{ url_for('generate') }}">
-          <input type="hidden" id="profileHidden" name="profile" value="{{ profile }}"/>
-
-          <div class="row g-3">
-            <!-- Course & Mapping -->
-            <div class="col-lg-6">
-              <div class="card">
-                <div class="card-header">
-                  <span class="icon-badge"><i class="bi bi-journal-text"></i></span> Course & Mapping
+                <!-- Course -->
+                <div class="mb-3">
+                    <label class="form-label">Course Code / Name</label>
+                    <input type="text" class="form-control" name="course" id="course" placeholder="E.g., SES 301 / Exercise Metabolism">
                 </div>
-                <div class="card-body">
-                  <label class="form-label">Course Code / Name *</label>
-                  <input name="course" class="form-control" required />
 
-                  <label class="form-label mt-3">PLO *</label>
-                  <select id="plo" name="plo" class="form-select" required>
-                    <option value="" disabled selected>Select PLO</option>
-                    {% for p in plos %}
-                      <option value="{{ p }}">{{ p }}</option>
-                    {% endfor %}
-                  </select>
-
-                  <div class="row mt-3">
-                    <div class="col-md-4 badge-field">
-                      <label class="form-label">SC Code</label>
-                      <input id="sc_code" class="form-control" readonly />
-                      <span class="badge bg-light text-dark">Code</span>
-                    </div>
-                    <div class="col-md-8 badge-field">
-                      <label class="form-label">SC Description</label>
-                      <input id="sc_desc" class="form-control" readonly />
-                      <span class="badge bg-light text-dark">SC</span>
-                    </div>
-                  </div>
-
-                  <div class="row mt-3">
-                    <div class="col-md-6 badge-field">
-                      <label class="form-label">VBE</label>
-                      <input id="vbe" class="form-control" readonly />
-                      <span class="badge bg-light text-dark">Values</span>
-                    </div>
-                    <div class="col-md-6 badge-field">
-                      <label class="form-label">Domain</label>
-                      <input id="domain" class="form-control" readonly />
-                      <span class="badge bg-light text-dark">Domain</span>
-                    </div>
-                  </div>
+                <!-- PLO Selection -->
+                <div class="mb-3">
+                    <label class="form-label">Programme Learning Outcome (PLO)</label>
+                    <select class="form-select" id="plo" name="plo" required>
+                        <option value="">-- Select PLO --</option>
+                        {% for p in plos %}
+                        <option value="{{ p }}">{{ p }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
-              </div>
-            </div>
 
-            <!-- Bloom & Verbs -->
-            <div class="col-lg-6">
-              <div class="card">
-                <div class="card-header">
-                  <span class="icon-badge"><i class="bi bi-layers"></i></span> Bloom & Verbs
+                <!-- Bloom Level -->
+                <div class="mb-3">
+                    <label class="form-label">Bloom Level</label>
+                    <select class="form-select" id="bloom" name="bloom">
+                        <option value="">-- Select Bloom Level --</option>
+                    </select>
                 </div>
-                <div class="card-body">
-                  <label class="form-label">Bloom Level *</label>
-                  <select id="bloom" name="bloom" class="form-select" required></select>
 
-                  <label class="form-label mt-3">Verb *</label>
-                  <select id="verb" name="verb" class="form-select" required></select>
+                <!-- Verb -->
+                <div class="mb-3">
+                    <label class="form-label">Verb</label>
+                    <select class="form-select" id="verb" name="verb">
+                        <option value="">-- Select Verb --</option>
+                    </select>
                 </div>
-              </div>
-            </div>
 
-            <!-- CLO Builder -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <span class="icon-badge"><i class="bi bi-pencil"></i></span> CLO Builder
+                <!-- Content (User Input) -->
+                <div class="mb-3">
+                    <label class="form-label">Content / Substance</label>
+                    <input type="text" class="form-control" name="content" id="content" placeholder="e.g., leadership styles, exercise metabolism, etc." required>
                 </div>
-                <div class="card-body">
-                  <p class="hint mb-2">
-                    <strong>Content</strong> = what &nbsp;•&nbsp; <strong>Condition</strong> = under what context &nbsp;•&nbsp;
-                    <strong>Criterion</strong> = level of quality &nbsp;•&nbsp; <strong>Verb</strong> = action
-                  </p>
 
-                  <label class="form-label">Content / Object *</label>
-                  <input name="content" class="form-control"
-                         placeholder="e.g., exercise metabolism; ECG interpretation; biomechanics of gait; machine learning models"
-                         required />
-
-                  <div class="row mt-3">
-                    <div class="col-md-4">
-                      <label class="form-label">Condition (Auto)</label>
-                      <input id="condition" class="form-control" readonly />
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Criterion (Auto)</label>
-                      <input id="criterion" class="form-control" readonly />
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Assessment %</label>
-                      <input type="number" min="0" max="100" step="1" name="cw" class="form-control" />
-                    </div>
-                  </div>
+                <!-- Coursework Weightage -->
+                <div class="mb-3">
+                    <label class="form-label">Coursework Weight (%)</label>
+                    <input type="number" class="form-control" name="cw" id="cw" min="0" max="100" required>
                 </div>
-              </div>
-            </div>
 
-            <!-- Assessment & Evidence -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <span class="icon-badge"><i class="bi bi-clipboard-check"></i></span> Assessment & Evidence
-                </div>
-                <div class="card-body">
-                  <label class="form-label">Assessment Suggestion</label>
-                  <input id="assessment" name="assessment" class="form-control" readonly />
-
-                  <label class="form-label mt-3">Evidence of Assessment</label>
-                  <input id="evidence" name="evidence" class="form-control" readonly />
-                </div>
-              </div>
-            </div>
-
-            <!-- Actions -->
-            <div class="col-12 d-flex justify-content-between">
-              <a href="{{ url_for('reset_table') }}" class="btn btn-outline-danger">
-                <i class="bi bi-trash"></i> Reset
-              </a>
-              <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                  <i class="bi bi-rocket-takeoff"></i> Generate CLO
-                </button>
-              </div>
-            </div>
-          </div>
-        </form>
-
-        <!-- Preview -->
-        <div class="card mt-4" id="cloPreviewCard" style="display:none;">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <div>
-              <span class="icon-badge"><i class="bi bi-lightbulb"></i></span>
-              Generated CLO
-            </div>
-            <button id="copyCloBtn" class="btn btn-sm btn-outline-secondary">
-              <i class="bi bi-clipboard"></i> Copy
-            </button>
-          </div>
-          <div class="card-body">
-            <p id="cloPreviewText"></p>
-          </div>
+            </form>
         </div>
-
-      </div>
-
-      <!-- HISTORY TAB -->
-      <div class="tab-pane fade" id="tabHistory">
-        <div class="card mt-3">
-          <div class="card-header">
-            <span class="icon-badge"><i class="bi bi-clock-history"></i></span> CLO History
-          </div>
-          <div class="card-body">
-            <div id="historyPlaceholder" class="text-muted text-center">
-              <i class="bi bi-eye"></i> History is hidden for privacy.
-              <div class="mt-2">
-                <button id="loadHistoryBtn" class="btn btn-outline-primary btn-sm">Show History</button>
-              </div>
-            </div>
-            <div id="historyArea" class="table-container" style="display:none;">
-              <div id="historyHTML"></div>
-            </div>
-            <template id="serverTable">
-              {{ table_html|safe }}
-            </template>
-          </div>
-        </div>
-      </div>
-
     </div>
 
-    <!-- Footer -->
-    <p class="footer-text">
-      Developed by Assoc Prof Dr Hazwani Ahmad Yusof @ Hanafi (AMDI, USM)
-    </p>
-  </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- ================================
+         CLO OUTPUT PREVIEW
+    ================================= -->
+    <div class="card mb-4">
+        <div class="card-header">Generated CLO Preview</div>
+        <div class="card-body">
+            <div id="clo_output" class="border rounded bg-white p-3">CLO will appear here...</div>
+        </div>
+    </div>
 
-  <script>
-    // ---------- Profile handling ----------
-    const profileSel = document.getElementById('profile');
-    profileSel.value = "{{ profile }}";
-    const profileHidden = document.getElementById('profileHidden');
 
-    profileSel.addEventListener('change', () => {
-      const url = new URL(window.location.href);
-      const v = profileSel.value;
-      if (v) url.searchParams.set('profile', v); else url.searchParams.delete('profile');
-      window.location.href = url.toString();
-    });
+    <!-- ================================
+         Assessment & Evidence
+    ================================= -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Assessment Methods</div>
+                <div class="card-body">
+                    <textarea id="assessment" name="assessment" class="form-control" rows="5"></textarea>
+                </div>
+            </div>
+        </div>
 
-    function profileSuffix(){
-      const p = (profileHidden.value || profileSel.value || '').trim();
-      return p ? `?profile=${encodeURIComponent(p)}` : '';
-    }
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">Evidence of Assessment</div>
+                <div class="card-body">
+                    <textarea id="evidence" name="evidence" class="form-control" rows="5"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    // ---------- Small fetch helper ----------
-    async function fetchJSON(url){
-      const r = await fetch(url);
-      if (!r.ok) return null;
-      return await r.json();
-    }
 
-    // ---------- DOM refs ----------
-    const ploSel = document.getElementById('plo');
-    const bloomSel = document.getElementById('bloom');
-    const verbSel  = document.getElementById('verb');
+    <!-- ================================
+         Table of Existing CLOs
+    ================================= -->
+    <div class="card">
+        <div class="card-header">CLO Table Records</div>
+        <div class="card-body">
+            {{ table_html|safe }}
+        </div>
+    </div>
 
-    const scCode = document.getElementById('sc_code');
-    const scDesc = document.getElementById('sc_desc');
-    const vbe    = document.getElementById('vbe');
-    const domain = document.getElementById('domain');
 
-    const condEl = document.getElementById('condition');
-    const critEl = document.getElementById('criterion');
-    const assessEl = document.getElementById('assessment');
-    const evidEl   = document.getElementById('evidence');
+    <!-- Bootstrap & JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-    // ---------- API-driven refreshers ----------
-    async function refreshPLO(plo){
-      const info = await fetchJSON(`/api/debug_plo/${encodeURIComponent(plo)}${profileSuffix()}`);
-      if (info && info.exists){
-        scCode.value = info.details.SC_Code || '';
-        scDesc.value = info.details.SC_Desc || '';
-        vbe.value    = info.details.VBE     || '';
-        domain.value = info.details.Domain  || '';
-      }else{
-        scCode.value = scDesc.value = vbe.value = domain.value = '';
-      }
-    }
 
-    async function refreshBlooms(plo){
-      bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
-      verbSel.innerHTML  = '<option disabled selected>Select Verb</option>';
-      const blooms = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}${profileSuffix()}`) || [];
-      for (const b of blooms){
-        const o = document.createElement('option');
-        o.value = o.textContent = b;
-        bloomSel.appendChild(o);
-      }
-    }
+    <!-- ================================
+         AJAX Logic
+    ================================= -->
+    <script>
+        const profile = document.getElementById("profile").value;
 
-    async function refreshVerbs(plo, bloom){
-      verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
-      const verbs = await fetchJSON(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${profileSuffix()}`) || [];
-      for (const v of verbs){
-        const o = document.createElement('option');
-        o.value = o.textContent = v;
-        verbSel.appendChild(o);
-      }
-    }
+        // ==========================================
+        // Load Bloom options when PLO changes
+        // ==========================================
+        document.getElementById("plo").addEventListener("change", function () {
+            const plo = this.value.trim();
+            if (!plo) return;
 
-    async function refreshMeta(plo, bloom){
-      // Use your meta endpoint if present; otherwise derive via separate calls
-      const m = await fetchJSON(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${profileSuffix()}`);
-      if (m){
-        // mapping (duplicate set to be safe)
-        scCode.value = m.sc_code ?? scCode.value;
-        scDesc.value = m.sc_desc ?? scDesc.value;
-        vbe.value    = m.vbe     ?? vbe.value;
-        domain.value = m.domain  ?? domain.value;
+            fetch(`/api/get_blooms/${plo}?profile=` + profile)
+                .then(res => res.json())
+                .then(data => {
+                    const bloomSel = document.getElementById("bloom");
+                    bloomSel.innerHTML = `<option value="">-- Select Bloom Level --</option>`;
+                    data.forEach(b => {
+                        bloomSel.innerHTML += `<option value="${b}">${b}</option>`;
+                    });
+                });
+        });
 
-        // dynamic parts
-        condEl.value   = m.condition  || '';
-        critEl.value   = m.criterion  || '';
-        assessEl.value = m.assessment || '';
-        evidEl.value   = m.evidence   || '';
-      }else{
-        // fallback: clear
-        condEl.value = critEl.value = assessEl.value = evidEl.value = '';
-      }
-    }
 
-    // ---------- Wire events ----------
-    ploSel?.addEventListener('change', async () => {
-      const p = ploSel.value;
-      profileHidden.value = profileSel.value;  // keep in POST
-      await refreshPLO(p);
-      await refreshBlooms(p);
-      // clear dependent fields
-      bloomSel.value = ''; verbSel.value = '';
-      condEl.value = critEl.value = assessEl.value = evidEl.value = '';
-    });
+        // ==========================================
+        // Load Verbs when Bloom changes
+        // ==========================================
+        document.getElementById("bloom").addEventListener("change", function () {
+            const plo = document.getElementById("plo").value.trim();
+            const bloom = this.value.trim();
+            if (!plo || !bloom) return;
 
-    bloomSel?.addEventListener('change', async () => {
-      const p = ploSel.value;
-      const b = bloomSel.value;
-      if (!p || !b) return;
-      profileHidden.value = profileSel.value;
-      await refreshVerbs(p, b);
-      await refreshMeta(p, b);  // <- fills condition/criterion/assessment/evidence
-    });
+            fetch(`/api/get_verbs/${plo}/${bloom}?profile=` + profile)
+                .then(res => res.json())
+                .then(data => {
+                    const verbSel = document.getElementById("verb");
+                    verbSel.innerHTML = `<option value="">-- Select Verb --</option>`;
+                    data.forEach(v => {
+                        verbSel.innerHTML += `<option value="${v}">${v}</option>`;
+                    });
+                });
 
-    // ---------- Submit (AJAX) so preview appears without page reload ----------
-    document.getElementById('cloForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      profileHidden.value = profileSel.value;
-      const res = await fetch(`/generate${profileSuffix()}`, { method:'POST', body:new FormData(e.target) });
-      const data = await res.json();
-      if (data.error){ alert(data.error); return; }
+            autoGeneratePreview();
+        });
 
-      // Show preview
-      document.getElementById('cloPreviewCard').style.display = 'block';
-      document.getElementById('cloPreviewText').innerText = data.clo;
 
-      // Ensure assessment/evidence visible (server truth)
-      assessEl.value = data.assessment || assessEl.value;
-      evidEl.value   = data.evidence   || evidEl.value;
-    });
+        // ==========================================
+        // Auto-generate CLO + Assessment + Evidence
+        // ==========================================
+        function autoGeneratePreview() {
+            const form = document.getElementById("cloForm");
+            const formData = new FormData(form);
 
-    // ---------- Copy button ----------
-    document.getElementById('copyCloBtn').addEventListener('click', async () => {
-      const txt = document.getElementById('cloPreviewText').innerText.trim();
-      if (!txt) return;
-      try{ await navigator.clipboard.writeText(txt); }catch{}
-    });
+            fetch(`/generate?profile=${profile}&preview=1`, {
+                method: "POST",
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.clo) document.getElementById("clo_output").innerText = data.clo;
+                if (data.assessment) document.getElementById("assessment").value = data.assessment;
+                if (data.evidence) document.getElementById("evidence").value = data.evidence;
+            })
+            .catch(err => console.log("Preview Error:", err));
+        }
 
-    // ---------- History (privacy — load on demand) ----------
-    document.getElementById('loadHistoryBtn')?.addEventListener('click', () => {
-      const tbl = document.getElementById('serverTable').innerHTML;
-      document.getElementById('historyHTML').innerHTML = tbl;
-      document.getElementById('historyArea').style.display = 'block';
-      document.getElementById('historyPlaceholder').style.display = 'none';
-    });
-  </script>
+        // Trigger preview when verb/content changes
+        document.getElementById("verb").addEventListener("change", autoGeneratePreview);
+        document.getElementById("content").addEventListener("input", autoGeneratePreview);
+    </script>
+
 </body>
 </html>
