@@ -1,15 +1,19 @@
 from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
-import pandas as pd, os
+import pandas as pd
+import os
 from datetime import datetime
 from openpyxl import load_workbook
 from io import BytesIO
 
 app = Flask(__name__, template_folder="templates")
+
 WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
 
-# ---------- Mapping sheets (7 disciplines) ----------
+# -----------------------------
+# DISCIPLINE → SHEET
+# -----------------------------
 PROFILE_SHEET_MAP = {
-    "": "Mapping",            # default
+    "": "Mapping",              # default
     "health": "Mapping_health",
     "sc": "Mapping_sc",
     "eng": "Mapping_eng",
@@ -19,16 +23,15 @@ PROFILE_SHEET_MAP = {
     "arts": "Mapping_arts",
 }
 
-# ---------- Helpers ----------
-def load_sheet_df(sheet_name: str) -> pd.DataFrame:
+def load_sheet_df(sheet_name):
     try:
         return pd.read_excel(WORKBOOK_PATH, sheet_name=sheet_name, engine="openpyxl")
     except Exception:
         return pd.DataFrame()
 
 def get_mapping_df(profile: str | None) -> pd.DataFrame:
-    key = (profile or "").strip().lower()
-    sheet = PROFILE_SHEET_MAP.get(key, "Mapping")
+    prof = (profile or "").strip().lower()
+    sheet = PROFILE_SHEET_MAP.get(prof, "Mapping")
     df = load_sheet_df(sheet)
     if df.empty and sheet != "Mapping":
         df = load_sheet_df("Mapping")
@@ -41,227 +44,258 @@ def get_plo_details(plo: str, profile: str | None):
     df = get_mapping_df(profile)
     if df.empty:
         return None
-    k = df.columns[0]
-    mask = df[k].astype(str).str.strip().str.upper() == str(plo).strip().upper()
+    key = df.columns[0]
+    mask = df[key].astype(str).str.strip().str.upper() == str(plo).strip().upper()
     if not mask.any():
         return None
     row = df[mask].iloc[0]
     cols = {c.lower(): c for c in df.columns}
     return {
-        "PLO": row[k],
+        "PLO": row[key],
         "SC_Code": row.get(cols.get("sc code"), ""),
         "SC_Desc": row.get(cols.get("sc description"), ""),
         "VBE": row.get(cols.get("vbe"), ""),
-        "Domain": row.get(cols.get("domain"), ""),
+        "Domain": row.get(cols.get("domain"), "")
     }
 
-def get_criterion_condition(domain: str, bloom: str):
+def get_criterion_phrase(domain, bloom):
     df = load_sheet_df("Criterion")
     if df.empty:
         return "", ""
     df.columns = [str(c).strip() for c in df.columns]
+    # expect columns: Domain | Bloom | Criterion | Condition (order-agnostic)
     dom_col = next((c for c in df.columns if "domain" in c.lower()), None)
-    blm_col = next((c for c in df.columns if "bloom" in c.lower()), None)
+    blo_col = next((c for c in df.columns if "bloom" in c.lower()), None)
     cri_col = next((c for c in df.columns if "criterion" in c.lower()), None)
     con_col = next((c for c in df.columns if "condition" in c.lower()), None)
-    if not all([dom_col, blm_col, cri_col, con_col]):
+    if not all([dom_col, blo_col, cri_col, con_col]):
         return "", ""
-    m = (df[dom_col].astype(str).str.lower() == str(domain).lower()) & \
-        (df[blm_col].astype(str).str.lower() == str(bloom).lower())
-    if not m.any():
+    mask = (df[dom_col].astype(str).str.lower() == str(domain).strip().lower()) & \
+           (df[blo_col].astype(str).str.lower() == str(bloom).strip().lower())
+    if not mask.any():
         return "", ""
-    row = df[m].iloc[0]
+    row = df[mask].iloc[0]
     return str(row.get(cri_col, "")), str(row.get(con_col, ""))
 
-def default_condition(domain: str) -> str:
+def get_default_condition(domain):
     return {
-        "cognitive":   "when interpreting data or case studies",
-        "affective":   "during discussions or peer activities",
-        "psychomotor": "during skill acquisition or practice",
+        "cognitive": "in clinical or exercise scenarios",
+        "affective": "during discussions or peer activities",
+        "psychomotor": "under supervised practical conditions"
     }.get(str(domain).strip().lower(), "")
 
-def get_assessment_and_evidence(bloom: str, domain: str):
-    sheet = "Assess_Affective_Psychomotor" if str(domain).lower() in ("affective","psychomotor") else "Bloom_Assessments"
+def get_assessment_and_evidence(bloom, domain):
+    sheet = "Assess_Affective_Psychomotor" if str(domain).lower() in ("affective", "psychomotor") else "Bloom_Assessments"
     df = load_sheet_df(sheet)
     if df.empty:
         return "", ""
     df.columns = [str(c).strip() for c in df.columns]
-    m = df.iloc[:,0].astype(str).str.strip().str.lower() == str(bloom).strip().lower()
-    if not m.any():
+    bloom_col, assess_col, evid_col = df.columns[:3]
+    mask = df[bloom_col].astype(str).str.strip().str.lower() == str(bloom).strip().lower()
+    if not mask.any():
         return "", ""
-    row = df[m].iloc[0]
-    return str(row.iloc[1]), str(row.iloc[2])
+    row = df[mask].iloc[0]
+    return str(row.get(assess_col, "")), str(row.get(evid_col, ""))
 
-def build_clo(verb, content, sc_desc, condition, criterion, vbe):
+def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
+    # polished, accreditation-friendly sentence
     verb = (verb or "").strip().lower()
     content = (content or "").strip()
-    if content and not content[0].isupper():
-        content = content.lower()
     parts = []
     if verb or content:
         parts.append(f"{verb} {content}".strip())
     if sc_desc:
         parts.append(f"using {str(sc_desc).lower()}")
     if condition:
-        c = str(condition).strip()
-        if not c.lower().startswith(("when","during","in","based","under","throughout")):
+        c = condition.strip()
+        if not c.lower().startswith(("when", "during", "in", "based", "under")):
             c = "when " + c
         parts.append(c)
     if criterion:
-        parts.append(str(criterion).strip())
+        parts.append(criterion.strip())
     if vbe:
         parts.append(f"guided by {str(vbe).lower()}")
-    s = " ".join(p for p in parts if p)
-    if s:
-        s = s[0].upper() + s[1:]
-        if not s.endswith("."):
-            s += "."
-    return s
+    sentence = " ".join(parts).strip()
+    if sentence:
+        sentence = sentence[0].upper() + sentence[1:]
+    if not sentence.endswith("."):
+        sentence += "."
+    return sentence
 
-def read_clo_table() -> pd.DataFrame:
+def read_clo_table():
     try:
         return pd.read_excel(WORKBOOK_PATH, sheet_name="CLO_Table", engine="openpyxl")
     except Exception:
         return pd.DataFrame()
 
-def write_clo_table(df: pd.DataFrame):
-    book = load_workbook(WORKBOOK_PATH)
-    if "CLO_Table" in book.sheetnames:
-        del book["CLO_Table"]
-    with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as w:
-        w._book = book
-        df.to_excel(w, sheet_name="CLO_Table", index=False)
+def write_clo_table(df):
+    try:
+        book = load_workbook(WORKBOOK_PATH)
+        if "CLO_Table" in book.sheetnames:
+            del book["CLO_Table"]
+        with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as writer:
+            writer._book = book
+            df.to_excel(writer, sheet_name="CLO_Table", index=False)
+    except Exception as e:
+        print("Error writing CLO_Table:", e)
 
-# ---------- Routes ----------
+# ------------------ ROUTES ------------------
+
 @app.route("/")
 def index():
-    profile = (request.args.get("profile") or "").strip().lower()
-    dfm = get_mapping_df(profile)
-    plos = dfm[dfm.columns[0]].dropna().astype(str).tolist() if not dfm.empty else []
+    profile = request.args.get("profile", "").strip().lower()
+    df_map = get_mapping_df(profile)
+    plos = df_map[df_map.columns[0]].dropna().astype(str).tolist() if not df_map.empty else []
     df_ct = read_clo_table()
     table_html = df_ct.to_html(classes="table table-striped table-sm", index=False) if not df_ct.empty else "<p>No CLO records yet.</p>"
-    return render_template(
-        "generator.html",
-        plos=plos,
-        table_html=table_html,
-        profile=profile,
-        developer="Developed by Assoc Prof Dr Hazwani Ahmad Yusof @ Hanafi (AMDI, USM)"
-    )
-
-@app.route("/api/debug_plo/<plo>")
-def api_debug_plo(plo):
-    profile = (request.args.get("profile") or "").strip().lower()
-    det = get_plo_details(plo, profile)
-    return jsonify({"plo": plo, "details": det or {}, "exists": bool(det)})
-
-@app.route("/api/get_blooms/<plo>")
-def api_get_blooms(plo):
-    profile = (request.args.get("profile") or "").strip().lower()
-    det = get_plo_details(plo, profile)
-    if not det:
-        return jsonify([])
-    domain = str(det["Domain"]).strip().lower()
-    sheet = {"cognitive":"Bloom_Cognitive","affective":"Bloom_Affective","psychomotor":"Bloom_Psychomotor"}.get(domain)
-    df = load_sheet_df(sheet) if sheet else pd.DataFrame()
-    if df.empty:
-        return jsonify([])
-    return jsonify(df.iloc[:,0].dropna().astype(str).str.strip().tolist())
-
-@app.route("/api/get_verbs/<plo>/<bloom>")
-def api_get_verbs(plo, bloom):
-    profile = (request.args.get("profile") or "").strip().lower()
-    det = get_plo_details(plo, profile)
-    if not det:
-        return jsonify([])
-    domain = str(det["Domain"]).strip().lower()
-    sheet = {"cognitive":"Bloom_Cognitive","affective":"Bloom_Affective","psychomotor":"Bloom_Psychomotor"}.get(domain)
-    df = load_sheet_df(sheet) if sheet else pd.DataFrame()
-    if df.empty:
-        return jsonify([])
-    m = df.iloc[:,0].astype(str).str.strip().str.lower() == str(bloom).strip().lower()
-    if not m.any():
-        return jsonify([])
-    raw = str(df.loc[m].iloc[0,1])
-    return jsonify([v.strip() for v in raw.split(",") if v.strip()])
-
-# returns criterion/condition/assessment/evidence for live autofill
-@app.route("/api/get_meta/<plo>/<bloom>")
-def api_get_meta(plo, bloom):
-    profile = (request.args.get("profile") or "").strip().lower()
-    det = get_plo_details(plo, profile)
-    if not det:
-        return jsonify({})
-    domain = det["Domain"]
-    crit, cond = get_criterion_condition(domain, bloom)
-    if not cond:
-        cond = default_condition(domain)
-    assess, evid = get_assessment_and_evidence(bloom, domain)
-    return jsonify({
-        "domain": domain, "criterion": crit, "condition": cond,
-        "assessment": assess, "evidence": evid
-    })
+    return render_template("generator.html",
+                           plos=plos,
+                           table_html=table_html,
+                           profile=profile)
 
 @app.route("/generate", methods=["POST"])
 def generate():
+    # keep profile from querystring OR hidden field
     profile = (request.args.get("profile") or request.form.get("profile") or "").strip().lower()
-    plo     = request.form.get("plo")
-    bloom   = request.form.get("bloom")
-    verb    = request.form.get("verb")
+
+    plo = request.form.get("plo")
+    bloom = request.form.get("bloom")
+    verb = request.form.get("verb")
     content = request.form.get("content")
-    course  = request.form.get("course")
-    cw      = request.form.get("cw")
+    course = request.form.get("course")
+    cw = request.form.get("cw")
 
-    det = get_plo_details(plo, profile)
-    if not det:
-        return jsonify({"error":"PLO not found for the selected discipline."}), 400
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify({"error": "PLO not found for selected discipline"}), 400
 
-    crit, cond = get_criterion_condition(det["Domain"], bloom)
-    if not cond:
-        cond = default_condition(det["Domain"])
-    assess, evid = get_assessment_and_evidence(bloom, det["Domain"])
+    domain = details["Domain"]
+    criterion, condition = get_criterion_phrase(domain, bloom)
+    if not condition:
+        condition = get_default_condition(domain)
+    assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
-    clo = build_clo(verb, content, det["SC_Desc"], cond, crit, det["VBE"])
+    clo = construct_clo_sentence(verb, content, details["SC_Desc"], condition, criterion, details["VBE"])
 
+    # persist to Excel
     df = read_clo_table()
     new_row = {
-        "ID": len(df)+1 if not df.empty else 1,
+        "ID": len(df) + 1 if not df.empty else 1,
         "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "Course": course, "PLO": plo, "Bloom": bloom,
+        "Course": course,
+        "PLO": plo,
+        "Bloom": bloom,
         "FullCLO": clo,
-        "Mapping (SC + VBE)": f"{det['SC_Code']} — {det['VBE']}",
-        "Assessment Methods": assess,
-        "Evidence of Assessment": evid,
+        "Mapping (SC + VBE)": f"{details['SC_Code']} — {details['VBE']}",
+        "Assessment Methods": assessment,
+        "Evidence of Assessment": evidence,
         "Coursework Assessment Percentage (%)": cw,
         "Profile": profile
     }
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     write_clo_table(df)
 
-    return jsonify({"clo": clo, "assessment": assess, "evidence": evid})
+    return jsonify({"clo": clo, "assessment": assessment, "evidence": evidence})
 
-@app.route("/reset_table")
-def reset_table():
-    cols = ["ID","Time","Course","PLO","Bloom","FullCLO","Mapping (SC + VBE)","Assessment Methods","Evidence of Assessment","Coursework Assessment Percentage (%)","Profile"]
-    df = pd.DataFrame(columns=cols)
-    book = load_workbook(WORKBOOK_PATH)
-    if "CLO_Table" in book.sheetnames:
-        del book["CLO_Table"]
-    with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as w:
-        w._book = book
-        df.to_excel(w, sheet_name="CLO_Table", index=False)
-    return redirect(url_for("index"))
+# API: PLO → Bloom list
+@app.route("/api/get_blooms/<plo>")
+def api_get_blooms(plo):
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify([])
+    sheet = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }.get(str(details["Domain"]).strip().lower())
+    if not sheet:
+        return jsonify([])
+    df = load_sheet_df(sheet)
+    if df.empty:
+        return jsonify([])
+    blooms = df.iloc[:, 0].dropna().astype(str).str.strip().tolist()
+    return jsonify(blooms)
 
+# API: PLO+Bloom → Verbs
+@app.route("/api/get_verbs/<plo>/<bloom>")
+def api_get_verbs(plo, bloom):
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify([])
+    sheet = {
+        "cognitive": "Bloom_Cognitive",
+        "affective": "Bloom_Affective",
+        "psychomotor": "Bloom_Psychomotor"
+    }.get(str(details["Domain"]).strip().lower())
+    if not sheet:
+        return jsonify([])
+    df = load_sheet_df(sheet)
+    if df.empty:
+        return jsonify([])
+    mask = df.iloc[:, 0].astype(str).str.strip().str.lower() == str(bloom).strip().lower()
+    if not mask.any():
+        return jsonify([])
+    raw = str(df.loc[mask].iloc[0, 1])
+    verbs = [v.strip() for v in raw.split(",") if v.strip()]
+    return jsonify(verbs)
+
+# API: quick debug for a PLO (fills SC code, desc, VBE, Domain)
+@app.route("/api/debug_plo/<plo>")
+def api_debug_plo(plo):
+    profile = request.args.get("profile", "").strip().lower()
+    d = get_plo_details(plo, profile)
+    return jsonify({"plo": plo, "details": d or {}, "exists": bool(d)})
+
+# API: pack meta (Criterion, Condition, Assessment, Evidence) after Bloom chosen
+@app.route("/api/get_meta/<plo>/<bloom>")
+def api_get_meta(plo, bloom):
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify({})
+    domain = details["Domain"]
+    criterion, condition = get_criterion_phrase(domain, bloom)
+    if not condition:
+        condition = get_default_condition(domain)
+    assessment, evidence = get_assessment_and_evidence(bloom, domain)
+    return jsonify({
+        "domain": domain,
+        "criterion": criterion,
+        "condition": condition,
+        "assessment": assessment,
+        "evidence": evidence
+    })
+
+# Download + Reset
 @app.route("/download")
 def download():
     df = read_clo_table()
     if df.empty:
         return "<p>No CLO table to download.</p>"
-    out = BytesIO()
-    with pd.ExcelWriter(out, engine="openpyxl") as w:
-        df.to_excel(w, sheet_name="CLO_Table", index=False)
-    out.seek(0)
-    return send_file(out, as_attachment=True, download_name="CLO_Table.xlsx",
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="CLO_Table", index=False)
+    output.seek(0)
+    return send_file(output, as_attachment=True,
+                     download_name="CLO_Table.xlsx",
                      mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+@app.route("/reset_table")
+def reset_table():
+    df_empty = pd.DataFrame(columns=[
+        "ID","Time","Course","PLO","Bloom","FullCLO",
+        "Mapping (SC + VBE)","Assessment Methods","Evidence of Assessment",
+        "Coursework Assessment Percentage (%)","Profile"
+    ])
+    book = load_workbook(WORKBOOK_PATH)
+    if "CLO_Table" in book.sheetnames:
+        del book["CLO_Table"]
+    with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as writer:
+        writer._book = book
+        df_empty.to_excel(writer, sheet_name="CLO_Table", index=False)
+    return redirect(url_for("index"))
 
 if __name__ == "__main__":
     app.run(debug=True)
