@@ -218,6 +218,10 @@
           </div>
           <div class="card-body">
             <p id="cloPreviewText"></p>
+            <button id="downloadRubricBtn" class="btn btn-success btn-sm mt-2">
+  <i class="bi bi-download"></i> Download Rubric for This CLO
+</button>
+
           </div>
         </div>
 
@@ -366,6 +370,9 @@
       await refreshVerbs(p, b);
       await refreshMeta(p, b);  // fills condition/criterion/assessment/evidence + mapping
     });
+    document.getElementById('downloadRubricBtn').addEventListener('click', () => {
+    window.location.href = "/download_rubric" + profileSuffix();
+});
 
     // ---------- Submit (AJAX) so preview appears without page reload ----------
     document.getElementById('cloForm').addEventListener('submit', async (e) => {
