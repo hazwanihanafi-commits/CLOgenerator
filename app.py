@@ -378,95 +378,100 @@ def generate():
     content = request.form.get("content")
     course = request.form.get("course")
     cw = request.form.get("cw")
-    include_condition = (request.form.get("include_condition", "1") == "1")
-    vbe_style = request.form.get("vbe_style", "guided")   # "guided" | "accordance" | "aligned"
 
+    # Retrieve SC + VBE + Domain
     details = get_plo_details(plo, profile)
     if not details:
         return jsonify({"error": "PLO not found"}), 400
 
-    domain = details["Domain"]
+    domain = details["Domain"].lower()
 
+    # ----------------------------
+    # CONDITION + CRITERION
+    # ----------------------------
     criterion, condition_phrase = get_criterion_phrase(domain, bloom)
-   # Get one-word JSON condition if available
-if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
-    condition_word = ONEWORD_META[domain][bloom]["condition"]
-    criterion = ONEWORD_META[domain][bloom]["criterion"]
-else:
-    # fallback: extract the first verb from condition phrase
-    condition_word = condition_phrase.split()[1] if len(condition_phrase.split()) > 1 else condition_phrase
+    if not condition_phrase:
+        condition_phrase = get_default_condition(domain)
 
-    # Assessment/Evidence auto-fill
-    assessment, evidence = get_assessment_and_evidence(bloom, domain)
+    # Try one-word JSON condition if available
+    if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
+        condition_word = ONEWORD_META[domain][bloom]["condition"]
+        criterion = ONEWORD_META[domain][bloom]["criterion"]
+    else:
+        # fallback: extract verb from phrase
+        condition_word = condition_phrase.split()[0]
 
-    # Polish condition or remove if requested
-    polished_condition = polish_oneword_condition(domain, mapping_condition)
+    # Build main CLO sentence
+    condition_full = f"when {condition_word}" if domain != "psychomotor" else f"by {condition_word}"
 
-    # Build variants (A/B/C)
-    clo_options = variants(
+    clo = construct_clo_sentence(
         verb=verb,
         content=content,
         sc_desc=details["SC_Desc"],
-        condition=polished_condition,
+        condition=condition_full,
         criterion=criterion,
-        vbe_text=details["VBE"],
-        vbe_style=vbe_style
+        vbe_text=details["VBE"]
     )
-    clo = clo_options[0]  # store A as the canonical record (shortest)
 
-    # Save CLO into table
-df = read_clo_table()
+    # ----------------------------
+    # BUILD VARIANT A/B/C
+    # ----------------------------
+    clo_a, clo_b, clo_c = make_clo_variants(
+        verb=verb,
+        content=content,
+        sc_desc=details["SC_Desc"],
+        condition_word=condition_word,
+        criterion=criterion,
+        domain=domain,
+        vbe_text=details["VBE"]
+    )
 
-new_row = {
-    "ID": len(df) + 1 if not df.empty else 1,
-    "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-    "Course": course,
-    "PLO": plo,
-    "Bloom": bloom,
-    "FullCLO": clo,
-    "Mapping (SC + VBE)": f"{details['SC_Code']} — {details['VBE']}",
-    "Assessment Methods": assessment,
-    "Evidence of Assessment": evidence,
-    "Coursework Assessment Percentage (%)": cw,
-    "Profile": profile
-}
+    clo_options = {
+        "A": clo_a,
+        "B": clo_b,
+        "C": clo_c
+    }
 
-df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-write_clo_table(df)
+    # ----------------------------
+    # ASSESSMENT + EVIDENCE
+    # ----------------------------
+    assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
-# ------------------------------------------------------------
-# Build A/B/C CLO variants
-# ------------------------------------------------------------
-clo_a, clo_b, clo_c = make_clo_variants(
-    verb=verb,
-    content=content,
-    sc_desc=details["SC_Desc"],
-    condition_word=condition_word,
-    criterion=criterion,
-    domain=domain,
-    vbe_text=details["VBE"]
-)
+    # ----------------------------
+    # SAVE INTO TABLE
+    # ----------------------------
+    df = read_clo_table()
 
-# Package them for JSON output
-clo_options = {
-    "A": clo_a,
-    "B": clo_b,
-    "C": clo_c
-}
+    new_row = {
+        "ID": len(df) + 1 if not df.empty else 1,
+        "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "Course": course,
+        "PLO": plo,
+        "Bloom": bloom,
+        "FullCLO": clo,
+        "Mapping (SC + VBE)": f"{details['SC_Code']} — {details['VBE']}",
+        "Assessment Methods": assessment,
+        "Evidence of Assessment": evidence,
+        "Coursework Assessment Percentage (%)": cw,
+        "Profile": profile
+    }
 
-# ------------------------------------------------------------
-# Return JSON to front-end
-# ------------------------------------------------------------
-return jsonify({
-    "clo": clo,
-    "clo_options": clo_options,
-    "assessment": assessment,
-    "evidence": evidence,
-    "sc_code": details["SC_Code"],
-    "sc_desc": details["SC_Desc"],
-    "vbe": details["VBE"],
-    "domain": domain
-})
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    write_clo_table(df)
+
+    # ----------------------------
+    # RETURN JSON
+    # ----------------------------
+    return jsonify({
+        "clo": clo,
+        "clo_options": clo_options,
+        "assessment": assessment,
+        "evidence": evidence,
+        "sc_code": details["SC_Code"],
+        "sc_desc": details["SC_Desc"],
+        "vbe": details["VBE"],
+        "domain": domain
+    })
 
 @app.route("/api/get_blooms/<plo>")
 def api_get_blooms(plo):
@@ -560,6 +565,7 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
