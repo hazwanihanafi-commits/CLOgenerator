@@ -422,7 +422,7 @@ def generate():
     def rubric_generator(clo, verb, criterion, condition, sc_desc, vbe):
     """
     Builds a complete rubric block for the CLO.
-    Returns dictionary structured for Excel and frontend display.
+    Returns dictionary structured for both Excel export and frontend display.
     """
 
     verb = (verb or "").strip()
@@ -431,12 +431,17 @@ def generate():
     sc_desc = (sc_desc or "").strip()
     vbe = (vbe or "").strip()
 
-    # Performance indicator
+    # --------------------------
+    # PERFORMANCE INDICATOR
+    # --------------------------
     indicator = (
         f"Ability to {verb.lower()} {sc_desc.lower()} {condition} "
         f"{criterion} while demonstrating {vbe.lower()}."
     ).strip()
 
+    # --------------------------
+    # RUBRIC LEVEL DESCRIPTORS
+    # --------------------------
     rubric = {
         "indicator": indicator,
         "excellent": (
@@ -458,7 +463,6 @@ def generate():
     }
 
     return rubric
-
 
     # ----------------------------------------------------
     # SAVE TABLE
@@ -593,6 +597,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
