@@ -274,7 +274,6 @@
       return p ? `?profile=${encodeURIComponent(p)}` : '';
     }
 
-    // ---------- Small fetch helper ----------
     async function fetchJSON(url){
       const r = await fetch(url);
       if (!r.ok) return null;
@@ -331,22 +330,18 @@
     }
 
     async function refreshMeta(plo, bloom){
-      // Use your meta endpoint if present; otherwise derive via separate calls
       const m = await fetchJSON(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${profileSuffix()}`);
       if (m){
-        // mapping (duplicate set to be safe)
         scCode.value = m.sc_code ?? scCode.value;
         scDesc.value = m.sc_desc ?? scDesc.value;
         vbe.value    = m.vbe     ?? vbe.value;
         domain.value = m.domain  ?? domain.value;
 
-        // dynamic parts
         condEl.value   = m.condition  || '';
         critEl.value   = m.criterion  || '';
         assessEl.value = m.assessment || '';
         evidEl.value   = m.evidence   || '';
       }else{
-        // fallback: clear
         condEl.value = critEl.value = assessEl.value = evidEl.value = '';
       }
     }
@@ -357,9 +352,10 @@
       profileHidden.value = profileSel.value;  // keep in POST
       await refreshPLO(p);
       await refreshBlooms(p);
-      // clear dependent fields
       bloomSel.value = ''; verbSel.value = '';
       condEl.value = critEl.value = assessEl.value = evidEl.value = '';
+      document.getElementById('cloPreviewCard').style.display = 'none';
+      document.getElementById('cloPreviewText').innerText = '';
     });
 
     bloomSel?.addEventListener('change', async () => {
@@ -368,7 +364,7 @@
       if (!p || !b) return;
       profileHidden.value = profileSel.value;
       await refreshVerbs(p, b);
-      await refreshMeta(p, b);  // <- fills condition/criterion/assessment/evidence
+      await refreshMeta(p, b);  // fills condition/criterion/assessment/evidence + mapping
     });
 
     // ---------- Submit (AJAX) so preview appears without page reload ----------
@@ -379,11 +375,9 @@
       const data = await res.json();
       if (data.error){ alert(data.error); return; }
 
-      // Show preview
       document.getElementById('cloPreviewCard').style.display = 'block';
       document.getElementById('cloPreviewText').innerText = data.clo;
 
-      // Ensure assessment/evidence visible (server truth)
       assessEl.value = data.assessment || assessEl.value;
       evidEl.value   = data.evidence   || evidEl.value;
     });
