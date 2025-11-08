@@ -238,11 +238,7 @@ def read_clo_table() -> pd.DataFrame:
         return pd.DataFrame()
 
 def write_clo_table(df: pd.DataFrame) -> None:
-    book = load_workbook(WORKBOOK_PATH)
-    if "CLO_Table" in book.sheetnames:
-        del book["CLO_Table"]
-    with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as writer:
-        writer._book = book
+    with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="w") as writer:
         df.to_excel(writer, sheet_name="CLO_Table", index=False)
 
 # ============================================================
@@ -298,24 +294,31 @@ def generate():
     # ----------------------------------------------------
     # VARIANTS (A/B/C)
     # ----------------------------------------------------
-    pure_condition = (condition_core or "").lower().strip()
+    # ----------------------------------------------------
+    # VARIANTS (A/B/C)
+    # ----------------------------------------------------
+    # pure condition = remove leading when/by
+    pure_condition = (condition_core or "").strip()
     for lead in ("when ", "by "):
-        if pure_condition.startswith(lead):
+        if pure_condition.lower().startswith(lead):
             pure_condition = pure_condition[len(lead):].strip()
             break
 
+    # A → uses WHEN
     clo_a = construct_clo_sentence(
         verb, content, details["SC_Desc"],
         pure_condition, criterion,
         details["VBE"], domain="cognitive", vbe_style=vbe_style
     )
 
+    # B → uses BY
     clo_b = construct_clo_sentence(
         verb, content, details["SC_Desc"],
         pure_condition, criterion,
         details["VBE"], domain="psychomotor", vbe_style=vbe_style
     )
 
+    # C → auto connector (domain)
     clo_c = construct_clo_sentence(
         verb, content, details["SC_Desc"],
         pure_condition, criterion,
@@ -514,6 +517,7 @@ def download_rubric():
         sc_desc = details.get("SC_Desc", "")
         vbe = details.get("VBE", "")
 
+        # Determine criterion + condition_core
         if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
             criterion = ONEWORD_META[domain][bloom]["criterion"]
             condition_core = ONEWORD_META[domain][bloom]["condition"]
@@ -525,11 +529,19 @@ def download_rubric():
         # Extract verb from CLO (first word)
         verb = clo_text.split(" ")[0].lower() if clo_text else ""
 
+        # ALWAYS clean condition_core (remove "when/by")
+        pure_condition = condition_core.strip()
+        for lead in ("when ", "by "):
+            if pure_condition.lower().startswith(lead):
+                pure_condition = pure_condition[len(lead):].strip()
+                break
+
+        # Generate rubric
         rub = rubric_generator(
             clo_text,
             verb,
             criterion,
-            condition_core,
+            pure_condition,
             sc_desc,
             vbe
         )
@@ -543,10 +555,12 @@ def download_rubric():
             "Poor": rub["poor"]
         })
 
+    # Write to memory
     out = BytesIO()
-    with pd.ExcelWriter(out, engine="openpyxl") as writer:
+    with pd.ExcelWriter(out, engine="openpyxl", mode="w") as writer:
         pd.DataFrame(rows).to_excel(writer, index=False, sheet_name="Rubric")
     out.seek(0)
+
     return send_file(
         out,
         as_attachment=True,
@@ -559,4 +573,5 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
