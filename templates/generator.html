@@ -2,7 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CLO Generator</title>
+  <title>SCLOG — Course Learning Outcome Generator</title>
+
+<a class="navbar-brand brand-title" href="#">
+  <i class="bi bi-magic me-2"></i>SCLOG — Course Learning Outcome Generator
+</a>
+</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Bootstrap + Icons -->
@@ -56,7 +61,7 @@
   <div class="dev-credit py-2">
     <div class="container small">
       <i class="bi bi-person-badge me-1"></i>
-      This app was developed by <strong>Assoc Prof Dr Hazwani Ahmad Yuso@Hanafi</strong> (AMDI USM).
+      This app was developed by <strong>Assoc Prof Dr Hazwani Ahmad Yuso@Hanafi</strong> (AMDI, USM).
     </div>
   </div>
 
@@ -166,33 +171,62 @@
             </div>
 
             <!-- CLO Builder -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <span class="icon-badge"><i class="bi bi-pencil"></i></span>
-                  CLO Builder
-                </div>
-                <div class="card-body">
-                  <label class="form-label">Content / Object *</label>
-                  <input name="content" class="form-control" required>
+            def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
+    """Construct a grammatically polished CLO sentence."""
 
-                  <div class="row mt-3">
-                    <div class="col-md-4">
-                      <label class="form-label">Assessment %</label>
-                      <input type="number" min="0" max="100" step="1" name="cw" class="form-control">
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Assessment Suggestion</label>
-                      <input name="assessment" id="assessment" class="form-control" readonly>
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Evidence of Assessment</label>
-                      <input name="evidence" id="evidence" class="form-control" readonly>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+    # --- Normalize inputs ---
+    verb = verb.strip().lower()
+    content = content.strip()
+
+    # Convert content to lowercase except when capitalized words appear
+    if content and not content[0].isupper():
+        content = content.lower()
+
+    parts = []
+
+    # 1. Verb + content
+    base = f"{verb} {content}".strip()
+    parts.append(base)
+
+    # 2. SC Description
+    if sc_desc:
+        sc_piece = f"using {sc_desc.lower()}"
+        parts.append(sc_piece)
+
+    # 3. Condition (when..., during..., based on..., etc.)
+    if condition:
+        cond = condition.strip()
+        # Ensure condition starts with a connector
+        if not cond.lower().startswith(("when", "during", "in", "based", "under")):
+            cond = "when " + cond
+        parts.append(cond)
+
+    # 4. Criterion (accurately, effectively, professionally, etc.)
+    if criterion:
+        crit = criterion.strip()
+        parts.append(crit)
+
+    # 5. VBE (guided by…)
+    if vbe:
+        parts.append(f"guided by {vbe.lower()}")
+
+    # --- Join parts logically ---
+    sentence = " ".join(parts)
+
+    # Capitalize first letter
+    if sentence:
+        sentence = sentence[0].upper() + sentence[1:]
+
+    # Remove double spaces
+    while "  " in sentence:
+        sentence = sentence.replace("  ", " ")
+
+    # Add period at end
+    if not sentence.endswith("."):
+        sentence += "."
+
+    return sentence
+
 
             <!-- Actions -->
             <div class="col-12">
