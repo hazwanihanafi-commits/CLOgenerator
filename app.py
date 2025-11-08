@@ -419,7 +419,7 @@ def generate():
     # ----------------------------------------------------
     # RUBRIC
     # ----------------------------------------------------
-    def rubric_generator(clo, verb, criterion, condition, sc_desc, vbe):
+def rubric_generator(clo, verb, criterion, condition, sc_desc, vbe):
     """
     Builds a complete rubric block for the CLO.
     Returns dictionary structured for both Excel export and frontend display.
@@ -597,6 +597,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
