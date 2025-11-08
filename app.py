@@ -288,9 +288,18 @@ def generate():
 
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
-    clo = construct_clo_sentence(
-        verb, content, details["SC_Desc"], condition, criterion, details["VBE"]
-    )
+    polished_condition = polish_condition(condition, profile=profile, bloom=bloom)
+
+clo = construct_clo_sentence(
+    verb=verb,
+    content=content,
+    sc_desc=details["SC_Desc"],
+    condition=polished_condition,
+    criterion=criterion,
+    vbe=details["VBE"],
+    profile=profile,
+    bloom=bloom
+)
 
     df = read_clo_table()
 
@@ -405,4 +414,5 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
