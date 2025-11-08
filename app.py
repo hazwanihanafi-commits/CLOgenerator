@@ -352,9 +352,6 @@ def api_get_meta(plo, bloom):
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    # -----------------------------------------
-    # INPUTS
-    # -----------------------------------------
     profile = request.args.get("profile", "").strip().lower()
     plo = request.form.get("plo")
     bloom = request.form.get("bloom")
@@ -363,93 +360,77 @@ def generate():
     course = request.form.get("course")
     cw = request.form.get("cw")
     vbe_style = request.form.get("vbe_style", "guided")
-    include_condition_flag = request.form.get("include_condition", "1") == "1"
 
-    # -----------------------------------------
-    # LOOKUP PLO → SC / VBE / DOMAIN
-    # -----------------------------------------
+    # Retrieve SC + VBE + Domain
     details = get_plo_details(plo, profile)
     if not details:
         return jsonify({"error": "PLO not found"}), 400
 
-    domain = (details["Domain"] or "").strip().lower()
+    domain = details["Domain"].lower()
 
-    # -----------------------------------------
-    # CONDITION + CRITERION (Excel default)
-    # -----------------------------------------
-    criterion, condition = get_criterion_phrase(domain, bloom)
-    if not condition:
-        condition = get_default_condition(domain)
+    # ----------------------------------------------------
+    # CONDITION + CRITERION
+    # ----------------------------------------------------
+    criterion, condition_raw = get_criterion_phrase(domain, bloom)
+    if not condition_raw:
+        condition_raw = get_default_condition(domain)
 
-    # -----------------------------------------
-    # ONEWORD META OVERRIDE
-    # -----------------------------------------
+    # ONE-WORD meta priority
     if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
         criterion = ONEWORD_META[domain][bloom]["criterion"]
-        condition = ONEWORD_META[domain][bloom]["condition"]
-
-    # -----------------------------------------
-    # REMOVE CONDITION IF CHECKBOX UNCHECKED
-    # -----------------------------------------
-    if not include_condition_flag:
-        condition_word = ""
+        condition_core = ONEWORD_META[domain][bloom]["condition"]
     else:
-        condition_word = condition
+        condition_core = condition_raw
 
-    # -----------------------------------------
-    # BUILD MAIN CLO
-    # -----------------------------------------
+    # ----------------------------------------------------
+    # MAIN CLO (uses NEW parameter name: condition_core)
+    # ----------------------------------------------------
     clo = construct_clo_sentence(
         verb=verb,
         content=content,
         sc_desc=details["SC_Desc"],
-        condition_word=condition_word,
+        condition_core=condition_core,
         criterion=criterion,
         vbe_text=details["VBE"],
         domain=domain,
         vbe_style=vbe_style
     )
 
-    # -----------------------------------------
-    # BUILD 3 VARIANTS
-    # -----------------------------------------
+    # ----------------------------------------------------
+    # VARIANTS (A/B/C)
+    # ----------------------------------------------------
     clo_a, clo_b, clo_c = make_clo_variants(
         verb=verb,
         content=content,
         sc_desc=details["SC_Desc"],
-        condition_word=condition_word,
+        condition_core=condition_core,
         criterion=criterion,
         domain=domain,
         vbe_text=details["VBE"],
         vbe_style=vbe_style
     )
+    clo_options = {"A": clo_a, "B": clo_b, "C": clo_c}
 
-    clo_options = {
-        "A": clo_a,
-        "B": clo_b,
-        "C": clo_c
-    }
-
-    # -----------------------------------------
+    # ----------------------------------------------------
     # ASSESSMENT + EVIDENCE
-    # -----------------------------------------
+    # ----------------------------------------------------
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
-    # -----------------------------------------
-    # RUBRIC GENERATION
-    # -----------------------------------------
+    # ----------------------------------------------------
+    # RUBRIC
+    # ----------------------------------------------------
     rubric = rubric_generator(
         clo=clo,
         verb=verb,
         criterion=criterion,
-        condition=condition_word,
+        condition=condition_core,
         sc_desc=details["SC_Desc"],
         vbe=details["VBE"]
     )
 
-    # -----------------------------------------
-    # SAVE TO TABLE
-    # -----------------------------------------
+    # ----------------------------------------------------
+    # SAVE TABLE
+    # ----------------------------------------------------
     df = read_clo_table()
     new_row = {
         "ID": len(df) + 1 if not df.empty else 1,
@@ -467,9 +448,9 @@ def generate():
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     write_clo_table(df)
 
-    # -----------------------------------------
+    # ----------------------------------------------------
     # RETURN JSON
-    # -----------------------------------------
+    # ----------------------------------------------------
     return jsonify({
         "clo": clo,
         "clo_options": clo_options,
@@ -481,6 +462,7 @@ def generate():
         "vbe": details["VBE"],
         "domain": domain
     })
+
 
 @app.route("/api/debug_plo/<plo>")
 def api_debug_plo(plo):
@@ -578,4 +560,5 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
