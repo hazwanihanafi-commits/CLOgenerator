@@ -5,6 +5,36 @@ from datetime import datetime
 from openpyxl import load_workbook
 from io import BytesIO
 
+# ------------------------------------------------------------
+# ONE-WORD META for CLO auto-polish (Domain × Bloom)
+# ------------------------------------------------------------
+ONEWORD_META = {
+    "cognitive": {
+        "Remember":  {"criterion": "accurately",                    "condition": "recalling information"},
+        "Understand": {"criterion": "coherently",                  "condition": "explaining concepts"},
+        "Apply":     {"criterion": "effectively",                  "condition": "applying methods"},
+        "Analyze":   {"criterion": "critically",                   "condition": "evaluating information"},
+        "Evaluate":  {"criterion": "independently",                "condition": "making judgments"},
+        "Create":    {"criterion": "innovatively",                 "condition": "generating ideas"}
+    },
+    "affective": {
+        "Receive":        {"criterion": "openly",                  "condition": "engaging respectfully"},
+        "Respond":        {"criterion": "responsibly",             "condition": "participating actively"},
+        "Value":          {"criterion": "sincerely",               "condition": "demonstrating values"},
+        "Organization":   {"criterion": "constructively",          "condition": "balancing perspectives"},
+        "Characterization":{"criterion": "ethically",              "condition": "behaving professionally"}
+    },
+    "psychomotor": {
+        "Perception":            {"criterion": "accurately",       "condition": "identifying cues"},
+        "Set":                   {"criterion": "precisely",        "condition": "preparing procedures"},
+        "Guided Response":       {"criterion": "under supervision","condition": "practising skills"},
+        "Mechanism":             {"criterion": "competently",      "condition": "performing techniques"},
+        "Complex Overt Response":{"criterion": "efficiently",      "condition": "executing tasks"},
+        "Adaptation":            {"criterion": "safely",           "condition": "adjusting actions"},
+        "Origination":           {"criterion": "creatively",       "condition": "developing procedures"}
+    }
+}
+
 app = Flask(__name__, template_folder="templates")
 
 WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
@@ -301,36 +331,6 @@ def api_get_meta(plo, bloom):
     bloom_key = (bloom or "").strip()
 
     # ------------------------------------------------------------
-    # ✅ One-word Criterion + Condition mapping (universal)
-    # ------------------------------------------------------------
-    ONEWORD_META = {
-        "cognitive": {
-            "Remember":   {"criterion": "accurately",    "condition": "interpreting"},
-            "Understand": {"criterion": "coherently",    "condition": "interpreting"},
-            "Apply":      {"criterion": "effectively",   "condition": "interpreting"},
-            "Analyze":    {"criterion": "critically",    "condition": "interpreting"},
-            "Evaluate":   {"criterion": "independently", "condition": "interpreting"},
-            "Create":     {"criterion": "innovatively",  "condition": "interpreting"}
-        },
-        "affective": {
-            "Receive":         {"criterion": "openly",         "condition": "engaging"},
-            "Respond":         {"criterion": "responsibly",    "condition": "engaging"},
-            "Value":           {"criterion": "sincerely",      "condition": "engaging"},
-            "Organization":    {"criterion": "constructively", "condition": "engaging"},
-            "Characterization":{"criterion": "ethically",      "condition": "engaging"}
-        },
-        "psychomotor": {
-            "Perception":            {"criterion": "attentively", "condition": "performing"},
-            "Set":                   {"criterion": "precisely",    "condition": "performing"},
-            "Guided Response":       {"criterion": "controlled",   "condition": "performing"},
-            "Mechanism":             {"criterion": "competently",  "condition": "performing"},
-            "Complex Overt Response":{"criterion": "confidently",  "condition": "performing"},
-            "Adaptation":            {"criterion": "safely",       "condition": "performing"},
-            "Origination":           {"criterion": "creatively",   "condition": "performing"}
-        }
-    }
-
-    # ------------------------------------------------------------
     # ✅ Decide "when" vs "by" automatically
     # ------------------------------------------------------------
     def choose_prefix(domain):
@@ -386,41 +386,41 @@ def generate():
 
     domain = details["Domain"].lower()
 
-    # ----------------------------
-    # CONDITION + CRITERION
-    # ----------------------------
-    criterion, condition_phrase = get_criterion_phrase(domain, bloom)
-    if not condition_phrase:
-        condition_phrase = get_default_condition(domain)
+    # ----------------------------------------------------
+    # CONDITION + CRITERION (from Excel or default)
+    # ----------------------------------------------------
+    criterion, condition = get_criterion_phrase(domain, bloom)
+    if not condition:
+        condition = get_default_condition(domain)
 
-    # Try one-word JSON condition if available
-    if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
-        condition_word = ONEWORD_META[domain][bloom]["condition"]
-        criterion = ONEWORD_META[domain][bloom]["criterion"]
-    else:
-        # fallback: extract verb from phrase
-        condition_word = condition_phrase.split()[0]
+    # ----------------------------------------------------
+    # ONEWORD META OVERRIDE (universal short versions)
+    # ----------------------------------------------------
+    domain_key = domain.lower().strip()
+    if domain_key in ONEWORD_META and bloom in ONEWORD_META[domain_key]:
+        criterion = ONEWORD_META[domain_key][bloom]["criterion"]
+        condition = ONEWORD_META[domain_key][bloom]["condition"]
 
-    # Build main CLO sentence
-    condition_full = f"when {condition_word}" if domain != "psychomotor" else f"by {condition_word}"
-
+    # ----------------------------------------------------
+    # MAIN CLO SENTENCE
+    # ----------------------------------------------------
     clo = construct_clo_sentence(
         verb=verb,
         content=content,
         sc_desc=details["SC_Desc"],
-        condition=condition_full,
+        condition=condition,   # KEEP PURE condition (no “when/by”)
         criterion=criterion,
         vbe_text=details["VBE"]
     )
 
-    # ----------------------------
-    # BUILD VARIANT A/B/C
-    # ----------------------------
+    # ----------------------------------------------------
+    # CLO VARIANTS (A / B / C)
+    # ----------------------------------------------------
     clo_a, clo_b, clo_c = make_clo_variants(
         verb=verb,
         content=content,
         sc_desc=details["SC_Desc"],
-        condition_word=condition_word,
+        condition_word=condition,
         criterion=criterion,
         domain=domain,
         vbe_text=details["VBE"]
@@ -432,16 +432,15 @@ def generate():
         "C": clo_c
     }
 
-    # ----------------------------
-    # ASSESSMENT + EVIDENCE
-    # ----------------------------
+    # ----------------------------------------------------
+    # ASSESSMENT + EVIDENCE AUTOFILL
+    # ----------------------------------------------------
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
-    # ----------------------------
-    # SAVE INTO TABLE
-    # ----------------------------
+    # ----------------------------------------------------
+    # SAVE TO EXCEL TABLE
+    # ----------------------------------------------------
     df = read_clo_table()
-
     new_row = {
         "ID": len(df) + 1 if not df.empty else 1,
         "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
@@ -455,13 +454,12 @@ def generate():
         "Coursework Assessment Percentage (%)": cw,
         "Profile": profile
     }
-
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     write_clo_table(df)
 
-    # ----------------------------
-    # RETURN JSON
-    # ----------------------------
+    # ----------------------------------------------------
+    # RETURN TO FRONTEND
+    # ----------------------------------------------------
     return jsonify({
         "clo": clo,
         "clo_options": clo_options,
@@ -565,6 +563,7 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
