@@ -240,31 +240,6 @@ def index():
     return render_template("generator.html", plos=plos, table_html=table_html, profile=profile)
 
 # ============================================================
-# FIXED: RESET TABLE (MISSING ROUTE)
-# ============================================================
-@app.route("/reset_table")
-def reset_table():
-    empty_df = pd.DataFrame(columns=[
-        "ID","Time","Course","PLO","Bloom","FullCLO",
-        "Mapping (SC + VBE)","Assessment Methods","Evidence of Assessment",
-        "Coursework Assessment Percentage (%)","Profile"
-    ])
-
-    try:
-        book = load_workbook(WORKBOOK_PATH)
-        if "CLO_Table" in book.sheetnames:
-            del book["CLO_Table"]
-
-        with pd.ExcelWriter(WORKBOOK_PATH, engine="openpyxl", mode="a") as w:
-            w._book = book
-            empty_df.to_excel(w, index=False, sheet_name="CLO_Table")
-
-    except Exception as e:
-        return f"<p>Error resetting table: {e}</p>"
-
-    return redirect(url_for("index"))
-
-# ============================================================
 # GENERATE CLO
 # ============================================================
 @app.route("/generate", methods=["POST"])
@@ -415,3 +390,4 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
