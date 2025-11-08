@@ -239,6 +239,38 @@
           </div>
         </div>
 
+        <!-- RUBRIC DISPLAY -->
+<div class="card mt-3" id="rubricCard" style="display:none;">
+  <div class="card-header">
+    <span class="icon-badge"><i class="bi bi-clipboard-check"></i></span> CLO Rubric (Auto-Generated)
+  </div>
+  <div class="card-body">
+    <table class="table table-bordered">
+      <tr>
+        <th style="width:20%">Performance Indicator</th>
+        <td id="r_indicator"></td>
+      </tr>
+      <tr>
+        <th>Excellent</th>
+        <td id="r_excellent"></td>
+      </tr>
+      <tr>
+        <th>Good</th>
+        <td id="r_good"></td>
+      </tr>
+      <tr>
+        <th>Satisfactory</th>
+        <td id="r_satisfactory"></td>
+      </tr>
+      <tr>
+        <th>Poor</th>
+        <td id="r_poor"></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+
       </div>
 
       <!-- HISTORY TAB -->
@@ -377,65 +409,84 @@
       document.getElementById('cloPreviewCard').style.display = 'none';
     });
 
-    bloomSel?.addEventListener('change', async () => {
-      const p = ploSel.value;
-      const b = bloomSel.value;
-      if (!p || !b) return;
-      profileHidden.value = profileSel.value;
-      await refreshVerbs(p, b);
-      await refreshMeta(p, b);
-    });
+ // ---------- On Bloom change ----------
+bloomSel?.addEventListener('change', async () => {
+  const p = ploSel.value;
+  const b = bloomSel.value;
+  if (!p || !b) return;
+  profileHidden.value = profileSel.value;
 
-    // ---------- Submit (AJAX) ----------
-    document.getElementById('cloForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      profileHidden.value = profileSel.value;
+  await refreshVerbs(p, b);
+  await refreshMeta(p, b);
+});
 
-      const formData = new FormData(e.target);
-      // ensure checkbox + vbe_style included
-      formData.set('include_condition', includeCondition.checked ? '1' : '0');
-      formData.set('vbe_style', vbeStyle.value);
+// ---------- Rubric Populate Function ----------
+function populateRubric(rubric) {
+  if (!rubric) return;
 
-      const res = await fetch(`/generate${profileSuffix()}`, { method:'POST', body: formData });
-      const data = await res.json();
-      if (data.error){ alert(data.error); return; }
+  document.getElementById("rubricCard").style.display = "block";
+  document.getElementById("r_indicator").innerText    = rubric.indicator;
+  document.getElementById("r_excellent").innerText    = rubric.excellent;
+  document.getElementById("r_good").innerText         = rubric.good;
+  document.getElementById("r_satisfactory").innerText = rubric.satisfactory;
+  document.getElementById("r_poor").innerText         = rubric.poor;
+}
 
-      document.getElementById('cloPreviewCard').style.display = 'block';
-      document.getElementById('cloPreviewText').innerText = data.clo;
+// ---------- Submit (AJAX) ----------
+form?.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-      assessEl.value = data.assessment || assessEl.value;
-      evidEl.value   = data.evidence   || evidEl.value;
+  const formData = new FormData(form);
+  const resp = await fetch("/generate", { method: "POST", body: formData });
+  const data = await resp.json();
 
-      // show variants
-      const alt = document.getElementById('altOptions');
-      alt.innerHTML = '';
-      (data.clo_options || []).forEach((t, i) => {
-        const div = document.createElement('div');
-        div.className = 'option' + (i===0 ? ' active-option' : '');
-        div.innerText = (i===0? 'A. ' : i===1? 'B. ' : 'C. ') + t;
-        div.addEventListener('click', () => {
-          document.getElementById('cloPreviewText').innerText = t;
-          document.querySelectorAll('#altOptions .option').forEach(n => n.classList.remove('active-option'));
-          div.classList.add('active-option');
-        });
-        alt.appendChild(div);
+  // CLO preview card
+  document.getElementById('cloPreviewCard').style.display = 'block';
+  document.getElementById('cloPreviewText').innerText = data.clo;
+
+  // Auto-fill assessment + evidence
+  assessEl.value = data.assessment || "";
+  evidEl.value   = data.evidence   || "";
+
+  // -----------------------------------
+  // CLO OPTIONS (A / B / C)
+  // -----------------------------------
+  const alt = document.getElementById('altOptions');
+  alt.innerHTML = "";
+
+  if (data.clo_options) {
+    Object.entries(data.clo_options).forEach(([key, value]) => {
+      const div = document.createElement("div");
+      div.className = "option";
+
+      div.innerText = `${key}. ${value}`;
+      div.addEventListener("click", () => {
+        document.getElementById("cloPreviewText").innerText = value;
+        document.querySelectorAll("#altOptions .option").forEach(x => x.classList.remove("active-option"));
+        div.classList.add("active-option");
       });
-    });
 
-    // ---------- Copy ----------
-    document.getElementById('copyCloBtn').addEventListener('click', async () => {
-      const txt = document.getElementById('cloPreviewText').innerText.trim();
-      if (!txt) return;
-      try{ await navigator.clipboard.writeText(txt); }catch{}
+      alt.appendChild(div);
     });
+  }
 
-    // ---------- History (privacy — load on demand) ----------
-    document.getElementById('loadHistoryBtn')?.addEventListener('click', () => {
-      const tbl = document.getElementById('serverTable').innerHTML;
-      document.getElementById('historyHTML').innerHTML = tbl;
-      document.getElementById('historyArea').style.display = 'block';
-      document.getElementById('historyPlaceholder').style.display = 'none';
-    });
-  </script>
-</body>
-</html>
+  // -----------------------------------
+  // POPULATE RUBRIC
+  // -----------------------------------
+  populateRubric(data.rubric);
+});
+
+// ---------- Copy ----------
+document.getElementById('copyCloBtn').addEventListener('click', async () => {
+  const txt = document.getElementById('cloPreviewText').innerText.trim();
+  if (!txt) return;
+  try { await navigator.clipboard.writeText(txt); } catch {}
+});
+
+// ---------- History (load on demand) ----------
+document.getElementById('loadHistoryBtn')?.addEventListener('click', () => {
+  const tbl = document.getElementById('serverTable').innerHTML;
+  document.getElementById('historyHTML').innerHTML = tbl;
+  document.getElementById('historyArea').style.display = 'block';
+  document.getElementById('historyPlaceholder').style.display = 'none';
+});
