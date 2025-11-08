@@ -70,7 +70,7 @@ def get_plo_details(plo, profile=None):
 # Criterion & Condition
 # -----------------------------
 def get_criterion_phrase(domain, bloom):
-    df = load_sheet_df("Criterion")
+    df.columns = [c.strip() for c in df.columns]
     if df.empty:
         return "", ""
 
@@ -314,5 +314,24 @@ def api_debug_plo(plo):
 # -----------------------------
 # Run App
 # -----------------------------
+@app.route("/download")
+def download():
+    df = read_clo_table()
+    if df.empty:
+        return "<p>No CLO table to download.</p>"
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="CLO_Table")
+
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="CLO_Table.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 if __name__ == "__main__":
     app.run(debug=True)
+
