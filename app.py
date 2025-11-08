@@ -80,9 +80,8 @@ def get_plo_details(plo: str, profile: str | None = None) -> dict | None:
     if df.empty:
         return None
 
-    # Normalize column names
     colmap = {c.strip().lower().replace(" ", ""): c for c in df.columns}
-    col_plo = list(df.columns)[0]          # assume first column is PLO
+    col_plo = list(df.columns)[0]
     col_sc = colmap.get("sccode")
     col_desc = colmap.get("scdescription")
     col_vbe = colmap.get("vbe")
@@ -105,7 +104,6 @@ def get_plo_details(plo: str, profile: str | None = None) -> dict | None:
 # Criterion / Condition sources
 # ============================================================
 def get_criterion_phrase(domain: str, bloom: str) -> tuple[str, str]:
-    """Reads Criterion sheet: Domain | Bloom | Criterion | Condition."""
     df = load_sheet_df("Criterion")
     if df.empty:
         return "", ""
@@ -144,10 +142,10 @@ def get_assessment_and_evidence(bloom: str, domain: str) -> tuple[str, str]:
     return str(row[assess_col]).strip(), str(row[evid_col]).strip()
 
 # ============================================================
-# Polishing / builders
+# CLO builders
 # ============================================================
 def decide_connector(domain: str) -> str:
-    """Psychomotor uses 'by', others 'when'."""
+    """Psychomotor uses 'by', others use 'when'."""
     return "by" if (domain or "").lower() == "psychomotor" else "when"
 
 def sc_snippet(sc_desc: str) -> str:
@@ -167,25 +165,16 @@ def vbe_phrase(vbe: str, style: str = "guided") -> str:
     return f"guided by {vbe.lower()}"
 
 def construct_clo_sentence(
-    verb: str,
-    content: str,
-    sc_desc: str,
-    condition_core: str,
-    criterion: str,
-    vbe_text: str,
-    domain: str = "",
-    vbe_style: str = "guided"
+    verb: str, content: str, sc_desc: str,
+    condition_core: str, criterion: str,
+    vbe_text: str, domain: str = "", vbe_style: str = "guided"
 ) -> str:
-    """
-    FINAL ORDER (approved):
-    Verb + Content + using SC + when/by condition + criterion + guided by VBE.
-    """
+
     verb = (verb or "").strip().lower()
     content = (content or "").strip()
     criterion = (criterion or "").strip().rstrip(".")
     condition_core = (condition_core or "").strip()
 
-    # Ensure condition_core is bare (no leading 'when/by')
     for lead in ("when ", "by "):
         if condition_core.lower().startswith(lead):
             condition_core = condition_core[len(lead):].strip()
@@ -202,43 +191,34 @@ def construct_clo_sentence(
         vbe_phrase(vbe_text, vbe_style)
     ]
     sentence = " ".join([p for p in parts if p]).strip()
-    if sentence:
-        sentence = sentence[0].upper() + sentence[1:]
-        if not sentence.endswith("."):
-            sentence += "."
-    return sentence
+    if sentence and not sentence.endswith("."):
+        sentence += "."
+    return sentence.capitalize()
 
 def make_clo_variants(
-    verb: str, content: str, sc_desc: str, condition_core: str,
-    criterion: str, domain: str, vbe_text: str, vbe_style: str = "guided"
-) -> tuple[str, str, str]:
-    """
-    Returns three polished variants that still follow your approved order:
-    A: 'when'
-    B: 'by'
-    C: Auto (domain-based)
-    """
-    # Bare condition_core only
+    verb, content, sc_desc, condition_core,
+    criterion, domain, vbe_text, vbe_style
+):
     for lead in ("when ", "by "):
         if condition_core.lower().startswith(lead):
             condition_core = condition_core[len(lead):].strip()
             break
 
-    a = construct_clo_sentence(verb, content, sc_desc, condition_core, criterion, vbe_text, domain="cognitive", vbe_style=vbe_style)  # force "when"
-    b = construct_clo_sentence(verb, content, sc_desc, condition_core, criterion, vbe_text, domain="psychomotor", vbe_style=vbe_style) # force "by"
-    c = construct_clo_sentence(verb, content, sc_desc, condition_core, criterion, vbe_text, domain=domain, vbe_style=vbe_style)        # auto by domain
+    a = construct_clo_sentence(verb, content, sc_desc, condition_core, criterion, vbe_text, domain="cognitive", vbe_style=vbe_style)
+    b = construct_clo_sentence(verb, content, sc_desc, condition_core, criterion, vbe_text, domain="psychomotor", vbe_style=vbe_style)
+    c = construct_clo_sentence(verb, content, sc_desc, condition_core, criterion, vbe_text, domain=domain, vbe_style=vbe_style)
     return a, b, c
 
-def rubric_generator(clo: str, verb: str, criterion: str, condition_core: str, sc_desc: str, vbe: str) -> dict:
-    """Simple rubric block aligned to CLO components."""
-    # indicator
+# ============================================================
+# Rubric
+# ============================================================
+def rubric_generator(clo, verb, criterion, condition_core, sc_desc, vbe):
     connector = "by" if "perform" in (clo or "").lower() else "when"
-    if condition_core.lower().startswith(("when ", "by ")):
-        cond_text = condition_core
-    else:
-        cond_text = f"{connector} {condition_core}" if condition_core else ""
+    cond_text = condition_core
+    if not condition_core.lower().startswith(("when ", "by ")):
+        cond_text = f"{connector} {condition_core}".strip()
 
-    indicator = f"Ability to {verb.lower()} {sc_desc.lower()} {cond_text} {criterion} while demonstrating {vbe.lower()}.".strip()
+    indicator = f"Ability to {verb.lower()} {sc_desc.lower()} {cond_text} {criterion} while demonstrating {vbe.lower()}."
 
     return {
         "indicator": indicator,
@@ -249,7 +229,7 @@ def rubric_generator(clo: str, verb: str, criterion: str, condition_core: str, s
     }
 
 # ============================================================
-# CLO table (persist)
+# CLO Table
 # ============================================================
 def read_clo_table() -> pd.DataFrame:
     try:
@@ -277,6 +257,93 @@ def index():
     table_html = df_ct.to_html(classes="table table-striped table-sm", index=False) if not df_ct.empty else "<p>No CLO records yet.</p>"
     return render_template("generator.html", plos=plos, table_html=table_html, profile=profile)
 
+# ============================================================
+# Generate CLO
+# ============================================================
+@app.route("/generate", methods=["POST"])
+def generate():
+    profile = request.args.get("profile", "").strip().lower()
+    plo = request.form.get("plo")
+    bloom = request.form.get("bloom")
+    verb = request.form.get("verb")
+    content = request.form.get("content")
+    course = request.form.get("course")
+    cw = request.form.get("cw")
+    vbe_style = request.form.get("vbe_style", "guided")
+
+    # Validate PLO
+    details = get_plo_details(plo, profile)
+    if not details:
+        return jsonify({"error": "PLO not found"}), 400
+
+    domain = details["Domain"].lower()
+
+    # Criterion + Condition
+    criterion, condition_raw = get_criterion_phrase(domain, bloom)
+    if not condition_raw:
+        condition_raw = get_default_condition(domain)
+
+    if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
+        criterion = ONEWORD_META[domain][bloom]["criterion"]
+        condition_core = ONEWORD_META[domain][bloom]["condition"]
+    else:
+        condition_core = condition_raw
+
+    # Construct CLO
+    clo = construct_clo_sentence(
+        verb, content, details["SC_Desc"], condition_core,
+        criterion, details["VBE"], domain, vbe_style
+    )
+
+    # Variants
+    clo_a, clo_b, clo_c = make_clo_variants(
+        verb, content, details["SC_Desc"], condition_core,
+        criterion, domain, details["VBE"], vbe_style
+    )
+    clo_options = {"A": clo_a, "B": clo_b, "C": clo_c}
+
+    # Assessment + Evidence
+    assessment, evidence = get_assessment_and_evidence(bloom, domain)
+
+    # Rubric
+    rubric = rubric_generator(
+        clo, verb, criterion, condition_core,
+        details["SC_Desc"], details["VBE"]
+    )
+
+    # Save record
+    df = read_clo_table()
+    new_row = {
+        "ID": len(df) + 1 if not df.empty else 1,
+        "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+        "Course": course,
+        "PLO": plo,
+        "Bloom": bloom,
+        "FullCLO": clo,
+        "Mapping (SC + VBE)": f"{details['SC_Code']} — {details['VBE']}",
+        "Assessment Methods": assessment,
+        "Evidence of Assessment": evidence,
+        "Coursework Assessment Percentage (%)": cw,
+        "Profile": profile
+    }
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    write_clo_table(df)
+
+    return jsonify({
+        "clo": clo,
+        "clo_options": clo_options,
+        "assessment": assessment,
+        "evidence": evidence,
+        "rubric": rubric,
+        "sc_code": details["SC_Code"],
+        "sc_desc": details["SC_Desc"],
+        "vbe": details["VBE"],
+        "domain": domain
+    })
+
+# ============================================================
+# Meta routes
+# ============================================================
 @app.route("/api/get_blooms/<plo>")
 def api_get_blooms(plo):
     profile = request.args.get("profile", "").strip().lower()
@@ -312,19 +379,16 @@ def api_get_verbs(plo, bloom):
     mask = df.iloc[:, 0].astype(str).str.lower() == str(bloom).lower()
     if not mask.any():
         return jsonify([])
-    # Verbs expected in 2nd column as comma-separated
     verbs = [v.strip() for v in str(df[mask].iloc[0, 1]).split(",") if v.strip()]
     return jsonify(verbs)
 
 @app.route("/api/get_meta/<plo>/<bloom>")
 def api_get_meta(plo, bloom):
-    """Auto-fill SC/VBE/Domain + standardized condition & criterion + assessment/evidence."""
     profile = request.args.get("profile", "").strip().lower()
     details = get_plo_details(plo, profile) or {}
     domain = (details.get("Domain", "") or "").strip().lower()
     bloom_key = (bloom or "").strip()
 
-    # Try one-word override, else Excel
     if domain in ONEWORD_META and bloom_key in ONEWORD_META[domain]:
         meta = ONEWORD_META[domain][bloom_key]
         criterion = meta["criterion"]
@@ -334,9 +398,7 @@ def api_get_meta(plo, bloom):
         criterion = crit or ""
         condition_core = cond or get_default_condition(domain)
 
-    # Prefix condition now (so UI can show directly)
     condition = f"{decide_connector(domain)} {condition_core}" if condition_core else ""
-
     assessment, evidence = get_assessment_and_evidence(bloom_key, domain)
 
     return jsonify({
@@ -345,161 +407,14 @@ def api_get_meta(plo, bloom):
         "vbe": details.get("VBE", ""),
         "domain": domain,
         "criterion": criterion,
-        "condition": condition,   # already prefixed with when/by
+        "condition": condition,
         "assessment": assessment,
         "evidence": evidence
     })
 
-@app.route("/generate", methods=["POST"])
-def generate():
-    profile = request.args.get("profile", "").strip().lower()
-    plo = request.form.get("plo")
-    bloom = request.form.get("bloom")
-    verb = request.form.get("verb")
-    content = request.form.get("content")
-    course = request.form.get("course")
-    cw = request.form.get("cw")
-    vbe_style = request.form.get("vbe_style", "guided")
-
-    # Retrieve SC + VBE + Domain
-    details = get_plo_details(plo, profile)
-    if not details:
-        return jsonify({"error": "PLO not found"}), 400
-
-    domain = details["Domain"].lower()
-
-    # ----------------------------------------------------
-    # CONDITION + CRITERION
-    # ----------------------------------------------------
-    criterion, condition_raw = get_criterion_phrase(domain, bloom)
-    if not condition_raw:
-        condition_raw = get_default_condition(domain)
-
-    # ONE-WORD meta priority
-    if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
-        criterion = ONEWORD_META[domain][bloom]["criterion"]
-        condition_core = ONEWORD_META[domain][bloom]["condition"]
-    else:
-        condition_core = condition_raw
-
-    # ----------------------------------------------------
-    # MAIN CLO (uses NEW parameter name: condition_core)
-    # ----------------------------------------------------
-    clo = construct_clo_sentence(
-        verb=verb,
-        content=content,
-        sc_desc=details["SC_Desc"],
-        condition_core=condition_core,
-        criterion=criterion,
-        vbe_text=details["VBE"],
-        domain=domain,
-        vbe_style=vbe_style
-    )
-
-    # ----------------------------------------------------
-    # VARIANTS (A/B/C)
-    # ----------------------------------------------------
-    clo_a, clo_b, clo_c = make_clo_variants(
-        verb=verb,
-        content=content,
-        sc_desc=details["SC_Desc"],
-        condition_core=condition_core,
-        criterion=criterion,
-        domain=domain,
-        vbe_text=details["VBE"],
-        vbe_style=vbe_style
-    )
-    clo_options = {"A": clo_a, "B": clo_b, "C": clo_c}
-
-    # ----------------------------------------------------
-    # ASSESSMENT + EVIDENCE
-    # ----------------------------------------------------
-    assessment, evidence = get_assessment_and_evidence(bloom, domain)
-
-    # ----------------------------------------------------
-    # RUBRIC
-    # ----------------------------------------------------
-def rubric_generator(clo, verb, criterion, condition, sc_desc, vbe):
-    """
-    Builds a complete rubric block for the CLO.
-    Returns dictionary structured for both Excel export and frontend display.
-    """
-
-    verb = (verb or "").strip()
-    criterion = (criterion or "").strip()
-    condition = (condition or "").strip()
-    sc_desc = (sc_desc or "").strip()
-    vbe = (vbe or "").strip()
-
-    # --------------------------
-    # PERFORMANCE INDICATOR
-    # --------------------------
-    indicator = (
-        f"Ability to {verb.lower()} {sc_desc.lower()} {condition} "
-        f"{criterion} while demonstrating {vbe.lower()}."
-    ).strip()
-
-    # --------------------------
-    # RUBRIC LEVEL DESCRIPTORS
-    # --------------------------
-    rubric = {
-        "indicator": indicator,
-        "excellent": (
-            f"Consistently {criterion} and highly proficient in applying "
-            f"{sc_desc.lower()} {condition}, with clear adherence to {vbe.lower()}."
-        ),
-        "good": (
-            f"Generally {criterion} and competent in applying {sc_desc.lower()} "
-            f"{condition}, with minor gaps in demonstrating {vbe.lower()}."
-        ),
-        "satisfactory": (
-            f"Shows partial ability to apply {sc_desc.lower()} {condition}, "
-            f"but performance is inconsistent and only moderately {criterion}."
-        ),
-        "poor": (
-            f"Unable to adequately apply {sc_desc.lower()} {condition}; "
-            f"does not meet expected standards for {vbe.lower()}."
-        )
-    }
-
-    return rubric
-
-    # ----------------------------------------------------
-    # SAVE TABLE
-    # ----------------------------------------------------
-    df = read_clo_table()
-    new_row = {
-        "ID": len(df) + 1 if not df.empty else 1,
-        "Time": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "Course": course,
-        "PLO": plo,
-        "Bloom": bloom,
-        "FullCLO": clo,
-        "Mapping (SC + VBE)": f"{details['SC_Code']} — {details['VBE']}",
-        "Assessment Methods": assessment,
-        "Evidence of Assessment": evidence,
-        "Coursework Assessment Percentage (%)": cw,
-        "Profile": profile
-    }
-    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
-    write_clo_table(df)
-
-    # ----------------------------------------------------
-    # RETURN JSON
-    # ----------------------------------------------------
-    return jsonify({
-        "clo": clo,
-        "clo_options": clo_options,
-        "assessment": assessment,
-        "evidence": evidence,
-        "rubric": rubric,
-        "sc_code": details["SC_Code"],
-        "sc_desc": details["SC_Desc"],
-        "vbe": details["VBE"],
-        "domain": domain
-    })
-
-
+# ============================================================
+# Debug route
+# ============================================================
 @app.route("/api/debug_plo/<plo>")
 def api_debug_plo(plo):
     profile = request.args.get("profile","")
@@ -510,6 +425,9 @@ def api_debug_plo(plo):
         "exists": bool(info)
     })
 
+# ============================================================
+# Reset table
+# ============================================================
 @app.route("/reset_table")
 def reset_table():
     df = pd.DataFrame(columns=[
@@ -525,6 +443,9 @@ def reset_table():
         df.to_excel(writer, sheet_name="CLO_Table", index=False)
     return redirect(url_for("index"))
 
+# ============================================================
+# Download CLO Table
+# ============================================================
 @app.route("/download")
 def download():
     df = read_clo_table()
@@ -541,6 +462,9 @@ def download():
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
 
+# ============================================================
+# Download Rubric Sheet
+# ============================================================
 @app.route("/download_rubric")
 def download_rubric():
     df = read_clo_table()
@@ -549,12 +473,16 @@ def download_rubric():
 
     rows = []
     for _, row in df.iterrows():
+        clo_text = row.get("FullCLO", "")
         plo = row.get("PLO", "")
-        details = get_plo_details(str(plo), row.get("Profile", "")) or {}
-        domain = (details.get("Domain", "") or "").lower()
         bloom = row.get("Bloom", "")
+        profile = row.get("Profile", "")
 
-        # Criterion & condition for rubric
+        details = get_plo_details(str(plo), profile) or {}
+        domain = (details.get("Domain", "") or "").lower()
+        sc_desc = details.get("SC_Desc", "")
+        vbe = details.get("VBE", "")
+
         if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
             criterion = ONEWORD_META[domain][bloom]["criterion"]
             condition_core = ONEWORD_META[domain][bloom]["condition"]
@@ -563,17 +491,20 @@ def download_rubric():
             criterion = crit or ""
             condition_core = cond or get_default_condition(domain)
 
-        rubric = rubric_generator(
-        clo,
-        verb,
-        criterion,
-        condition,
-        details["SC_Desc"],
-        details["VBE"]
+        # Extract verb from CLO (first word)
+        verb = clo_text.split(" ")[0].lower() if clo_text else ""
+
+        rub = rubric_generator(
+            clo_text,
+            verb,
+            criterion,
+            condition_core,
+            sc_desc,
+            vbe
         )
 
         rows.append({
-            "CLO": row.get("FullCLO", ""),
+            "CLO": clo_text,
             "Performance Indicator": rub["indicator"],
             "Excellent": rub["excellent"],
             "Good": rub["good"],
@@ -593,18 +524,7 @@ def download_rubric():
     )
 
 # ============================================================
-# Run (local)
+# Run Local
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-
-
-
-
-
-
-
-
-
