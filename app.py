@@ -216,6 +216,40 @@ def variants(verb, content, sc_desc, condition, criterion, vbe_text, vbe_style="
     else:
         crit_h = crit
     c = construct_clo_sentence(verb, content, sc_desc, condition, crit_h, vbe_text, vbe_style)
+    # ------------------------------------------------------------
+# CLO VARIANT GENERATOR (A/B/C OPTIONS)
+# ------------------------------------------------------------
+
+def make_clo_variants(verb, content, sc_desc, condition_word, criterion, domain, vbe_text):
+    """
+    Builds A/B/C CLO variants automatically using your universal rules.
+    """
+
+    # Prefix rules (psychomotor prefers "by")
+    prefix_when = "when"
+    prefix_by = "by"
+    default_prefix = prefix_by if domain == "psychomotor" else prefix_when
+
+    # Variant A — Method-focused ("by")
+    clo_a = (
+        f"{verb} {content} using {sc_desc} "
+        f"by {condition_word} {criterion} guided by {vbe_text}."
+    ).replace("  ", " ").strip().capitalize()
+
+    # Variant B — Context-focused ("when")
+    clo_b = (
+        f"{verb} {content} using {sc_desc} "
+        f"when {condition_word} {criterion} guided by {vbe_text}."
+    ).replace("  ", " ").strip().capitalize()
+
+    # Variant C — Hybrid
+    clo_c = (
+        f"{verb} {content} using {sc_desc} "
+        f"{default_prefix} {condition_word} {criterion} guided by {vbe_text}."
+    ).replace("  ", " ").strip().capitalize()
+
+    return clo_a, clo_b, clo_c
+
 
     return [a, b, c]
 
@@ -496,5 +530,6 @@ def download():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
