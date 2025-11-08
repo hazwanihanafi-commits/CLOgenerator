@@ -52,27 +52,29 @@ def get_plo_details(plo, profile=None):
     if df.empty:
         return None
 
-    # Normalize column names
+    # Normalize column names (remove spaces, lowercase)
     colmap = {c.strip().lower().replace(" ", ""): c for c in df.columns}
 
-    # First column is PLO by design
-    col_plo = list(df.columns)[0]
+    # Identify columns regardless of format in Excel
+    col_plo = list(df.columns)[0]                 # first column is always PLO
     col_sc = colmap.get("sccode")
     col_desc = colmap.get("scdescription")
     col_vbe = colmap.get("vbe")
     col_domain = colmap.get("domain")
 
+    # Match PLO
     mask = df[col_plo].astype(str).str.strip().str.upper() == str(plo).strip().upper()
     if not mask.any():
         return None
 
     row = df[mask].iloc[0]
+
     return {
         "PLO": row[col_plo],
-        "SC_Code": row.get(col_sc, "") if col_sc else "",
-        "SC_Desc": row.get(col_desc, "") if col_desc else "",
-        "VBE": row.get(col_vbe, "") if col_vbe else "",
-        "Domain": row.get(col_domain, "") if col_domain else ""
+        "SC_Code": row.get(col_sc, ""),
+        "SC_Desc": row.get(col_desc, ""),
+        "VBE": row.get(col_vbe, ""),
+        "Domain": row.get(col_domain, "")
     }
 
 # ------------------------------------------------------------
@@ -97,11 +99,44 @@ def get_criterion_phrase(domain, bloom):
 
 def get_default_condition(domain):
     mapping = {
-        "cognitive": "based on case scenarios or clinical data",
-        "affective": "during clinical or group activities",
-        "psychomotor": "under supervised practical conditions"
+        "cognitive": "in clinical or case-based contexts",
+        "affective": "during group, community, or clinical interactions",
+        "psychomotor": "under supervised practical or laboratory conditions"
     }
     return mapping.get(str(domain).lower(), "")
+
+# ---------- Polishing helpers ----------
+def polish_condition(condition: str, remove_condition: bool, profile: str = "", bloom: str = "") -> str:
+    if remove_condition:
+        return ""
+    c = (condition or "").strip()
+    if not c:
+        return ""
+    # normalise opener (prefer “in/when/during/under/by” once only)
+    starters = ("in ", "when ", "during ", "under ", "by ", "based ")
+    if not c.lower().startswith(starters):
+        # heuristic: analysis/synthesis → “when”, practice → “in/under”
+        if str(bloom).lower() in ("analyze", "analyse", "evaluate", "evaluation", "create", "synthesize", "synthesis"):
+            c = "when " + c
+        else:
+            c = "in " + c
+    # spacing
+    return " ".join(c.split())
+
+def vbe_phrase(vbe: str, style: str = "guided") -> str:
+    vbe = (vbe or "").strip()
+    if not vbe:
+        return ""
+    style = (style or "guided").lower()
+    if style == "accordance":
+        return f"in accordance with {vbe.lower()}"
+    if style == "aligned":
+        return f"aligned with {vbe.lower()}"
+    # default “C” = guided
+    return f"guided by {vbe.lower()}"
+
+def sc_snippet(sc_desc: str) -> str:
+    return f"using {sc_desc.lower()}" if sc_desc else ""
 
 # ------------------------------------------------------------
 # ASSESSMENT & EVIDENCE
@@ -110,115 +145,79 @@ def get_assessment_and_evidence(bloom, domain):
     domain = str(domain).lower()
     sheet = "Assess_Affective_Psychomotor" if domain in ("affective", "psychomotor") else "Bloom_Assessments"
     df = load_sheet_df(sheet)
+
     if df.empty:
         return "", ""
+
     df.columns = [c.strip() for c in df.columns]
     bloom_col, assess_col, evid_col = df.columns[:3]
+
     mask = df[bloom_col].astype(str).str.lower() == str(bloom).lower()
+
     if not mask.any():
         return "", ""
+
     row = df[mask].iloc[0]
     return str(row[assess_col]).strip(), str(row[evid_col]).strip()
 
 # ------------------------------------------------------------
-# AUTO-POLISHING
-# ------------------------------------------------------------
-def tidy_spaces(s):
-    return " ".join(str(s or "").split())
-
-def polish_condition(condition, profile="", bloom="", domain=""):
-    """
-    Light normalizer so 'Condition = under what context' reads naturally and specifically.
-    Keeps your sheet-driven phrasing but adds specificity keywords per profile/domain.
-    """
-    base = tidy_spaces(condition)
-    if not base:
-        base = get_default_condition(domain)
-
-    # Ensure it starts with a context preposition
-    lowers = base.lower()
-    if not lowers.startswith(("in ", "within ", "during ", "under ", "based ", "using ", "when ")):
-        base = "in " + base
-
-    # Profile-specific nudge (non-destructive)
-    p = (profile or "").lower()
-    d = (domain or "").lower()
-
-    if p in ("", "health"):
-        base = base.replace("case scenarios", "authentic patient case scenarios")
-        base = base.replace("clinical data", "clinic and EMR data")
-
-    if p == "sc":
-        base = base.replace("case scenarios", "realistic problem sets or datasets")
-
-    if p == "eng":
-        base = base.replace("case scenarios", "design briefs or test rigs")
-
-    if p == "socs":
-        base = base.replace("case scenarios", "community or policy case scenarios")
-
-    if p == "edu":
-        base = base.replace("case scenarios", "lesson or classroom scenarios")
-
-    if p == "bus":
-        base = base.replace("case scenarios", "market or business case scenarios")
-
-    if p == "arts":
-        base = base.replace("case scenarios", "studio or performance briefs")
-
-    # Domain gentle tweak
-    if d == "psychomotor" and not any(w in lowers for w in ["simulated", "lab", "station", "practical"]):
-        base += " in simulated lab/practical stations"
-
-    return tidy_spaces(base)
-
-def polish_sentence(s):
-    s = tidy_spaces(s)
-    if not s:
-        return s
-    s = s[0].upper() + s[1:]
-    if not s.endswith("."):
-        s += "."
-    return s
-
-# ------------------------------------------------------------
 # CLO SENTENCE BUILDER
 # ------------------------------------------------------------
-def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
+def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe_text, vbe_style="guided"):
     parts = []
 
-    # Verb + content
-    if verb and content:
-        base = f"{verb.strip().lower()} {content.strip()}"
-    elif content:
-        base = content.strip()
-    else:
-        base = ""
-    base = base.strip()
-    if base:
-        parts.append(base)
+    # Verb in lower then sentence-case later
+    base = f"{str(verb).strip().lower()} {str(content).strip()}"
+    parts.append(base)
 
-    # SC description (skills/competencies)
-    if sc_desc:
-        parts.append(f"using {str(sc_desc).strip().lower()}")
+    # SC
+    sc_part = sc_snippet(sc_desc)
+    if sc_part:
+        parts.append(sc_part)
 
-    # Condition (context)
+    # Hybrid “by applying …” if the criterion sounds like performance standard
+    # otherwise we just append criterion as-is.
+    crit = (criterion or "").strip()
+    if crit:
+        # light polish: ensure not double “by”
+        if not crit.lower().startswith(("by ", "to ", "with ", "at ", "according ", "in ")):
+            crit = "to " + crit
+        parts.append(crit)
+
+    # Condition (optional, already polished)
     if condition:
-        c = condition.strip()
-        if not c.lower().startswith(("when", "during", "in", "within", "based", "under", "using")):
-            c = "in " + c
-        parts.append(c)
+        parts.append(condition)
 
-    # Criterion (quality/level)
-    if criterion:
-        parts.append(str(criterion).strip())
+    # VBE phrase (Option C default = guided by)
+    vbe_part = vbe_phrase(vbe_text, vbe_style)
+    if vbe_part:
+        parts.append(vbe_part)
 
-    # VBE (values)
-    if vbe:
-        parts.append(f"guided by {str(vbe).strip().lower()}")
+    sentence = " ".join([p for p in parts if p]).strip()
+    if sentence:
+        sentence = sentence[0].upper() + sentence[1:]
+        if not sentence.endswith("."):
+            sentence += "."
+    return sentence
 
-    sentence = " ".join([tidy_spaces(p) for p in parts if tidy_spaces(p)])
-    return polish_sentence(sentence)
+def variants(verb, content, sc_desc, condition, criterion, vbe_text, vbe_style="guided"):
+    """Return 3 polished alternatives (A/B/C) including a hybrid."""
+    # A: concise, no condition
+    a = construct_clo_sentence(verb, content, sc_desc, "", criterion, vbe_text, vbe_style)
+
+    # B: include condition
+    b = construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe_text, vbe_style)
+
+    # C: hybrid wording: “… by applying …” + condition
+    # reframe criterion to a doing-action when possible
+    crit = (criterion or "").strip()
+    if crit and not crit.lower().startswith("by "):
+        crit_h = "by " + crit.lstrip("to ").lstrip()
+    else:
+        crit_h = crit
+    c = construct_clo_sentence(verb, content, sc_desc, condition, crit_h, vbe_text, vbe_style)
+
+    return [a, b, c]
 
 # ------------------------------------------------------------
 # CLO TABLE
@@ -249,6 +248,27 @@ def index():
     table_html = df_ct.to_html(classes="table table-striped table-sm", index=False) if not df_ct.empty else "<p>No CLO records yet.</p>"
     return render_template("generator.html", plos=plos, table_html=table_html, profile=profile)
 
+@app.route("/api/get_meta/<plo>/<bloom>")
+def api_get_meta(plo, bloom):
+    """Meta endpoint the UI calls to auto-fill mapping + condition/criterion + assessment/evidence."""
+    profile = request.args.get("profile", "").strip().lower()
+    details = get_plo_details(plo, profile) or {}
+    domain = details.get("Domain", "")
+    criterion, condition = get_criterion_phrase(domain, bloom)
+    if not condition:
+        condition = get_default_condition(domain)
+    assessment, evidence = get_assessment_and_evidence(bloom, domain)
+    return jsonify({
+        "sc_code": details.get("SC_Code", ""),
+        "sc_desc": details.get("SC_Desc", ""),
+        "vbe": details.get("VBE", ""),
+        "domain": domain,
+        "condition": condition,
+        "criterion": criterion,
+        "assessment": assessment,
+        "evidence": evidence
+    })
+
 @app.route("/generate", methods=["POST"])
 def generate():
     profile = request.args.get("profile", "").strip().lower()
@@ -258,6 +278,8 @@ def generate():
     content = request.form.get("content")
     course = request.form.get("course")
     cw = request.form.get("cw")
+    include_condition = (request.form.get("include_condition", "1") == "1")
+    vbe_style = request.form.get("vbe_style", "guided")   # "guided" | "accordance" | "aligned"
 
     details = get_plo_details(plo, profile)
     if not details:
@@ -269,21 +291,23 @@ def generate():
     if not condition:
         condition = get_default_condition(domain)
 
-    # auto-assessment/evidence by bloom & domain
+    # Assessment/Evidence auto-fill
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
-    # auto-polish condition
-    polished_condition = polish_condition(condition, profile=profile, bloom=bloom, domain=domain)
+    # Polish condition or remove if requested
+    polished_condition = polish_condition(condition, remove_condition=not include_condition, profile=profile, bloom=bloom)
 
-    # build CLO
-    clo = construct_clo_sentence(
+    # Build variants (A/B/C)
+    clo_options = variants(
         verb=verb,
         content=content,
         sc_desc=details["SC_Desc"],
         condition=polished_condition,
         criterion=criterion,
-        vbe=details["VBE"]
+        vbe_text=details["VBE"],
+        vbe_style=vbe_style
     )
+    clo = clo_options[0]  # store A as the canonical record (shortest)
 
     # Save CLO into table
     df = read_clo_table()
@@ -303,33 +327,15 @@ def generate():
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     write_clo_table(df)
 
-    return jsonify({"clo": clo, "assessment": assessment, "evidence": evidence})
-
-@app.route("/api/get_meta/<plo>/<bloom>")
-def api_get_meta(plo, bloom):
-    """Single call the frontend uses to auto-fill everything after PLO + Bloom."""
-    profile = request.args.get("profile", "").strip().lower()
-    details = get_plo_details(plo, profile)
-    if not details:
-        return jsonify({})
-
-    domain = details["Domain"]
-    criterion, condition = get_criterion_phrase(domain, bloom)
-    if not condition:
-        condition = get_default_condition(domain)
-    condition = polish_condition(condition, profile=profile, bloom=bloom, domain=domain)
-
-    assessment, evidence = get_assessment_and_evidence(bloom, domain)
-
     return jsonify({
-        "sc_code": details.get("SC_Code", ""),
-        "sc_desc": details.get("SC_Desc", ""),
-        "vbe": details.get("VBE", ""),
-        "domain": domain,
-        "criterion": criterion,
-        "condition": condition,
+        "clo": clo,
+        "clo_options": clo_options,
         "assessment": assessment,
-        "evidence": evidence
+        "evidence": evidence,
+        "sc_code": details["SC_Code"],
+        "sc_desc": details["SC_Desc"],
+        "vbe": details["VBE"],
+        "domain": domain
     })
 
 @app.route("/api/get_blooms/<plo>")
@@ -339,12 +345,13 @@ def api_get_blooms(plo):
     if not details:
         return jsonify([])
 
-    domain = str(details["Domain"]).lower()
+    domain = details["Domain"].lower()
     sheetmap = {
         "cognitive": "Bloom_Cognitive",
         "affective": "Bloom_Affective",
         "psychomotor": "Bloom_Psychomotor"
     }
+
     df = load_sheet_df(sheetmap.get(domain))
     if df.empty:
         return jsonify([])
@@ -358,12 +365,13 @@ def api_get_verbs(plo, bloom):
     if not details:
         return jsonify([])
 
-    domain = str(details["Domain"]).lower()
+    domain = details["Domain"].lower()
     sheetmap = {
         "cognitive": "Bloom_Cognitive",
         "affective": "Bloom_Affective",
         "psychomotor": "Bloom_Psychomotor"
     }
+
     df = load_sheet_df(sheetmap.get(domain))
     if df.empty:
         return jsonify([])
@@ -372,17 +380,15 @@ def api_get_verbs(plo, bloom):
     if not mask.any():
         return jsonify([])
 
-    # verbs assumed in 2nd column comma-separated
-    return jsonify([v.strip() for v in str(df[mask].iloc[0, 1]).split(",") if v.strip()])
+    return jsonify([v.strip() for v in str(df[mask].iloc[0, 1]).split(",")])
 
 @app.route("/api/debug_plo/<plo>")
 def api_debug_plo(plo):
-    profile = request.args.get("profile","")
-    det = get_plo_details(plo, profile)
+    profile = request.args.get("profile", "")
     return jsonify({
         "plo": plo,
-        "details": det or {},
-        "exists": bool(det)
+        "details": get_plo_details(plo, profile) or {},
+        "exists": bool(get_plo_details(plo, profile))
     })
 
 @app.route("/reset_table")
@@ -412,6 +418,7 @@ def download():
     output = BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="CLO_Table")
+
     output.seek(0)
 
     return send_file(
