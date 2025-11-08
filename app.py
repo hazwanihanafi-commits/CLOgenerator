@@ -143,7 +143,8 @@ def generate():
     course = request.form.get("course")
     cw = request.form.get("cw")
 
-    details = get_plo_details(plo) or {}
+    profile = request.args.get("profile", "").strip().lower() or None
+    details = get_plo_details(plo, profile) or {}
     domain = details.get("Domain", "")
     sc_code = details.get("SC_Code", "")
     sc_desc = details.get("SC_Desc", "")
@@ -243,7 +244,8 @@ def reset_table():
 
 @app.route("/api/get_blooms/<plo>")
 def api_get_blooms(plo):
-    details = get_plo_details(plo)
+    profile = request.args.get("profile", "").strip().lower() or None
+    details = get_plo_details(plo, profile)
     if not details:
         return jsonify([])
     domain = details.get("Domain", "").strip().lower()
@@ -263,7 +265,8 @@ def api_get_blooms(plo):
 
 @app.route("/api/get_verbs/<plo>/<bloom>")
 def api_get_verbs(plo, bloom):
-    details = get_plo_details(plo)
+    profile = request.args.get("profile", "").strip().lower() or None
+    details = get_plo_details(plo, profile)
     if not details:
         return jsonify([])
     domain = details.get("Domain", "").strip().lower()
@@ -287,11 +290,13 @@ def api_get_verbs(plo, bloom):
 
 @app.route("/api/debug_plo/<plo>")
 def api_debug_plo(plo):
-    details = get_plo_details(plo)
+    profile = request.args.get("profile", "").strip().lower() or None
+    details = get_plo_details(plo, profile)
     return jsonify({"plo": plo, "details": details or {}, "exists": bool(details)})
 
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
