@@ -51,6 +51,27 @@ PROFILE_SHEET_MAP = {
 }
 
 # ============================================================
+# FULL NAME MAPPINGS FOR SC + VBE
+# ============================================================
+SC_FULLNAME = {
+    "SC1": "Apply ethics professionally",
+    "SC2": "Work collaboratively in teams",
+    "SC3": "Communicate effectively",
+    "SC4": "Critical and analytical thinking",
+    "SC5": "Problem-solving and decision-making",
+    "SC6": "Digital and information literacy",
+    "SC7": "Leadership and responsibility",
+    "SC8": "Lifelong learning capability"
+}
+
+VBE_FULLNAME = {
+    "Ethics & Etiquette": "Ethical and professional conduct",
+    "Integrity": "Integrity and trustworthiness",
+    "Respect": "Mutual respect and inclusivity",
+    "Professionalism": "Professional behaviour and accountability"
+}
+
+# ============================================================
 # EXCEL HELPERS
 # ============================================================
 def load_sheet_df(sheet_name: str):
@@ -252,11 +273,22 @@ def generate():
     vbe_style = request.form.get("vbe_style", "guided")
 
     details = get_plo_details(plo, profile)
+    sc_code = details["SC_Code"]
+    sc_desc = details["SC_Desc"]
+    vbe_raw = details["VBE"]
+
+    # lookup full names
+    sc_full = SC_FULLNAME.get(sc_code, sc_desc)
+    vbe_full = VBE_FULLNAME.get(vbe_raw, vbe_raw)
+
     if not details:
-        return jsonify({"error":"PLO not found"}), 400
+        return jsonify({"error": "PLO not found"}), 400
 
     domain = details["Domain"].lower()
 
+    # ------------------------------
+    # Criterion + Condition
+    # ------------------------------
     criterion, condition_raw = get_criterion_phrase(domain, bloom)
     if not condition_raw:
         condition_raw = get_default_condition(domain)
@@ -267,30 +299,75 @@ def generate():
     else:
         condition_core = condition_raw
 
+    # ------------------------------
+    # MAIN CLO
+    # ------------------------------
     clo = construct_clo_sentence(
-        verb, content, details["SC_Desc"], condition_core,
-        criterion, details["VBE"], domain, vbe_style
+        verb, content, sc_desc, condition_core,
+        criterion, vbe_full, domain, vbe_style
     )
 
-    pure_condition = condition_core.lower().strip()
-    for lead in ("when ","by "):
+    # ----------------------------------------------------
+    # VARIANTS (Cognitive + Psychomotor, no duplicate shape)
+    # ----------------------------------------------------
+
+    # Helper: short SC phrase (full-name version)
+    def sc_snippet(desc):
+        return f"based on {desc.lower()}"
+
+    # Helper: VBE phrase style (full-name version)
+    def vbe_phrase(vbe_val, style):
+        if style == "guided":
+            return f"guided by {vbe_val}"
+        if style == "accordance":
+            return f"in accordance with {vbe_val}"
+        if style == "aligned":
+            return f"aligned with {vbe_val}"
+        return f"guided by {vbe_val}"
+    
+    # Clean condition for remixing
+    pure_condition = (condition_core or "").lower().strip()
+    for lead in ("when ", "by "):
         if pure_condition.startswith(lead):
             pure_condition = pure_condition[len(lead):].strip()
             break
 
-    clo_a = construct_clo_sentence(verb, content, details["SC_Desc"], pure_condition, criterion, details["VBE"], "cognitive", vbe_style)
-    clo_b = construct_clo_sentence(verb, content, details["SC_Desc"], pure_condition, criterion, details["VBE"], "psychomotor", vbe_style)
-    clo_c = construct_clo_sentence(verb, content, details["SC_Desc"], pure_condition, criterion, details["VBE"], domain, vbe_style)
+    # Variant 1 – Cognitive emphasis (understanding)
+    clo_cognitive = (
+        f"{verb.lower()} {content} {sc_snippet(sc_desc)} "
+        f"to understand {pure_condition} {criterion} "
+        f"{vbe_phrase(vbe_full, vbe_style)}."
+    ).capitalize()
 
+    # Variant 2 – Psychomotor emphasis (action)
+    clo_psychomotor = (
+        f"{verb.lower()} {content} {sc_snippet(sc_desc)} "
+        f"by performing {pure_condition} {criterion} "
+        f"{vbe_phrase(vbe_full, vbe_style)}."
+    ).capitalize()
+
+    clo_options = {
+        "Cognitive Variant": clo_cognitive,
+        "Psychomotor Variant": clo_psychomotor
+    }
+
+    # ------------------------------
+    # Assessment + Rubric
+    # ------------------------------
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
-    rubric = rubric_generator(clo, verb, criterion, condition_core, details["SC_Desc"], details["VBE"])
-
-    mapping_full = (
-        f"SC Code: {details['SC_Code']} — SC Description: {details['SC_Desc']} | "
-        f"VBE: {details['VBE']}"
+    rubric = rubric_generator(
+        clo, verb, criterion, condition_core, sc_desc, vbe_full
     )
 
+    mapping_full = (
+        f"SC Code: {sc_code} — SC Description: {sc_desc} | "
+        f"VBE: {vbe_full}"
+    )
+
+    # ------------------------------
+    # Save to History Excel
+    # ------------------------------
     df = read_clo_table()
     new_row = {
         "ID": len(df)+1 if not df.empty else 1,
@@ -309,9 +386,12 @@ def generate():
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     write_clo_table(df)
 
+    # ------------------------------
+    # Final API Output
+    # ------------------------------
     return jsonify({
         "clo": clo,
-        "clo_options": {"A": clo_a, "B": clo_b, "C": clo_c},
+        "clo_options": clo_options,
         "assessment": assessment,
         "evidence": evidence,
         "rubric": rubric,
@@ -320,6 +400,7 @@ def generate():
         "vbe": details["VBE"],
         "domain": domain
     })
+
 # ============================================================
 # API ROUTES (BLOOMS, VERBS, META)
 # ============================================================
@@ -466,6 +547,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
