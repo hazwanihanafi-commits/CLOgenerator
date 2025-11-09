@@ -234,10 +234,7 @@ def index():
 
     plos = df_map[df_map.columns[0]].dropna().astype(str).tolist() if not df_map.empty else []
 
-    df_ct = read_clo_table()
-    table_html = df_ct.to_html(classes="table table-sm table-striped", index=False) if not df_ct.empty else "<p>No CLO records yet.</p>"
-
-    return render_template("generator.html", plos=plos, table_html=table_html, profile=profile)
+    return render_template("generator.html", plos=plos, profile=profile)
 
 # ============================================================
 # GENERATE CLO
@@ -469,5 +466,6 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
