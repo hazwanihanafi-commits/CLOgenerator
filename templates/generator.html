@@ -52,11 +52,6 @@
     <!-- Tabs -->
     <ul class="nav nav-pills mb-3">
       <li class="nav-item">
-        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#tabGenerate">
-          <i class="bi bi-pencil-square me-1"></i>Generate CLO
-        </button>
-      </li>
-      <li class="nav-item">
         <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabHistory">
           <i class="bi bi-table me-1"></i>History
         </button>
@@ -265,32 +260,6 @@
         </div>
 
       </div> <!-- end tab -->
-
-      <!-- HISTORY TAB -->
-      <div class="tab-pane fade" id="tabHistory">
-        <div class="card mt-3">
-          <div class="card-header">
-            <span class="icon-badge"><i class="bi bi-clock-history"></i></span> CLO History
-          </div>
-          <div class="card-body">
-
-            <div id="historyPlaceholder" class="text-muted text-center">
-              History is hidden for privacy.
-              <br>
-              <button id="loadHistoryBtn" class="btn btn-outline-primary mt-2">Show</button>
-            </div>
-
-            <div id="historyArea" style="display:none;">
-              <div id="historyHTML"></div>
-            </div>
-
-            <template id="serverTable">
-              {{ table_html|safe }}
-            </template>
-
-          </div>
-        </div>
-      </div>
 
     </div>
 
