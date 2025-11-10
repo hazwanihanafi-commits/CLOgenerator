@@ -346,9 +346,22 @@ def generate():
         f"{vbe_phrase(vbe_full, vbe_style)}."
     ).capitalize()
 
+    # -------------------------------------------
+    # PICK ONE alternative ONLY (automatic logic)
+    # -------------------------------------------
+
+    # Auto-select alternative:
+    # If domain is psychomotor-heavy → use psychomotor variant
+    # If cognitive-heavy → use cognitive variant
+    # If neither → default cognitive
+    if domain in ("psychomotor", "psycho", "skills"):
+        alt = clo_psychomotor
+    else:
+        alt = clo_cognitive
+
+    # Return ONLY one alternative
     clo_options = {
-        "Cognitive Variant": clo_cognitive,
-        "Psychomotor Variant": clo_psychomotor
+        "Alternative": alt
     }
 
     # ------------------------------
@@ -547,6 +560,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
