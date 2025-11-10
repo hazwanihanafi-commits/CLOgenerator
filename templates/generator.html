@@ -314,10 +314,7 @@ const profileFromURL = params.get("profile");
 if (profileFromURL) {
     profileSel.value = profileFromURL;
     profileHidden.value = profileFromURL;
-
-    // ✅ Add this so placeholders follow the correct discipline
-    if (typeof updateContentPlaceholder === "function") {
-        updateContentPlaceholder();
+    updateContentPlaceholder(); 
     }
 }
 
@@ -327,6 +324,29 @@ if (profileFromURL) {
 const toggleBtn  = document.getElementById("toggleVariants");
 const variantBox = document.getElementById("variantContainer");
 const altOptions = document.getElementById("altOptions");
+
+  /* ============================================================
+   PLACEHOLDER UPDATE FUNCTION (required to avoid errors)
+============================================================ */
+function updateContentPlaceholder() {
+    const contentInput = document.querySelector('input[name="content"]');
+    if (!contentInput) return;
+
+    const contentPlaceholderMap = {
+      "health": ["e.g., ECG waveforms","e.g., patient functional assessment data","e.g., clinical rehabilitation outcomes"],
+      "sc":     ["e.g., algorithm complexity output","e.g., debugging logs","e.g., API response datasets"],
+      "eng":    ["e.g., circuit voltage measurements","e.g., CAD structural parameters","e.g., stress–strain test results"],
+      "socs":   ["e.g., demographic indicators","e.g., social behaviour observations","e.g., qualitative interview codes"],
+      "edu":    ["e.g., learning outcome progression","e.g., student performance profiles","e.g., instructional design components"],
+      "bus":    ["e.g., financial ratio analysis","e.g., market segmentation data","e.g., strategic planning matrices"],
+      "arts":   ["e.g., visual composition elements","e.g., colour harmony structures","e.g., creative concept variations"]
+    };
+
+    const profile = profileSel.value || "health";
+    const options = contentPlaceholderMap[profile] || ["Enter content here"];
+    
+    contentInput.placeholder = options[Math.floor(Math.random() * options.length)];
+}
 
 /* ============================================================
    HELPERS
