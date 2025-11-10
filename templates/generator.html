@@ -504,23 +504,21 @@ form.addEventListener("submit", async (e) => {
     document.getElementById("cloPreviewText").innerText = data.clo || "";
 
     /* Render variants */
-    altOptions.innerHTML = "";
-    variantBox.style.display = "none";  
-    toggleBtn.innerHTML = `<i class="bi bi-list-ul"></i> Show Variants`;
+altOptions.innerHTML = "";  // clear only
 
-    const variants = data.clo_options || {};
-    Object.entries(variants).forEach(([label, text]) => {
-        const div = document.createElement("div");
-        div.className = "variant-item p-2 mb-2 border rounded";
-        div.style.cursor = "pointer";
-        div.innerHTML = `<strong>${label}:</strong> ${text}`;
+const variants = data.clo_options || {};
+Object.entries(variants).forEach(([label, text]) => {
+    const div = document.createElement("div");
+    div.className = "variant-item p-2 mb-2 border rounded";
+    div.style.cursor = "pointer";
+    div.innerHTML = `<strong>${label}:</strong> ${text}`;
 
-        div.onclick = () => {
-            document.getElementById("cloPreviewText").innerText = text;
-        };
+    div.onclick = () => {
+        document.getElementById("cloPreviewText").innerText = text;
+    };
 
-        altOptions.appendChild(div);
-    });
+    altOptions.appendChild(div);
+});
 
     /* Assessment + Evidence */
     assessEl.value = data.assessment || "";
