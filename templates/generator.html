@@ -121,107 +121,136 @@
               </div>
             </div>
 
-            <!-- CLO Builder -->
+           <!-- CLO Builder -->
 <div class="col-12">
   <div class="card">
     <div class="card-header bg-white border-0 fw-semibold">
       <span class="icon-badge"><i class="bi bi-pencil"></i></span>
       CLO Builder
     </div>
+
     <div class="card-body">
 
+      <!-- Content -->
       <label class="form-label">Content *</label>
       <input name="content" class="form-control" placeholder="e.g., ECG waveforms" required />
 
+      <!-- Condition + Criterion + CW -->
       <div class="row mt-3">
         <div class="col-md-4">
           <label class="form-label">Condition</label>
           <input id="condition" class="form-control" readonly />
         </div>
+
         <div class="col-md-4">
           <label class="form-label">Criterion</label>
           <input id="criterion" class="form-control" readonly />
         </div>
+
         <div class="col-md-4">
           <label class="form-label">Assessment %</label>
           <input type="number" name="cw" min="0" max="100" class="form-control" />
         </div>
       </div>
 
-      <!-- ✅ Info Box (correct placement INSIDE the card-body) -->
+      <!-- ✅ Updated Info Box -->
       <div class="alert alert-info mt-4" style="border-radius:12px;">
         <h6 class="fw-bold mb-2">What are Condition and Criterion?</h6>
 
         <p class="mb-1">
           <strong>Condition</strong> describes the context or situation in which the learner performs the task.
           It specifies <em>when, where, or under what constraints</em> the performance should occur.
+          Examples include: <em>when applying methods</em>, <em>when analysing task requirements</em>, or
+          <em>by performing relevant skills</em>.
         </p>
 
         <p class="mb-0">
-          <strong>Criterion</strong> defines the expected level of quality or standard of performance.
-          It clarifies <em>how well</em> the learner must complete the task to meet the CLO.
+          <strong>Criterion</strong> represents the <em>professional, ethical, and quality standard</em> that guides performance.
+          In this generator, the criterion follows the selected VBE attribute, such as
+          <em>guided by ethics & professionalism</em>, <em>demonstrating integrity in judgement</em>,
+          <em>aligned with practice standards</em>, or <em>grounded in honesty & integrity</em>.
+          It reflects the <em>expected ethical and professional conduct</em> required when achieving the CLO.
         </p>
       </div>
 
+    </div> <!-- end card-body -->
+  </div> <!-- end CLO Builder card -->
+</div> <!-- end col-12 -->
+
+
+<!-- ✅ Assessment Card (SEPARATE CARD, CORRECT POSITION) -->
+<div class="col-12 mt-4">
+  <div class="card">
+    <div class="card-header bg-white border-0 fw-semibold">
+      <span class="icon-badge"><i class="bi bi-clipboard-check"></i></span>
+      Assessment
+    </div>
+
+    <div class="card-body">
+
+      <label class="form-label">Assessment</label>
+      <input id="assessment" class="form-control" readonly />
+
+      <label class="form-label mt-3">Evidence</label>
+      <input id="evidence" class="form-control" readonly />
+
+      <div class="d-flex justify-content-between flex-wrap gap-2 mt-4">
+
+        <div class="btn-group">
+          <a href="/download" class="btn btn-outline-success">
+            <i class="bi bi-download"></i> Download CLO Table
+          </a>
+          <a href="/download_rubric" class="btn btn-outline-secondary">
+            <i class="bi bi-file-earmark-spreadsheet"></i> Download Rubric
+          </a>
+        </div>
+
+        <button type="submit" class="btn btn-brand">
+          <i class="bi bi-magic"></i> Generate CLO
+        </button>
+
+      </div>
     </div>
   </div>
 </div>
 
-
-            <!-- Assessment & Actions -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header bg-white border-0 fw-semibold">
-                  <span class="icon-badge"><i class="bi bi-clipboard-check"></i></span>
-                  Assessment
-                </div>
-                <div class="card-body">
-                  <label class="form-label">Assessment</label>
-                  <input id="assessment" class="form-control" readonly />
-
-                  <label class="form-label mt-3">Evidence</label>
-                  <input id="evidence" class="form-control" readonly />
-
-                  <div class="d-flex justify-content-between flex-wrap gap-2 mt-4">
-                    <div class="btn-group">
-                      <a href="/download" class="btn btn-outline-success">
-                        <i class="bi bi-download"></i> Download CLO Table
-                      </a>
-                      <a href="/download_rubric" class="btn btn-outline-secondary">
-                        <i class="bi bi-file-earmark-spreadsheet"></i> Download Rubric
-                      </a>
-                    </div>
-
-                    <button type="submit" class="btn btn-brand">
-                      <i class="bi bi-magic"></i> Generate CLO
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div> <!-- /row -->
-        </div> <!-- /card-body -->
-      </form>
+    <!-- CLO Preview (Main + Variant List) -->
+<div class="card card-elev mt-3" id="cloPreviewCard" style="display:none;">
+  <div class="card-header bg-white border-0 fw-semibold d-flex justify-content-between align-items-center">
+    <div>
+      <span class="icon-badge"><i class="bi bi-lightbulb"></i></span>
+      Generated CLO
     </div>
 
-    <!-- CLO Preview (Main + One Alternative) -->
-    <div class="card card-elev mt-3" id="cloPreviewCard" style="display:none;">
-      <div class="card-header bg-white border-0 fw-semibold d-flex justify-content-between align-items-center">
-        <div>
-          <span class="icon-badge"><i class="bi bi-lightbulb"></i></span>
-          Generated CLO
-        </div>
-        <button id="copyCloBtn" class="btn btn-outline-secondary btn-sm">
-          <i class="bi bi-clipboard"></i> Copy
-        </button>
+    <button id="copyCloBtn" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-clipboard"></i> Copy
+    </button>
+  </div>
+
+  <div class="card-body">
+
+    <!-- Main CLO text -->
+    <p id="cloPreviewText" class="lead mb-3"></p>
+
+    <!-- Header + Toggle Button -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="small text-muted fw-semibold">
+        Alternative Variants:
       </div>
-      <div class="card-body">
-        <p id="cloPreviewText" class="lead mb-3"></p>
-        <div class="small text-muted mb-2">Alternative:</div>
-        <div id="altOptions"></div>
-      </div>
+
+      <button id="toggleVariants" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-list-ul"></i> Show Variants
+      </button>
     </div>
+
+    <!-- Collapsible Variant Box -->
+    <div id="variantContainer" style="display:none;">
+      <div id="altOptions" class="mt-2"></div>
+    </div>
+
+  </div>
+</div>
+
 
     <!-- Rubric -->
     <div class="card card-elev mt-3" id="rubricCard" style="display:none;">
@@ -242,17 +271,82 @@
 
   </main>
 
-  <!-- FOOTER -->
- <footer class="text-center mt-5 mb-4 small text-muted">
+<!-- FOOTER -->
+<footer class="text-center mt-5 mb-4 small text-muted">
   <strong>SCLOG Generator</strong><br>
   Developed by Assoc. Prof. Dr. Hazwani Ahmad Yusof@Hanafi<br>
   Advanced Medical and Dental Institute (AMDI), Universiti Sains Malaysia (USM)
 </footer>
 
-  <!-- JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
+/* ============================================================
+   VARIANT TOGGLE + RENDERING (NEW)
+============================================================ */
+
+const toggleBtn = document.getElementById("toggleVariants");
+const variantBox = document.getElementById("variantContainer");
+const altOptions = document.getElementById("altOptions");
+
+if (toggleBtn) {
+    toggleBtn.addEventListener("click", () => {
+        if (variantBox.style.display === "none") {
+            variantBox.style.display = "block";
+            toggleBtn.innerHTML = `<i class="bi bi-eye-slash"></i> Hide Variants`;
+        } else {
+            variantBox.style.display = "none";
+            toggleBtn.innerHTML = `<i class="bi bi-list-ul"></i> Show Variants`;
+        }
+    });
+}
+
+/* ============================================================
+   RENDER VARIANTS AFTER CLO GENERATION
+============================================================ */
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const resp = await fetch("/generate" + suffix(), {
+        method: "POST",
+        body: new FormData(form)
+    });
+
+    const data = await resp.json();
+
+    // Show main CLO
+    document.getElementById('cloPreviewCard').style.display = 'block';
+    document.getElementById('cloPreviewText').innerText = data.clo || "";
+
+    // Render Variants
+    altOptions.innerHTML = "";
+    variantBox.style.display = "none"; // collapsed default
+    toggleBtn.innerHTML = `<i class="bi bi-list-ul"></i> Show Variants`;
+
+    const variants = data.clo_options || {};
+
+    Object.entries(variants).forEach(([label, text]) => {
+        const div = document.createElement("div");
+        div.className = "variant-item p-2 mb-2 border rounded";
+        div.style.cursor = "pointer";
+        div.innerHTML = `<strong>${label}:</strong> ${text}`;
+
+        div.onclick = () => {
+            document.getElementById('cloPreviewText').innerText = text;
+        };
+
+        altOptions.appendChild(div);
+    });
+
+    // Update Assessment + Evidence
+    assessEl.value = data.assessment || "";
+    evidEl.value = data.evidence || "";
+
+    // Update Rubric
+    populateRubric(data.rubric);
+});
+</script>
+
  /* --------------------------------------------------
    ELEMENTS (must be global)
 -------------------------------------------------- */
