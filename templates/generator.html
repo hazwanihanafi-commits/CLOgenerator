@@ -234,65 +234,75 @@
   <!-- JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script>
-  /* --------------------------------------------------
-     AUTO-SELECT PROFILE FROM URL
-  -------------------------------------------------- */
+<script>
+ /* --------------------------------------------------
+   ELEMENTS (must be global)
+-------------------------------------------------- */
+const profileSel   = document.getElementById('profile');
+const profileHidden= document.getElementById('profileHidden');
+const ploSel       = document.getElementById('plo');
+const bloomSel     = document.getElementById('bloom');
+const verbSel      = document.getElementById('verb');
+
+const scCode  = document.getElementById('sc_code');
+const scDesc  = document.getElementById('sc_desc');
+const vbe     = document.getElementById('vbe');
+const domain  = document.getElementById('domain');
+
+const condEl   = document.getElementById('condition');
+const critEl   = document.getElementById('criterion');
+const assessEl = document.getElementById('assessment');
+const evidEl   = document.getElementById('evidence');
+
+const form = document.getElementById('cloForm');
+
+/* --------------------------------------------------
+   DISCIPLINE PLACEHOLDERS
+-------------------------------------------------- */
+const contentInput = document.querySelector('input[name="content"]');
+
+const contentPlaceholderMap = {
+  "health": ["e.g., ECG waveforms","e.g., patient functional assessment data","e.g., clinical rehabilitation outcomes"],
+  "sc":     ["e.g., algorithm complexity output","e.g., debugging logs","e.g., API response datasets"],
+  "eng":    ["e.g., circuit voltage measurements","e.g., CAD structural parameters","e.g., stress–strain test results"],
+  "socs":   ["e.g., demographic indicators","e.g., social behaviour observations","e.g., qualitative interview codes"],
+  "edu":    ["e.g., learning outcome progression","e.g., student performance profiles","e.g., instructional design components"],
+  "bus":    ["e.g., financial ratio analysis","e.g., market segmentation data","e.g., strategic planning matrices"],
+  "arts":   ["e.g., visual composition elements","e.g., colour harmony structures","e.g., creative concept variations"]
+};
+
+function updateContentPlaceholder() {
+  const profile = profileSel.value || "";
+  const options = contentPlaceholderMap[profile] || ["Enter content here"];
+  contentInput.placeholder = options[Math.floor(Math.random()*options.length)];
+}
+
+/* --------------------------------------------------
+   AUTO-SELECT PROFILE FROM URL
+-------------------------------------------------- */
+document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const profileFromURL = params.get("profile");
 
-  document.addEventListener("DOMContentLoaded", () => {
-      const sel = document.getElementById("profile");
-      if (sel && profileFromURL) {
-          sel.value = profileFromURL;
-      }
-  });
-
-  /* ============== ELEMENTS ============== */
-  const profileSel   = document.getElementById('profile');
-  const profileHidden= document.getElementById('profileHidden');
-  const ploSel       = document.getElementById('plo');
-  const bloomSel     = document.getElementById('bloom');
-  const verbSel      = document.getElementById('verb');
-
-  const scCode = document.getElementById('sc_code');
-  const scDesc = document.getElementById('sc_desc');
-  const vbe    = document.getElementById('vbe');
-  const domain = document.getElementById('domain');
-
-  const condEl   = document.getElementById('condition');
-  const critEl   = document.getElementById('criterion');
-  const assessEl = document.getElementById('assessment');
-  const evidEl   = document.getElementById('evidence');
-
-  const form = document.getElementById('cloForm');
-
-  /* ============== DISCIPLINE PLACEHOLDER ============== */
-  const contentInput = document.querySelector('input[name="content"]');
-  const contentPlaceholderMap = {
-    "": ["e.g., ECG waveforms","e.g., respiratory function indicators","e.g., exercise metabolism responses"],
-    "health": ["e.g., ECG waveforms","e.g., patient functional assessment data","e.g., clinical exercise prescription parameters"],
-    "sc": ["e.g., algorithm complexity results","e.g., API response logs","e.g., software test cases"],
-    "eng": ["e.g., circuit load measurements","e.g., CAD model specifications","e.g., stress-strain datasets"],
-    "socs": ["e.g., demographic survey datasets","e.g., community behavioural indicators","e.g., qualitative interview themes"],
-    "edu": ["e.g., lesson plan structure","e.g., student learning profiles","e.g., assessment rubric elements"],
-    "bus": ["e.g., financial ratio trends","e.g., market segmentation data","e.g., strategic planning frameworks"],
-    "arts": ["e.g., colour theory elements","e.g., visual composition structures","e.g., creative conceptual briefs"]
-  };
-  function updateContentPlaceholder() {
-    const profile = profileSel.value || "";
-    const options = contentPlaceholderMap[profile] || ["Enter content here"];
-    contentInput.placeholder = options[Math.floor(Math.random()*options.length)];
+  if (profileFromURL && profileSel) {
+    profileSel.value = profileFromURL;
   }
-  profileSel.addEventListener("change", () => {
-    // also refresh page query so backend uses mapped sheet
-    const url = new URL(window.location.href);
-    if (profileSel.value) url.searchParams.set('profile', profileSel.value);
-    else url.searchParams.delete('profile');
-    window.location.href = url.toString();
-  });
-  // run once on load
-  updateContentPlaceholder();
+
+  updateContentPlaceholder();   // <<< THIS MUST RUN HERE
+});
+
+/* --------------------------------------------------
+   ON PROFILE CHANGE → reload page for backend
+-------------------------------------------------- */
+profileSel.addEventListener("change", () => {
+  const url = new URL(window.location.href);
+  if (profileSel.value) {
+      url.searchParams.set("profile", profileSel.value);
+  } else {
+      url.searchParams.delete("profile");
+  }
+  window.location.href = url.toString();
+});
 
   /* ============== HELPERS ============== */
   function suffix() {
