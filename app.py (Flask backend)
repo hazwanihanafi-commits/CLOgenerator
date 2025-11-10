@@ -253,79 +253,30 @@ def download():
                      mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 def construct_clo_sentence(verb, content, sc_desc, condition, criterion, vbe):
     """
-    Improved CLO sentence builder.
-    Handles grammar, spacing, casing, repetition, and universal structure.
+    Custom CLO Template aligned with MQA + VBE + Sustainability Competency (SC).
+
+    Final CLO structure:
+    [Verb] [Content]
+    using anticipatory thinking
+    by effectively performing tasks that involve analyzing task requirements,
+    guided by ethics and professionalism.
     """
 
-    # Clean inputs
-    verb = (verb or "").strip().capitalize()
-    content = (content or "").strip()
-    sc_desc = (sc_desc or "").strip()
-    condition = (condition or "").strip()
-    criterion = (criterion or "").strip()
-    vbe = (vbe or "").strip()
+    # Fixed SC and VBE (MQA requirement)
+    thinking = "anticipatory thinking"
+    action   = "effectively performing tasks that involve analyzing task requirements"
+    vbe_part = "guided by ethics and professionalism"
 
-    parts = []
+    # Build final CLO text
+    clo = (
+        f"{verb.capitalize()} {content} "
+        f"using {thinking} "
+        f"by {action}, "
+        f"{vbe_part}."
+    )
 
-    # -----------------------------------
-    # 1. VERB + CONTENT
-    # -----------------------------------
-    base = f"{verb} {content}"
-    parts.append(base)
+    return clo
 
-    # -----------------------------------
-    # 2. INSERT 'using SC description'
-    # (avoid double 'using', e.g. user content already contains 'using')
-    # -----------------------------------
-    if sc_desc:
-        cleaned_sc = sc_desc.lower()
-        if "using" not in content.lower():
-            parts.append(f"using {cleaned_sc}")
-        else:
-            # Content already uses SC; do not repeat
-            pass
-
-    # -----------------------------------
-    # 3. INSERT CONDITION
-    # Enforce correct grammar: starts with when/during/in/under/based on
-    # -----------------------------------
-    if condition:
-        c = condition.lower()
-        if not c.startswith(("when", "during", "under", "based", "in")):
-            c = "when " + c
-        parts.append(c)
-
-    # -----------------------------------
-    # 4. INSERT CRITERION (quality level)
-    # -----------------------------------
-    if criterion:
-        criterion_clean = criterion
-        # avoid double "demonstrating"/"showing" if user already included
-        lower = criterion_clean.lower()
-        if lower.startswith(("and", "when")):
-            criterion_clean = criterion_clean[3:].strip()
-        parts.append(criterion_clean)
-
-    # -----------------------------------
-    # 5. INSERT VBE (Values & Professionalism)
-    # -----------------------------------
-    if vbe:
-        parts.append(f"guided by {vbe.lower()}")
-
-    # -----------------------------------
-    # 6. FINAL CLEANUP
-    # -----------------------------------
-    sentence = " ".join(parts)
-    sentence = sentence[0].upper() + sentence[1:]  # Capitalize first letter
-
-    # Ensure period
-    if not sentence.endswith("."):
-        sentence += "."
-
-    # Fix double spaces
-    sentence = " ".join(sentence.split())
-
-    return sentence
 def polish_condition(raw_condition, profile=None, bloom=None):
     """
     Refines 'Condition = under what context' into elegant, academic phrasing.
