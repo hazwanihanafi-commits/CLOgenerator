@@ -54,13 +54,13 @@ PROFILE_SHEET_MAP = {
 # VBE → CRITERION MAP (Overrides Bloom Criterion)
 # ============================================================
 VBE_CRITERION = {
-    "Ethics & Professionalism": "Guided by ethics and professionalism",
+    "Ethics and Professionalism": "Guided by ethics and professionalism",
     "Professional practice standards": "Aligned with professional practice standards",
     "Integrity": "Demonstrating integrity in judgement",
-    "Ethics & Etiquette": "Guided by ethical and professional etiquette",
-    "Professionalism & Teamwork": "Demonstrating professionalism and effective teamwork",
-    "Professionalism & Well-being": "Upholding professionalism and personal well-being",
-    "Honesty & Integrity": "Guided by honesty and integrity",
+    "Ethics and Etiquette": "Guided by ethical and professional etiquette",
+    "Professionalism and Teamwork": "Demonstrating professionalism and effective teamwork",
+    "Professionalism and Well-being": "Upholding professionalism and personal well-being",
+    "Honesty and Integrity": "Guided by honesty and integrity",
     "Professional conduct": "Demonstrating responsible and professional conduct"
 }
 
@@ -79,7 +79,7 @@ SC_FULLNAME = {
 }
 
 VBE_FULLNAME = {
-    "Ethics & Etiquette": "Ethical and professional conduct",
+    "Ethics and Etiquette": "Ethical and professional conduct",
     "Integrity": "Integrity and trustworthiness",
     "Respect": "Mutual respect and inclusivity",
     "Professionalism": "Professional behaviour and accountability"
@@ -636,6 +636,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
