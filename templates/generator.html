@@ -18,7 +18,7 @@
   <nav class="navbar navbar-expand-lg navbar-dark bg-brand py-3 shadow-sm">
     <div class="container">
       <span class="navbar-brand fw-semibold">
-        <i class="bi bi-stars me-2"></i> SCLOG CLO Generator
+        <i class="bi bi-stars me-2"></i> SCLOG Smart Course Learning Outcome Generator
       </span>
 
       <div class="ms-auto d-flex align-items-center gap-2">
@@ -122,33 +122,51 @@
             </div>
 
             <!-- CLO Builder -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header bg-white border-0 fw-semibold">
-                  <span class="icon-badge"><i class="bi bi-pencil"></i></span>
-                  CLO Builder
-                </div>
-                <div class="card-body">
-                  <label class="form-label">Content *</label>
-                  <input name="content" class="form-control" placeholder="e.g., ECG waveforms" required />
+<div class="col-12">
+  <div class="card">
+    <div class="card-header bg-white border-0 fw-semibold">
+      <span class="icon-badge"><i class="bi bi-pencil"></i></span>
+      CLO Builder
+    </div>
+    <div class="card-body">
 
-                  <div class="row mt-3">
-                    <div class="col-md-4">
-                      <label class="form-label">Condition</label>
-                      <input id="condition" class="form-control" readonly />
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Criterion</label>
-                      <input id="criterion" class="form-control" readonly />
-                    </div>
-                    <div class="col-md-4">
-                      <label class="form-label">Assessment %</label>
-                      <input type="number" name="cw" min="0" max="100" class="form-control" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+      <label class="form-label">Content *</label>
+      <input name="content" class="form-control" placeholder="e.g., ECG waveforms" required />
+
+      <div class="row mt-3">
+        <div class="col-md-4">
+          <label class="form-label">Condition</label>
+          <input id="condition" class="form-control" readonly />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Criterion</label>
+          <input id="criterion" class="form-control" readonly />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Assessment %</label>
+          <input type="number" name="cw" min="0" max="100" class="form-control" />
+        </div>
+      </div>
+
+      <!-- ✅ Info Box (correct placement INSIDE the card-body) -->
+      <div class="alert alert-info mt-4" style="border-radius:12px;">
+        <h6 class="fw-bold mb-2">What are Condition and Criterion?</h6>
+
+        <p class="mb-1">
+          <strong>Condition</strong> describes the context or situation in which the learner performs the task.
+          It specifies <em>when, where, or under what constraints</em> the performance should occur.
+        </p>
+
+        <p class="mb-0">
+          <strong>Criterion</strong> defines the expected level of quality or standard of performance.
+          It clarifies <em>how well</em> the learner must complete the task to meet the CLO.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</div>
+
 
             <!-- Assessment & Actions -->
             <div class="col-12">
