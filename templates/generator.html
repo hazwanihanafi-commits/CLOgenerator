@@ -424,9 +424,16 @@ toggleBtn.addEventListener("click", () => {
 });
 
 /* ============================================================
-   SUBMIT → GENERATE CLO
+   COPY BUTTON
 ============================================================ */
-form.addEventListener("submit", async e => {
+document.getElementById("copyCloBtn").addEventListener("click", async () => {
+    const text = document.getElementById("cloPreviewText").innerText.trim();
+    if (text) await navigator.clipboard.writeText(text);
+});
+/* ============================================================
+   SUBMIT → Generate CLO + Variants + Rubric
+============================================================ */
+form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const resp = await fetch("/generate" + suffix(), {
@@ -435,34 +442,35 @@ form.addEventListener("submit", async e => {
     });
     const data = await resp.json();
 
+    /* Show CLO preview */
     document.getElementById("cloPreviewCard").style.display = "block";
-    document.getElementById("cloPreviewText").innerText = data.clo;
+    document.getElementById("cloPreviewText").innerText = data.clo || "";
 
+    /* Render variants */
     altOptions.innerHTML = "";
-    variantBox.style.display = "none";
+    variantBox.style.display = "none";  
     toggleBtn.innerHTML = `<i class="bi bi-list-ul"></i> Show Variants`;
 
-    Object.entries(data.clo_options || {}).forEach(([label, text]) => {
+    const variants = data.clo_options || {};
+    Object.entries(variants).forEach(([label, text]) => {
         const div = document.createElement("div");
         div.className = "variant-item p-2 mb-2 border rounded";
         div.style.cursor = "pointer";
         div.innerHTML = `<strong>${label}:</strong> ${text}`;
-        div.onclick = () =>
+
+        div.onclick = () => {
             document.getElementById("cloPreviewText").innerText = text;
+        };
+
         altOptions.appendChild(div);
     });
 
-    assessEl.value = data.assessment;
-    evidEl.value   = data.evidence;
-    populateRubric(data.rubric);
-});
+    /* Assessment + Evidence */
+    assessEl.value = data.assessment || "";
+    evidEl.value   = data.evidence || "";
 
-/* ============================================================
-   COPY BUTTON
-============================================================ */
-document.getElementById("copyCloBtn").addEventListener("click", async () => {
-    const text = document.getElementById("cloPreviewText").innerText.trim();
-    if (text) await navigator.clipboard.writeText(text);
+    /* Rubric */
+    populateRubric(data.rubric);
 });
 
 });
