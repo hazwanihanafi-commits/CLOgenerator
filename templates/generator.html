@@ -10,27 +10,76 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
 
   <style>
-    :root{ --brand:#5a2ca0; --ink:#3b2f5b; --soft:#f7f7fb; }
-    body{background:var(--soft);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    .navbar-custom{background:var(--brand);color:#fff}
-    .navbar-custom label,.navbar-custom .nav-link,.navbar-custom a{color:#fff!important}
-    .card{border:0;border-radius:1rem;box-shadow:0 6px 18px rgba(0,0,0,.08)}
-    .card-header{background:#fff;border-bottom:0;font-weight:600;display:flex;gap:.6rem;color:var(--ink)}
-    .icon-badge{width:40px;height:40px;border-radius:10px;background:#ede6ff;color:var(--brand);display:inline-flex;align-items:center;justify-content:center}
-    #cloPreviewText{font-size:1.1rem;font-weight:600;color:#1a1a80;line-height:1.6}
-    .option{border:1px solid #e7e7f3;border-radius:10px;padding:12px;margin-top:8px;cursor:pointer}
-    .option:hover{background:#fafaff}
-    .active-option{border-color:#5a2ca0;box-shadow:0 0 0 2px rgba(90,44,160,.15)}
+    :root {
+      --brand:#5a2ca0;
+      --bg:#f5f2fc;
+      --card:#ffffff;
+      --ink:#2a1e41;
+    }
+    body {
+      background:var(--bg);
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    .navbar-custom {
+      background:var(--brand);
+      color:#fff;
+    }
+    .navbar-custom * {
+      color:#fff!important;
+    }
+    .card {
+      border:0;
+      border-radius:1rem;
+      background:var(--card);
+      box-shadow:0 8px 22px rgba(0,0,0,.08);
+    }
+    .card-header {
+      background:#fff;
+      border-bottom:0;
+      font-weight:600;
+      display:flex;
+      gap:.6rem;
+      color:var(--ink);
+    }
+    .icon-badge {
+      width:40px;height:40px;
+      border-radius:10px;
+      background:#ede6ff;
+      color:var(--brand);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.2rem;
+    }
+    #cloPreviewText {
+      font-size:1.15rem;
+      font-weight:600;
+      color:#1a1a80;
+      line-height:1.5;
+    }
+    .option {
+      border:1px solid #e7e7f3;
+      border-radius:10px;
+      padding:12px;
+      margin-top:8px;
+      cursor:pointer;
+      background:#faf9ff;
+    }
+    .option:hover { background:#f2ecff; }
+    .active-option {
+      border-color:#5a2ca0;
+      box-shadow:0 0 0 2px rgba(90,44,160,.18);
+    }
   </style>
 </head>
+
 <body>
 
   <!-- NAVBAR -->
   <nav class="navbar navbar-custom p-3">
     <div class="container d-flex justify-content-between align-items-center">
-      <div class="text-white fw-bold">
+      <div class="fw-bold">
         <i class="bi bi-stars me-2"></i> SCLOG Course Learning Outcome Generator
       </div>
+
       <div class="d-flex align-items-center">
         <label class="me-2 fw-semibold">Discipline:</label>
         <select id="profile" class="form-select form-select-sm">
@@ -49,225 +98,196 @@
 
   <main class="container my-4">
 
-    <!-- Tabs -->
-    <ul class="nav nav-pills mb-3">
-      <li class="nav-item">
-        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#tabHistory">
-          <i class="bi bi-table me-1"></i>History
-        </button>
-      </li>
-    </ul>
+    <!-- MAIN CONTENT ONLY (no history tab) -->
+    <div class="card p-3 mb-4">
+      <form id="cloForm" method="POST">
 
-    <div class="tab-content">
+        <input type="hidden" id="profileHidden" name="profile" value="{{ profile }}" />
 
-      <!-- GENERATE TAB -->
-      <div class="tab-pane fade show active" id="tabGenerate">
+        <div class="row g-4">
 
-        <!-- ----------------------------------------------------- -->
-        <!-- FORM START -->
-        <!-- ----------------------------------------------------- -->
-        <form id="cloForm" method="POST">
+          <!-- COURSE INFO -->
+          <div class="col-lg-6">
+            <div class="card">
+              <div class="card-header">
+                <span class="icon-badge"><i class="bi bi-journal-text"></i></span> Course & Mapping
+              </div>
+              <div class="card-body">
 
-          <input type="hidden" id="profileHidden" name="profile" value="{{ profile }}" />
+                <label class="form-label">Course Code / Name *</label>
+                <input name="course" class="form-control" required />
 
-          <div class="row g-3">
+                <label class="form-label mt-3">PLO *</label>
+                <select id="plo" name="plo" class="form-select" required>
+                  <option value="" disabled selected>Select PLO</option>
+                  {% for p in plos %}
+                  <option value="{{ p }}">{{ p }}</option>
+                  {% endfor %}
+                </select>
 
-            <!-- COURSE + MAPPING -->
-            <div class="col-lg-6">
-              <div class="card">
-                <div class="card-header">
-                  <span class="icon-badge"><i class="bi bi-journal-text"></i></span> Course & Mapping
-                </div>
-                <div class="card-body">
-                  
-                  <label class="form-label">Course Code / Name *</label>
-                  <input name="course" class="form-control" required />
-
-                  <label class="form-label mt-3">PLO *</label>
-                  <select id="plo" name="plo" class="form-select" required>
-                    <option value="" disabled selected>Select PLO</option>
-                    {% for p in plos %}
-                      <option value="{{ p }}">{{ p }}</option>
-                    {% endfor %}
-                  </select>
-
-                  <div class="row mt-3">
-                    <div class="col-md-4">
-                      <label class="form-label">SC Code</label>
-                      <input id="sc_code" class="form-control" readonly />
-                    </div>
-                    <div class="col-md-8">
-                      <label class="form-label">SC Description</label>
-                      <input id="sc_desc" class="form-control" readonly />
-                    </div>
+                <div class="row mt-3">
+                  <div class="col-md-4">
+                    <label class="form-label">SC Code</label>
+                    <input id="sc_code" class="form-control" readonly />
                   </div>
-
-                  <div class="row mt-3">
-                    <div class="col-md-6">
-                      <label class="form-label">VBE</label>
-                      <input id="vbe" class="form-control" readonly />
-                    </div>
-                    <div class="col-md-6">
-                      <label class="form-label">Domain</label>
-                      <input id="domain" class="form-control" readonly />
-                    </div>
+                  <div class="col-md-8">
+                    <label class="form-label">SC Description</label>
+                    <input id="sc_desc" class="form-control" readonly />
                   </div>
-
                 </div>
-              </div>
-            </div>
 
-            <!-- BLOOM + VERB -->
-            <div class="col-lg-6">
-              <div class="card">
-                <div class="card-header">
-                  <span class="icon-badge"><i class="bi bi-layers"></i></span> Bloom & Verbs
-                </div>
-                <div class="card-body">
-
-                  <label class="form-label">Bloom Level *</label>
-                  <select id="bloom" name="bloom" class="form-select" required></select>
-
-                  <label class="form-label mt-3">Verb *</label>
-                  <select id="verb" name="verb" class="form-select" required></select>
-
-                  <div class="row mt-3">
-                    <div class="col-md-6">
-                      <label class="form-label">VBE Phrase Style</label>
-                      <select id="vbe_style" name="vbe_style" class="form-select">
-                        <option value="guided" selected>guided by …</option>
-                        <option value="accordance">in accordance with …</option>
-                        <option value="aligned">aligned with …</option>
-                      </select>
-                    </div>
-
-                    <div class="col-md-6 form-check" style="padding-top: 34px;">
-                      <input class="form-check-input" type="checkbox" id="include_condition" checked>
-                      <label class="form-check-label">Include condition</label>
-                    </div>
+                <div class="row mt-3">
+                  <div class="col-md-6">
+                    <label class="form-label">VBE</label>
+                    <input id="vbe" class="form-control" readonly />
                   </div>
-
-                </div>
-              </div>
-            </div>
-
-            <!-- CLO BUILDER -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <span class="icon-badge"><i class="bi bi-pencil"></i></span> CLO Builder
-                </div>
-                <div class="card-body">
-
-                  <label class="form-label">Content *</label>
-                  <input name="content" class="form-control" placeholder="e.g., ECG waveforms" required />
-
-                  <div class="row mt-3">
-                    <div class="col-md-4">
-                      <label class="form-label">Condition</label>
-                      <input id="condition" class="form-control" readonly />
-                    </div>
-
-                    <div class="col-md-4">
-                      <label class="form-label">Criterion</label>
-                      <input id="criterion" class="form-control" readonly />
-                    </div>
-
-                    <div class="col-md-4">
-                      <label class="form-label">Assessment %</label>
-                      <input type="number" name="cw" min="0" max="100" class="form-control" />
-                    </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Domain</label>
+                    <input id="domain" class="form-control" readonly />
                   </div>
-
                 </div>
+
               </div>
             </div>
+          </div>
 
-            <!-- ASSESSMENT -->
-            <div class="col-12">
-              <div class="card">
-                <div class="card-header">
-                  <span class="icon-badge"><i class="bi bi-clipboard-check"></i></span> Assessment
-                </div>
-                <div class="card-body">
+          <!-- BLOOM & VERB -->
+          <div class="col-lg-6">
+            <div class="card">
+              <div class="card-header">
+                <span class="icon-badge"><i class="bi bi-layers"></i></span> Bloom & Verbs
+              </div>
+              <div class="card-body">
 
-                  <label class="form-label">Assessment</label>
-                  <input id="assessment" name="assessment" class="form-control" readonly />
+                <label class="form-label">Bloom Level *</label>
+                <select id="bloom" name="bloom" class="form-select" required></select>
 
-                  <label class="form-label mt-3">Evidence</label>
-                  <input id="evidence" name="evidence" class="form-control" readonly />
+                <label class="form-label mt-3">Verb *</label>
+                <select id="verb" name="verb" class="form-select" required></select>
 
-                </div>
+                <label class="form-label mt-3">VBE Phrase Style</label>
+                <select id="vbe_style" name="vbe_style" class="form-select">
+                  <option value="guided">guided by …</option>
+                  <option value="accordance">in accordance with …</option>
+                  <option value="aligned">aligned with …</option>
+                </select>
+
               </div>
             </div>
+          </div>
 
-                       <!-- BUTTONS -->
-            <div class="col-12 d-flex justify-content-between mt-3">
-
-              <div>
-                  <a href="/download" class="btn btn-outline-success me-2">
-                    <i class="bi bi-download"></i> Download CLO Table
-                  </a>
-                  <a href="/download_rubric" class="btn btn-outline-secondary">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Download Rubric
-                  </a>
+          <!-- CONTENT + CONDITION -->
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <span class="icon-badge"><i class="bi bi-pencil"></i></span> CLO Builder
               </div>
+              <div class="card-body">
 
-              <button type="submit" class="btn btn-primary">
-                  Generate CLO
-              </button>
+                <label class="form-label">Content *</label>
+                <input name="content" class="form-control" placeholder="e.g., ECG waveforms" required />
 
+                <div class="row mt-3">
+                  <div class="col-md-4">
+                    <label class="form-label">Condition</label>
+                    <input id="condition" class="form-control" readonly />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Criterion</label>
+                    <input id="criterion" class="form-control" readonly />
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label">Assessment %</label>
+                    <input type="number" name="cw" min="0" max="100" class="form-control" />
+                  </div>
+                </div>
+
+              </div>
             </div>
+          </div>
 
-        <!-- ----------------------------------------------------- -->
-        <!-- CLO PREVIEW -->
-        <!-- ----------------------------------------------------- -->
-        <div class="card mt-4" id="cloPreviewCard" style="display:none;">
-          <div class="card-header d-flex justify-content-between align-items-center">
+          <!-- ASSESSMENT -->
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <span class="icon-badge"><i class="bi bi-clipboard-check"></i></span> Assessment
+              </div>
+              <div class="card-body">
+                <label class="form-label">Assessment</label>
+                <input id="assessment" class="form-control" readonly />
+
+                <label class="form-label mt-3">Evidence</label>
+                <input id="evidence" class="form-control" readonly />
+              </div>
+            </div>
+          </div>
+
+          <!-- BUTTONS -->
+          <div class="col-12 d-flex justify-content-between mt-3">
             <div>
-              <span class="icon-badge"><i class="bi bi-lightbulb"></i></span> Generated CLO
+              <a href="/download" class="btn btn-outline-success me-2">
+                <i class="bi bi-download"></i> Download CLO Table
+              </a>
+              <a href="/download_rubric" class="btn btn-outline-secondary">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Download Rubric
+              </a>
             </div>
 
-            <button id="copyCloBtn" class="btn btn-sm btn-outline-secondary">
-              <i class="bi bi-clipboard"></i> Copy
+            <button type="submit" class="btn btn-primary">
+              Generate CLO
             </button>
           </div>
 
-          <div class="card-body">
-            <p id="cloPreviewText"></p>
-            <hr>
-            <div class="fw-semibold">Other options:</div>
-            <div id="altOptions"></div>
-          </div>
         </div>
+      </form>
+    </div>
 
-        <!-- ----------------------------------------------------- -->
-        <!-- RUBRIC PREVIEW -->
-        <!-- ----------------------------------------------------- -->
-        <div class="card mt-4" id="rubricCard" style="display:none;">
-          <div class="card-header">
-            <span class="icon-badge"><i class="bi bi-list-check"></i></span> CLO Rubric
-          </div>
-          <div class="card-body">
-            <table class="table table-bordered">
-              <tr><th>Indicator</th><td id="r_indicator"></td></tr>
-              <tr><th>Excellent</th><td id="r_excellent"></td></tr>
-              <tr><th>Good</th><td id="r_good"></td></tr>
-              <tr><th>Satisfactory</th><td id="r_satisfactory"></td></tr>
-              <tr><th>Poor</th><td id="r_poor"></td></tr>
-            </table>
-          </div>
+    <!-- CLO PREVIEW -->
+    <div class="card mt-4" id="cloPreviewCard" style="display:none;">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <span class="icon-badge"><i class="bi bi-lightbulb"></i></span> Generated CLO
         </div>
+        <button id="copyCloBtn" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-clipboard"></i> Copy
+        </button>
+      </div>
+      <div class="card-body">
+        <p id="cloPreviewText"></p>
+        <hr>
+        <div class="fw-semibold">Other options:</div>
+        <div id="altOptions"></div>
+      </div>
+    </div>
 
-      </div> <!-- end tab -->
-
+    <!-- RUBRIC -->
+    <div class="card mt-4" id="rubricCard" style="display:none;">
+      <div class="card-header">
+        <span class="icon-badge"><i class="bi bi-list-check"></i></span> CLO Rubric
+      </div>
+      <div class="card-body">
+        <table class="table table-bordered">
+          <tr><th>Indicator</th><td id="r_indicator"></td></tr>
+          <tr><th>Excellent</th><td id="r_excellent"></td></tr>
+          <tr><th>Good</th><td id="r_good"></td></tr>
+          <tr><th>Satisfactory</th><td id="r_satisfactory"></td></tr>
+          <tr><th>Poor</th><td id="r_poor"></td></tr>
+        </table>
+      </div>
     </div>
 
   </main>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- FOOTER -->
+  <footer class="text-center mt-5 mb-4" style="opacity:0.7;">
+    <strong>SCLOG Generator</strong><br>
+    Developed by Assoc. Prof. Dr. Hazwani Ahmad Yusof@Hanafi,<br>
+    Advanced Medical and Dental Institute, Universiti Sains Malaysia (USM)
+  </footer>
 
-  <script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
 /* --------------------------------------------------
    ELEMENTS
 -------------------------------------------------- */
@@ -275,11 +295,11 @@ const profileSel = document.getElementById('profile');
 const profileHidden = document.getElementById('profileHidden');
 const ploSel = document.getElementById('plo');
 const bloomSel = document.getElementById('bloom');
-const verbSel = document.getElementById('verb');
+const verbSel = document.getgetElementById('verb');
 
 const scCode = document.getElementById('sc_code');
 const scDesc = document.getElementById('sc_desc');
-const vbe = document.getElementById('vbe');
+const vbe    = document.getElementById('vbe');
 const domain = document.getElementById('domain');
 
 const condEl = document.getElementById('condition');
@@ -287,227 +307,163 @@ const critEl = document.getElementById('criterion');
 const assessEl = document.getElementById('assessment');
 const evidEl   = document.getElementById('evidence');
 
-const form = document.getElementById("cloForm");
+const form = document.getElementById('cloForm');
 
 /* --------------------------------------------------
-   DISCIPLINE-BASED CONTENT SUGGESTIONS
+   DISCIPLINE-BASED CONTENT PLACEHOLDER
 -------------------------------------------------- */
 const contentInput = document.querySelector('input[name="content"]');
-
 const contentPlaceholderMap = {
-  "": [
-    "e.g., ECG waveforms",
-    "e.g., respiratory function indicators",
-    "e.g., exercise metabolism responses"
-  ],
-  "health": [
-    "e.g., ECG waveforms",
-    "e.g., patient functional assessment data",
-    "e.g., clinical exercise prescription parameters"
-  ],
-  "sc": [
-    "e.g., algorithm complexity results",
-    "e.g., API response logs",
-    "e.g., software test cases"
-  ],
-  "eng": [
-    "e.g., circuit load measurements",
-    "e.g., CAD model specifications",
-    "e.g., stress-strain datasets"
-  ],
-  "socs": [
-    "e.g., demographic survey datasets",
-    "e.g., community behavioural indicators",
-    "e.g., qualitative interview themes"
-  ],
-  "edu": [
-    "e.g., lesson plan structure",
-    "e.g., student learning profiles",
-    "e.g., assessment rubric elements"
-  ],
-  "bus": [
-    "e.g., financial ratio trends",
-    "e.g., market segmentation data",
-    "e.g., strategic planning frameworks"
-  ],
-  "arts": [
-    "e.g., colour theory elements",
-    "e.g., visual composition structures",
-    "e.g., creative conceptual briefs"
-  ]
+  "": ["e.g., ECG waveforms","e.g., respiratory function indicators","e.g., exercise metabolism responses"],
+  "health": ["e.g., ECG waveforms","e.g., patient functional assessment data","e.g., clinical exercise prescription parameters"],
+  "sc": ["e.g., algorithm complexity results","e.g., API response logs","e.g., software test cases"],
+  "eng": ["e.g., circuit load measurements","e.g., CAD model specifications","e.g., stress-strain datasets"],
+  "socs": ["e.g., demographic survey datasets","e.g., community behavioural indicators","e.g., qualitative interview themes"],
+  "edu": ["e.g., lesson plan structure","e.g., student learning profiles","e.g., assessment rubric elements"],
+  "bus": ["e.g., financial_ratio_trends","e.g., market segmentation data","e.g., strategic planning frameworks"],
+  "arts": ["e.g., colour theory elements","e.g., visual composition structures","e.g., creative conceptual briefs"]
 };
 
 function updateContentPlaceholder() {
-  const selected = profileSel.value || "";
-  const options = contentPlaceholderMap[selected] || ["Enter content here"];
+  const profile = profileSel.value || "";
+  const options = contentPlaceholderMap[profile] || ["Enter content here"];
   contentInput.placeholder = options[Math.floor(Math.random() * options.length)];
 }
-
 profileSel.addEventListener("change", updateContentPlaceholder);
 updateContentPlaceholder();
-    /* --------------------------------------------------
-       HELPERS
-    -------------------------------------------------- */
-    function suffix() {
-      const p = profileHidden.value || profileSel.value;
-      return p ? `?profile=${encodeURIComponent(p)}` : "";
-    }
 
-    async function fetchJSON(url) {
-      const r = await fetch(url);
-      return r.ok ? r.json() : null;
-    }
+/* --------------------------------------------------
+   HELPERS
+-------------------------------------------------- */
+function suffix() {
+  const p = profileHidden.value || profileSel.value;
+  return p ? `?profile=${encodeURIComponent(p)}` : "";
+}
 
-    /* --------------------------------------------------
-       REFRESH FUNCTIONS
-    -------------------------------------------------- */
-    async function refreshBlooms(plo) {
-      bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
-      verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  return r.ok ? r.json() : null;
+}
 
-      const data = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}${suffix()}`);
-      if (data) data.forEach(b => {
-        const opt = document.createElement('option');
-        opt.value = opt.textContent = b;
-        bloomSel.appendChild(opt);
-      });
-    }
+/* --------------------------------------------------
+   REFRESH DROPDOWNS
+-------------------------------------------------- */
+async function refreshBlooms(plo) {
+  bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
+  verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
 
-    async function refreshVerbs(plo, bloom) {
-      verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
-      const data = await fetchJSON(`/api/get_verbs/${plo}/${bloom}${suffix()}`);
-      if (data) data.forEach(v => {
-        const opt = document.createElement('option');
-        opt.value = opt.textContent = v;
-        verbSel.appendChild(opt);
-      });
-    }
-
-    async function refreshMeta(plo, bloom) {
-      const m = await fetchJSON(`/api/get_meta/${plo}/${bloom}${suffix()}`);
-      if (!m) return;
-
-      scCode.value = m.sc_code;
-      scDesc.value = m.sc_desc;
-      vbe.value = m.vbe;
-      domain.value = m.domain;
-
-      condEl.value = m.condition;
-      critEl.value = m.criterion;
-
-      assessEl.value = m.assessment;
-      evidEl.value = m.evidence;
-    }
-
-    /* --------------------------------------------------
-       UI EVENT HANDLERS
-    -------------------------------------------------- */
-    profileSel.addEventListener('change', () => {
-      const url = new URL(window.location.href);
-      if (profileSel.value)
-        url.searchParams.set('profile', profileSel.value);
-      else 
-        url.searchParams.delete('profile');
-      window.location.href = url.toString();
+  const data = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}${suffix()}`);
+  if (data) {
+    data.forEach(b => {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = b;
+      bloomSel.appendChild(opt);
     });
+  }
+}
 
-    ploSel.addEventListener('change', async () => {
-      const p = ploSel.value;
-      profileHidden.value = profileSel.value;
-
-      await refreshBlooms(p);
-      bloomSel.value = "";
-      verbSel.value = "";
-
-      condEl.value = critEl.value = assessEl.value = evidEl.value = "";
-      document.getElementById('cloPreviewCard').style.display = 'none';
+async function refreshVerbs(plo, bloom) {
+  verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
+  const data = await fetchJSON(`/api/get_verbs/${plo}/${bloom}${suffix()}`);
+  if (data) {
+    data.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = v;
+      verbSel.appendChild(opt);
     });
+  }
+}
 
-    bloomSel.addEventListener('change', async () => {
-      const p = ploSel.value;
-      const b = bloomSel.value;
-      if (!p || !b) return;
+async function refreshMeta(plo, bloom) {
+  const m = await fetchJSON(`/api/get_meta/${plo}/${bloom}${suffix()}`);
+  if (!m) return;
 
-      await refreshVerbs(p, b);
-      await refreshMeta(p, b);
-    });
+  scCode.value = m.sc_code;
+  scDesc.value = m.sc_desc;
+  vbe.value = m.vbe;
+  domain.value = m.domain;
 
-    /* --------------------------------------------------
-       RUBRIC POPULATE
-    -------------------------------------------------- */
-    function populateRubric(r) {
-      if (!r) return;
-      document.getElementById('rubricCard').style.display = 'block';
-      document.getElementById('r_indicator').innerText = r.indicator;
-      document.getElementById('r_excellent').innerText = r.excellent;
-      document.getElementById('r_good').innerText = r.good;
-      document.getElementById('r_satisfactory').innerText = r.satisfactory;
-      document.getElementById('r_poor').innerText = r.poor;
-    }
+  condEl.value = m.condition;
+  critEl.value = m.criterion;
 
-    /* --------------------------------------------------
-       SUBMIT FORM (AJAX)
-    -------------------------------------------------- */
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+  assessEl.value = m.assessment;
+  evidEl.value = m.evidence;
+}
 
-      const data = await (await fetch("/generate" + suffix(), {
-        method: "POST",
-        body: new FormData(form)
-      })).json();
+/* --------------------------------------------------
+   UI EVENT ACTIONS
+-------------------------------------------------- */
+ploSel.addEventListener('change', async () => {
+  await refreshBlooms(ploSel.value);
+  bloomSel.value = "";
+  verbSel.value = "";
 
-      // Main CLO
-      document.getElementById('cloPreviewCard').style.display = 'block';
-      document.getElementById('cloPreviewText').innerText = data.clo;
+  condEl.value = critEl.value = assessEl.value = evidEl.value = "";
+  document.getElementById('cloPreviewCard').style.display = 'none';
+});
 
-      // Options A/B/C
-      const alt = document.getElementById('altOptions');
-      alt.innerHTML = "";
-      Object.entries(data.clo_options).forEach(([k, txt]) => {
-        const div = document.createElement("div");
-        div.className = "option";
-        div.innerText = `${k}. ${txt}`;
-        div.onclick = () => {
-          document.querySelectorAll("#altOptions .option").forEach(n => n.classList.remove("active-option"));
-          div.classList.add("active-option");
-          document.getElementById("cloPreviewText").innerText = txt;
-        };
-        alt.appendChild(div);
-      });
+bloomSel.addEventListener('change', async () => {
+  await refreshVerbs(ploSel.value, bloomSel.value);
+  await refreshMeta(ploSel.value, bloomSel.value);
+});
 
-      // Rubric
-      populateRubric(data.rubric);
+/* --------------------------------------------------
+   POPULATE RUBRIC
+-------------------------------------------------- */
+function populateRubric(r) {
+  document.getElementById('rubricCard').style.display = 'block';
+  document.getElementById('r_indicator').innerText = r.indicator;
+  document.getElementById('r_excellent').innerText = r.excellent;
+  document.getElementById('r_good').innerText = r.good;
+  document.getElementById('r_satisfactory').innerText = r.satisfactory;
+  document.getElementById('r_poor').innerText = r.poor;
+}
 
-      // Assessment
-      assessEl.value = data.assessment;
-      evidEl.value   = data.evidence;
-    });
+/* --------------------------------------------------
+   FORM SUBMIT → AJAX GENERATE
+-------------------------------------------------- */
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
 
-    /* --------------------------------------------------
-       COPY BUTTON
-    -------------------------------------------------- */
-    document.getElementById('copyCloBtn').addEventListener('click', async () => {
-      const text = document.getElementById('cloPreviewText').innerText.trim();
-      if (!text) return;
-      try { await navigator.clipboard.writeText(text); } catch {}
-    });
+  const data = await (await fetch("/generate" + suffix(), {
+    method: "POST",
+    body: new FormData(form)
+  })).json();
 
-    /* --------------------------------------------------
-       HISTORY
-    -------------------------------------------------- */
-    document.getElementById('loadHistoryBtn')?.addEventListener("click", () => {
-      document.getElementById("historyHTML").innerHTML =
-        document.getElementById("serverTable").innerHTML;
-      document.getElementById("historyArea").style.display = "block";
-      document.getElementById("historyPlaceholder").style.display = "none";
-    });
+  document.getElementById('cloPreviewCard').style.display = 'block';
+  document.getElementById('cloPreviewText').innerText = data.clo;
 
-  </script>
+  const alt = document.getElementById('altOptions');
+  alt.innerHTML = "";
+  Object.entries(data.clo_options).forEach(([name, txt]) => {
+    const div = document.createElement("div");
+    div.className = "option";
+    div.innerText = `${name}: ${txt}`;
+    div.onclick = () => {
+      document.querySelectorAll(".option").forEach(n => n.classList.remove("active-option"));
+      div.classList.add("active-option");
+      document.getElementById('cloPreviewText').innerText = txt;
+    };
+    alt.appendChild(div);
+  });
 
-  <footer class="text-center mt-5 mb-4" style="opacity:0.7;">
-    <strong>SCLOG Generator</strong><br>
-    Developed by Assoc. Prof. Dr. Hazwani Ahmad Yusof@Hanafi, Advanced Medical and Dental Institute, Universiti Sains Malaysia (USM)
-</footer>
+  populateRubric(data.rubric);
+
+  assessEl.value = data.assessment;
+  evidEl.value   = data.evidence;
+});
+
+/* --------------------------------------------------
+   COPY BUTTON
+-------------------------------------------------- */
+document.getElementById('copyCloBtn').addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(
+      document.getElementById('cloPreviewText').innerText.trim()
+    );
+  } catch {}
+});
+</script>
 
 </body>
 </html>
