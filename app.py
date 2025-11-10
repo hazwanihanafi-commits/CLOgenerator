@@ -198,24 +198,45 @@ def vbe_phrase(vbe, style):
 def construct_clo_sentence(verb, content, sc_desc, condition_core, criterion, vbe, domain, vbe_style="guided"):
     verb = verb.lower().strip()
     content = content.strip()
-    criterion = criterion.strip().rstrip(".")
     condition_core = condition_core.strip()
+    criterion_clean = criterion.lower().strip()
 
-    for lead in ("when ","by "):
+    # remove leading "when/by"
+    for lead in ("when ", "by "):
         if condition_core.lower().startswith(lead):
             condition_core = condition_core[len(lead):].strip()
             break
 
     condition = f"{decide_connector(domain)} {condition_core}" if condition_core else ""
 
-    parts = [
-        f"{verb} {content}",
-        sc_snippet(sc_desc),
-        condition,
-        criterion,
-        vbe_phrase(vbe, vbe_style)
-    ]
-    s = " ".join([p for p in parts if p]).strip()
+    # -------------------------------
+    # ✅ Prevent DOUBLE VBE phrases
+    # If criterion already contains a VBE-like phrase, DO NOT add vbe_phrase()
+    # -------------------------------
+    has_vbe_in_criterion = criterion_clean.startswith((
+        "guided by",
+        "aligned with",
+        "in accordance with",
+        "grounded in"
+    ))
+
+    if has_vbe_in_criterion:
+        parts = [
+            f"{verb} {content}",
+            sc_snippet(sc_desc),
+            condition,
+            criterion  # only criterion is used
+        ]
+    else:
+        parts = [
+            f"{verb} {content}",
+            sc_snippet(sc_desc),
+            condition,
+            criterion,
+            vbe_phrase(vbe, vbe_style)
+        ]
+
+    s = " ".join(p for p in parts if p).strip()
     if not s.endswith("."):
         s += "."
     return s.capitalize()
@@ -615,6 +636,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
