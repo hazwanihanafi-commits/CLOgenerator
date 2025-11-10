@@ -282,84 +282,16 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-/* ============================================================
-   VARIANT TOGGLE + RENDERING (NEW)
-============================================================ */
-
-const toggleBtn = document.getElementById("toggleVariants");
-const variantBox = document.getElementById("variantContainer");
-const altOptions = document.getElementById("altOptions");
-
-if (toggleBtn) {
-    toggleBtn.addEventListener("click", () => {
-        if (variantBox.style.display === "none") {
-            variantBox.style.display = "block";
-            toggleBtn.innerHTML = `<i class="bi bi-eye-slash"></i> Hide Variants`;
-        } else {
-            variantBox.style.display = "none";
-            toggleBtn.innerHTML = `<i class="bi bi-list-ul"></i> Show Variants`;
-        }
-    });
-}
+document.addEventListener("DOMContentLoaded", () => {
 
 /* ============================================================
-   RENDER VARIANTS AFTER CLO GENERATION
+   ELEMENTS (global)
 ============================================================ */
-form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const resp = await fetch("/generate" + suffix(), {
-        method: "POST",
-        body: new FormData(form)
-    });
-
-    const data = await resp.json();
-
-    // Show main CLO
-    document.getElementById('cloPreviewCard').style.display = 'block';
-    document.getElementById('cloPreviewText').innerText = data.clo || "";
-
-    // Render Variants
-    altOptions.innerHTML = "";
-    variantBox.style.display = "none"; // collapsed default
-    toggleBtn.innerHTML = `<i class="bi bi-list-ul"></i> Show Variants`;
-
-    const variants = data.clo_options || {};
-
-    Object.entries(variants).forEach(([label, text]) => {
-        const div = document.createElement("div");
-        div.className = "variant-item p-2 mb-2 border rounded";
-        div.style.cursor = "pointer";
-        div.innerHTML = `<strong>${label}:</strong> ${text}`;
-
-        div.onclick = () => {
-            document.getElementById('cloPreviewText').innerText = text;
-        };
-
-        altOptions.appendChild(div);
-    });
-
-    // Update Assessment + Evidence
-    assessEl.value = data.assessment || "";
-    evidEl.value = data.evidence || "";
-
-    // Update Rubric
-    populateRubric(data.rubric);
-});
-
-<!-- JS -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    
-/* --------------------------------------------------
-   ELEMENTS (must be global)
--------------------------------------------------- */
-const profileSel   = document.getElementById('profile');
-const profileHidden= document.getElementById('profileHidden');
-const ploSel       = document.getElementById('plo');
-const bloomSel     = document.getElementById('bloom');
-const verbSel      = document.getElementById('verb');
+const profileSel    = document.getElementById('profile');
+const profileHidden = document.getElementById('profileHidden');
+const ploSel        = document.getElementById('plo');
+const bloomSel      = document.getElementById('bloom');
+const verbSel       = document.getElementById('verb');
 
 const scCode  = document.getElementById('sc_code');
 const scDesc  = document.getElementById('sc_desc');
@@ -373,9 +305,16 @@ const evidEl   = document.getElementById('evidence');
 
 const form = document.getElementById('cloForm');
 
-/* --------------------------------------------------
+/* ============================================================
+   VARIANT UI ELEMENTS
+============================================================ */
+const toggleBtn   = document.getElementById("toggleVariants");
+const variantBox  = document.getElementById("variantContainer");
+const altOptions  = document.getElementById("altOptions");
+
+/* ============================================================
    DISCIPLINE PLACEHOLDERS
--------------------------------------------------- */
+============================================================ */
 const contentInput = document.querySelector('input[name="content"]');
 
 const contentPlaceholderMap = {
@@ -389,39 +328,34 @@ const contentPlaceholderMap = {
 };
 
 function updateContentPlaceholder() {
-  const profile = profileSel.value || "";
-  const options = contentPlaceholderMap[profile] || ["Enter content here"];
+  const p = profileSel.value || "";
+  const options = contentPlaceholderMap[p] || ["Enter content here"];
   contentInput.placeholder = options[Math.floor(Math.random()*options.length)];
 }
 
-/* --------------------------------------------------
-   AUTO-SELECT PROFILE FROM URL
--------------------------------------------------- */
-document.addEventListener("DOMContentLoaded", () => {
-  const params = new URLSearchParams(window.location.search);
-  const profileFromURL = params.get("profile");
+/* ============================================================
+   AUTO PROFILE FROM URL
+============================================================ */
+const params = new URLSearchParams(window.location.search);
+const profileFromURL = params.get("profile");
 
-  if (profileFromURL && profileSel) {
-    profileSel.value = profileFromURL;
-  }
+if (profileFromURL && profileSel) profileSel.value = profileFromURL;
 
-  updateContentPlaceholder();
-});
+updateContentPlaceholder();
 
-/* --------------------------------------------------
-   ON PROFILE CHANGE → reload page for backend
--------------------------------------------------- */
+/* ============================================================
+   PROFILE CHANGE → Reload page
+============================================================ */
 profileSel.addEventListener("change", () => {
   const url = new URL(window.location.href);
-  if (profileSel.value) {
-      url.searchParams.set("profile", profileSel.value);
-  } else {
-      url.searchParams.delete("profile");
-  }
+  if (profileSel.value) url.searchParams.set("profile", profileSel.value);
+  else url.searchParams.delete("profile");
   window.location.href = url.toString();
 });
 
-/* ================= HELPERS ================= */
+/* ============================================================
+   HELPERS
+============================================================ */
 function suffix() {
   const p = profileHidden.value || profileSel.value;
   return p ? `?profile=${encodeURIComponent(p)}` : "";
@@ -432,105 +366,127 @@ async function fetchJSON(url) {
   return r.ok ? r.json() : null;
 }
 
-/* ================= DROPDOWNS ================= */
+/* ============================================================
+   DROPDOWN UPDATES
+============================================================ */
 async function refreshBlooms(plo) {
   bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
   verbSel.innerHTML  = '<option disabled selected>Select Verb</option>';
   const data = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}${suffix()}`);
-  if (data) data.forEach(b => {
-    const opt = document.createElement('option');
-    opt.value = opt.textContent = b;
-    bloomSel.appendChild(opt);
-  });
+  if (data) data.forEach(b => bloomSel.append(new Option(b, b)));
 }
 
 async function refreshVerbs(plo, bloom) {
   verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
   const data = await fetchJSON(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${suffix()}`);
-  if (data) data.forEach(v => {
-    const opt = document.createElement('option');
-    opt.value = opt.textContent = v;
-    verbSel.appendChild(opt);
-  });
+  if (data) data.forEach(v => verbSel.append(new Option(v, v)));
 }
 
 async function refreshMeta(plo, bloom) {
   const m = await fetchJSON(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${suffix()}`);
   if (!m) return;
-  scCode.value = m.sc_code || "";
-  scDesc.value = m.sc_desc || "";
-  vbe.value    = m.vbe    || "";
-  domain.value = m.domain || "";
-  condEl.value = m.condition || "";
-  critEl.value = m.criterion || "";
-  assessEl.value = m.assessment || "";
-  evidEl.value   = m.evidence   || "";
+  scCode.value  = m.sc_code;
+  scDesc.value  = m.sc_desc;
+  vbe.value     = m.vbe;
+  domain.value  = m.domain;
+  condEl.value  = m.condition;
+  critEl.value  = m.criterion;
+  assessEl.value = m.assessment;
+  evidEl.value   = m.evidence;
 }
 
-/* ================= EVENTS ================= */
-ploSel.addEventListener('change', async () => {
+/* ============================================================
+   EVENTS
+============================================================ */
+ploSel.addEventListener("change", async () => {
   profileHidden.value = profileSel.value;
   await refreshBlooms(ploSel.value);
-  bloomSel.value = ""; verbSel.value = "";
+
+  bloomSel.value = "";
+  verbSel.value = "";
   condEl.value = critEl.value = assessEl.value = evidEl.value = "";
-  document.getElementById('cloPreviewCard').style.display = 'none';
+
+  document.getElementById("cloPreviewCard").style.display = "none";
 });
 
-bloomSel.addEventListener('change', async () => {
+bloomSel.addEventListener("change", async () => {
   await refreshVerbs(ploSel.value, bloomSel.value);
   await refreshMeta(ploSel.value, bloomSel.value);
 });
 
-/* ================= RUBRIC VIEW ================= */
+/* ============================================================
+   RUBRIC RENDER
+============================================================ */
 function populateRubric(r) {
   if (!r) return;
   document.getElementById('rubricCard').style.display = 'block';
-  document.getElementById('r_indicator').innerText    = r.indicator || "";
-  document.getElementById('r_excellent').innerText    = r.excellent || "";
-  document.getElementById('r_good').innerText         = r.good || "";
-  document.getElementById('r_satisfactory').innerText = r.satisfactory || "";
-  document.getElementById('r_poor').innerText         = r.poor || "";
+  document.getElementById('r_indicator').innerText = r.indicator;
+  document.getElementById('r_excellent').innerText = r.excellent;
+  document.getElementById('r_good').innerText = r.good;
+  document.getElementById('r_satisfactory').innerText = r.satisfactory;
+  document.getElementById('r_poor').innerText = r.poor;
 }
 
-/* ================= SUBMIT ================= */
-form.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  const resp = await fetch("/generate" + suffix(), { method: "POST", body: new FormData(form) });
-  const data = await resp.json();
-
-  document.getElementById('cloPreviewCard').style.display = 'block';
-  document.getElementById('cloPreviewText').innerText = data.clo || "";
-
-  const alt = document.getElementById('altOptions');
-  alt.innerHTML = "";
-  const variants = data.clo_options || {};
-
-  Object.keys(variants).forEach((name) => {
-    const txt = variants[name];
-    const div = document.createElement("div");
-    div.className = "option";
-    div.innerText = txt;
-    div.onclick = () => {
-      document.querySelectorAll("#altOptions .option").forEach(n => n.classList.remove("active-option"));
-      div.classList.add("active-option");
-      document.getElementById('cloPreviewText').innerText = txt;
-    };
-    alt.appendChild(div);
-  });
-
-  populateRubric(data.rubric);
-  assessEl.value = data.assessment || "";
-  evidEl.value   = data.evidence   || "";
+/* ============================================================
+   VARIANT TOGGLE (THIS WAS THE PART MISSING)
+============================================================ */
+toggleBtn?.addEventListener("click", () => {
+  if (variantBox.style.display === "none" || !variantBox.style.display) {
+      variantBox.style.display = "block";
+      toggleBtn.innerHTML = `<i class="bi bi-eye-slash"></i> Hide Variants`;
+  } else {
+      variantBox.style.display = "none";
+      toggleBtn.innerHTML = `<i class="bi bi-list-ul"></i> Show Variants`;
+  }
 });
 
-/* ================= COPY ================= */
-document.getElementById('copyCloBtn').addEventListener('click', async () => {
-  const text = (document.getElementById('cloPreviewText').innerText || "").trim();
+/* ============================================================
+   SUBMIT → Generate CLO + Variants + Rubric
+============================================================ */
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+
+  const resp = await fetch("/generate" + suffix(), {
+    method: "POST",
+    body: new FormData(form)
+  });
+  const data = await resp.json();
+
+  /* Main CLO */
+  document.getElementById("cloPreviewCard").style.display = "block";
+  document.getElementById("cloPreviewText").innerText = data.clo;
+
+  /* Variants */
+  altOptions.innerHTML = "";
+  variantBox.style.display = "none";
+  toggleBtn.innerHTML = `<i class="bi bi-list-ul"></i> Show Variants`;
+
+  const variants = data.clo_options || {};
+  Object.entries(variants).forEach(([label, text]) => {
+      const div = document.createElement("div");
+      div.className = "variant-item p-2 mb-2 border rounded";
+      div.style.cursor = "pointer";
+      div.innerHTML = `<strong>${label}:</strong> ${text}`;
+      div.onclick = () => { document.getElementById("cloPreviewText").innerText = text; };
+      altOptions.appendChild(div);
+  });
+
+  /* Assessment */
+  assessEl.value = data.assessment;
+  evidEl.value   = data.evidence;
+
+  /* Rubric */
+  populateRubric(data.rubric);
+});
+
+/* ============================================================
+   COPY CLO
+============================================================ */
+document.getElementById("copyCloBtn").addEventListener("click", async () => {
+  const text = document.getElementById("cloPreviewText").innerText.trim();
   if (!text) return;
   try { await navigator.clipboard.writeText(text); } catch {}
 });
 
+}); // END DOMContentLoaded
 </script>
-
-</body>
-</html>
