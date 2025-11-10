@@ -49,7 +49,7 @@
     <!-- GENERATOR CARD -->
     <div class="card card-elev mb-4">
       <form id="cloForm" method="POST">
-        <input type="hidden" id="profileHidden" name="profile" value="{{ profile }}" />
+        <input type="hidden" id="profileHidden" name="profile" />
 
         <div class="card-body p-4">
           <div class="row g-4">
@@ -283,7 +283,7 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
+  
 /* ============================================================
    ELEMENTS
 ============================================================ */
@@ -304,6 +304,22 @@ const assessEl = document.getElementById("assessment");
 const evidEl   = document.getElementById("evidence");
 
 const form = document.getElementById("cloForm");
+
+/* ============================================================
+   AUTO-LOAD PROFILE FROM URL (Fixes wrong redirect issue)
+============================================================ */
+const params = new URLSearchParams(window.location.search);
+const profileFromURL = params.get("profile");
+
+if (profileFromURL) {
+    profileSel.value = profileFromURL;
+    profileHidden.value = profileFromURL;
+
+    // ✅ Add this so placeholders follow the correct discipline
+    if (typeof updateContentPlaceholder === "function") {
+        updateContentPlaceholder();
+    }
+}
 
 /* ============================================================
    VARIANT ELEMENTS
