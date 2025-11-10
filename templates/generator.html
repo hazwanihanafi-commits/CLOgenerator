@@ -428,19 +428,6 @@ function populateRubric(r) {
 }
 
 /* ============================================================
-   VARIANT TOGGLE (THIS WAS THE PART MISSING)
-============================================================ */
-toggleBtn?.addEventListener("click", () => {
-  if (variantBox.style.display === "none" || !variantBox.style.display) {
-      variantBox.style.display = "block";
-      toggleBtn.innerHTML = `<i class="bi bi-eye-slash"></i> Hide Variants`;
-  } else {
-      variantBox.style.display = "none";
-      toggleBtn.innerHTML = `<i class="bi bi-list-ul"></i> Show Variants`;
-  }
-});
-
-/* ============================================================
    SUBMIT → Generate CLO + Variants + Rubric
 ============================================================ */
 form.addEventListener("submit", async e => {
