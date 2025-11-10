@@ -49,6 +49,19 @@ PROFILE_SHEET_MAP = {
     "bus": "Mapping_bus",
     "arts": "Mapping_arts"
 }
+# ============================================================
+# VBE → CRITERION MAP (Overrides Bloom Criterion)
+# ============================================================
+VBE_CRITERION = {
+    "Ethics & Professionalism": "Guided by ethics and professionalism",
+    "Professional practice standards": "Aligned with professional practice standards",
+    "Integrity": "Demonstrating integrity in judgement",
+    "Ethics & Etiquette": "Guided by ethical and professional etiquette",
+    "Professionalism & Teamwork": "Demonstrating professionalism and effective teamwork",
+    "Professionalism & Well-being": "Upholding professionalism and personal well-being",
+    "Honesty & Integrity": "Guided by honesty and integrity",
+    "Professional conduct": "Demonstrating responsible and professional conduct"
+}
 
 # ============================================================
 # FULL NAME MAPPINGS FOR SC + VBE
@@ -286,7 +299,7 @@ def generate():
 
     domain = details["Domain"].lower()
 
-    # ------------------------------
+       # ------------------------------
     # Criterion + Condition
     # ------------------------------
     criterion, condition_raw = get_criterion_phrase(domain, bloom)
@@ -307,62 +320,49 @@ def generate():
         criterion, vbe_full, domain, vbe_style
     )
 
-    # ----------------------------------------------------
-    # VARIANTS (Cognitive + Psychomotor, no duplicate shape)
-    # ----------------------------------------------------
+    # ============================================================
+    #  CUSTOM CLO VARIANTS (5 versions)
+    # ============================================================
 
-    # Helper: short SC phrase (full-name version)
-    def sc_snippet(desc):
-        return f"based on {desc.lower()}"
+    variants = {}
 
-    # Helper: VBE phrase style (full-name version)
-    def vbe_phrase(vbe_val, style):
-        if style == "guided":
-            return f"guided by {vbe_val}"
-        if style == "accordance":
-            return f"in accordance with {vbe_val}"
-        if style == "aligned":
-            return f"aligned with {vbe_val}"
-        return f"guided by {vbe_val}"
-    
-    # Clean condition for remixing
-    pure_condition = (condition_core or "").lower().strip()
-    for lead in ("when ", "by "):
-        if pure_condition.startswith(lead):
-            pure_condition = pure_condition[len(lead):].strip()
-            break
-
-    # Variant 1 – Cognitive emphasis (understanding)
-    clo_cognitive = (
-        f"{verb.lower()} {content} {sc_snippet(sc_desc)} "
-        f"to understand {pure_condition} {criterion} "
-        f"{vbe_phrase(vbe_full, vbe_style)}."
+    # Variant 1 — Standard
+    variants["Standard"] = (
+        f"{verb.lower()} {content} using {sc_desc.lower()} "
+        f"when developing strategies to enhance organizational safety culture, "
+        f"guided by honesty and integrity."
     ).capitalize()
 
-    # Variant 2 – Psychomotor emphasis (action)
-    clo_psychomotor = (
-        f"{verb.lower()} {content} {sc_snippet(sc_desc)} "
-        f"by performing {pure_condition} {criterion} "
-        f"{vbe_phrase(vbe_full, vbe_style)}."
+    # Variant 2 — More critical thinking
+    variants["Critical Thinking"] = (
+        f"{verb.lower()} {content} using {sc_desc.lower()} "
+        f"when evaluating organizational safety practices to design effective improvement strategies, "
+        f"guided by honesty and integrity."
     ).capitalize()
 
-    # -------------------------------------------
-    # PICK ONE alternative ONLY (automatic logic)
-    # -------------------------------------------
+    # Variant 3 — More action-oriented
+    variants["Action-Oriented"] = (
+        f"{verb.lower()} {content} using {sc_desc.lower()} "
+        f"when proposing and justifying strategies to strengthen safety culture within organizations, "
+        f"guided by honesty and integrity."
+    ).capitalize()
 
-    # Auto-select alternative:
-    # If domain is psychomotor-heavy → use psychomotor variant
-    # If cognitive-heavy → use cognitive variant
-    # If neither → default cognitive
-    if domain in ("psychomotor", "psycho", "skills"):
-        alt = clo_psychomotor
-    else:
-        alt = clo_cognitive
+    # Variant 4 — Professional practice
+    variants["Professional Practice"] = (
+        f"{verb.lower()} {content} using {sc_desc.lower()} "
+        f"when addressing real-world safety culture challenges in organizational settings, "
+        f"guided by honesty and integrity."
+    ).capitalize()
 
-    # Return ONLY one alternative
-    clo_options = {
-        "Alternative": alt
-    }
+    # Variant 5 — Ethical emphasis
+    variants["Ethical Emphasis"] = (
+        f"{verb.lower()} {content} using {sc_desc.lower()} "
+        f"when formulating ethically sound strategies to improve organizational safety culture, "
+        f"grounded in honesty and integrity."
+    ).capitalize()
+
+    # ✅ Assign clo_options to variants
+    clo_options = variants
 
     # ------------------------------
     # Assessment + Rubric
@@ -463,13 +463,15 @@ def api_get_verbs(plo, bloom):
     verbs = [v.strip() for v in str(df[mask].iloc[0, 1]).split(",") if v.strip()]
     return jsonify(verbs)
 
-
 @app.route("/api/get_meta/<plo>/<bloom>")
 def api_get_meta(plo, bloom):
     profile = request.args.get("profile", "").strip().lower()
     details = get_plo_details(plo, profile) or {}
     domain = (details.get("Domain", "") or "").lower()
 
+    # ---------------------------
+    # 1) Get Bloom criterion + condition
+    # ---------------------------
     if domain in ONEWORD_META and bloom in ONEWORD_META[domain]:
         criterion = ONEWORD_META[domain][bloom]["criterion"]
         condition_core = ONEWORD_META[domain][bloom]["condition"]
@@ -478,11 +480,27 @@ def api_get_meta(plo, bloom):
         criterion = crit or ""
         condition_core = cond or get_default_condition(domain)
 
+    # ---------------------------
+    # 2) Override Criterion USING VBE_CRITERION if VBE exists
+    # ---------------------------
+    vbe_value = details.get("VBE", "")
+    if vbe_value in VBE_CRITERION:
+        criterion = VBE_CRITERION[vbe_value]
+
+    # ---------------------------
+    # 3) Build condition phrase
+    # ---------------------------
     connector = "by" if domain == "psychomotor" else "when"
     condition = f"{connector} {condition_core}"
 
+    # ---------------------------
+    # 4) Assessment + Evidence
+    # ---------------------------
     assessment, evidence = get_assessment_and_evidence(bloom, domain)
 
+    # ---------------------------
+    # 5) Final return
+    # ---------------------------
     return jsonify({
         "sc_code": details.get("SC_Code", ""),
         "sc_desc": details.get("SC_Desc", ""),
@@ -560,6 +578,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
