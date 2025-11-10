@@ -242,30 +242,57 @@ def construct_clo_sentence(verb, content, sc_desc, condition_core, criterion, vb
     return s.capitalize()
 
 # ============================================================
-# RUBRIC
+# RUBRIC (VBE-FIRST FORMAT — UNIVERSAL ACROSS ALL FIELDS)
 # ============================================================
 def rubric_generator(clo, verb, criterion, condition_core, sc_desc, vbe):
-    connector = "by" if "perform" in clo.lower() else "when"
+    verb_l = verb.lower().strip()
+    sc_l = sc_desc.lower().strip() if sc_desc else ""
+    vbe_l = vbe.lower().strip()
+    criterion_l = criterion.lower().strip()
+    cond = condition_core.strip()
 
-    if condition_core.lower().startswith(("when ","by ")):
-        cond = condition_core
-    else:
-        cond = f"{connector} {condition_core}"
+    # Fix leading 'when/by'
+    if not cond.startswith(("when ", "by ")):
+        connector = "by" if "perform" in clo.lower() else "when"
+        cond = f"{connector} {cond}"
 
-    # --------------------------------------------------------
-    #  NEW VBE-DRIVEN RUBRIC (Replace old rubric fully)
-    # --------------------------------------------------------
+    # -------------------------------
+    # ✅ Indicator (VBE-first governance)
+    # -------------------------------
     indicator = (
-        f"Ability to {verb.lower()} {sc_desc.lower()} {cond} "
-        f"in accordance with {vbe.lower()}."
+        f"Ability to {verb_l} {sc_l} {cond} "
+        f"in accordance with {vbe_l}."
+    )
+
+    # -------------------------------
+    # ✅ Performance Levels
+    # -------------------------------
+    excellent = (
+        f"Consistently demonstrates {vbe_l} and applies {sc_l} {cond} "
+        f"with high accuracy and clarity."
+    )
+
+    good = (
+        f"Generally demonstrates {vbe_l} and applies {sc_l} {cond} "
+        f"with minor gaps in clarity or consistency."
+    )
+
+    satisfactory = (
+        f"Partially demonstrates {vbe_l}; applies {sc_l} {cond} "
+        f"inconsistently."
+    )
+
+    poor = (
+        f"Does not demonstrate {vbe_l}; unable to apply {sc_l} {cond} "
+        f"effectively."
     )
 
     return {
         "indicator": indicator,
-        "excellent": f"Consistently demonstrates {vbe.lower()} and applies {sc_desc.lower()} {cond} effectively.",
-        "good": f"Generally demonstrates {vbe.lower()} and applies {sc_desc.lower()} {cond} with minor gaps.",
-        "satisfactory": f"Partially demonstrates {vbe.lower()}; applies {sc_desc.lower()} {cond} inconsistently.",
-        "poor": f"Does not demonstrate {vbe.lower()}; unable to apply {sc_desc.lower()} {cond} effectively."
+        "excellent": excellent,
+        "good": good,
+        "satisfactory": satisfactory,
+        "poor": poor
     }
 
 # ============================================================
@@ -636,6 +663,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
