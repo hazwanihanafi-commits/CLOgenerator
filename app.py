@@ -321,47 +321,72 @@ def generate():
     )
 
     # ============================================================
-    #  CUSTOM CLO VARIANTS (5 versions)
+    #  UNIVERSAL AUTO-GENERATED VARIANTS (ALL CLO TYPES)
     # ============================================================
+
+    verb_l = verb.lower().strip()
+    content_l = content.strip()
+    sc_snip = sc_desc.lower().strip() if sc_desc else ""
+    vbe_snip = vbe_full.lower().strip()
+    cond_clean = condition_core.strip()
+
+    # Remove leading "when/by"
+    for lead in ("when ", "by "):
+        if cond_clean.lower().startswith(lead):
+            cond_clean = cond_clean[len(lead):].strip()
+            break
 
     variants = {}
 
-    # Variant 1 — Standard
+    # ------------------------------------------------------------
+    # 1. Standard (Baseline CLO)
+    # ------------------------------------------------------------
     variants["Standard"] = (
-        f"{verb.lower()} {content} using {sc_desc.lower()} "
-        f"when developing strategies to enhance organizational safety culture, "
-        f"guided by honesty and integrity."
+        f"{verb_l} {content_l} using {sc_snip} when {cond_clean} "
+        f"guided by {vbe_snip}."
     ).capitalize()
 
-    # Variant 2 — More critical thinking
+    # ------------------------------------------------------------
+    # 2. Critical Thinking Variant
+    # ------------------------------------------------------------
     variants["Critical Thinking"] = (
-        f"{verb.lower()} {content} using {sc_desc.lower()} "
-        f"when evaluating organizational safety practices to design effective improvement strategies, "
-        f"guided by honesty and integrity."
+        f"{verb_l} {content_l} using {sc_snip} when critically evaluating {cond_clean} "
+        f"guided by {vbe_snip}."
     ).capitalize()
 
-    # Variant 3 — More action-oriented
+    # ------------------------------------------------------------
+    # 3. Problem-Solving Variant
+    # ------------------------------------------------------------
+    variants["Problem-Solving"] = (
+        f"{verb_l} {content_l} using {sc_snip} by applying structured problem-solving approaches "
+        f"to address {cond_clean}, guided by {vbe_snip}."
+    ).capitalize()
+
+    # ------------------------------------------------------------
+    # 4. Action-Oriented Variant
+    # ------------------------------------------------------------
     variants["Action-Oriented"] = (
-        f"{verb.lower()} {content} using {sc_desc.lower()} "
-        f"when proposing and justifying strategies to strengthen safety culture within organizations, "
-        f"guided by honesty and integrity."
+        f"{verb_l} {content_l} using {sc_snip} by performing tasks related to {cond_clean} "
+        f"effectively and guided by {vbe_snip}."
     ).capitalize()
 
-    # Variant 4 — Professional practice
+    # ------------------------------------------------------------
+    # 5. Professional Practice Variant
+    # ------------------------------------------------------------
     variants["Professional Practice"] = (
-        f"{verb.lower()} {content} using {sc_desc.lower()} "
-        f"when addressing real-world safety culture challenges in organizational settings, "
-        f"guided by honesty and integrity."
+        f"{verb_l} {content_l} using {sc_snip} when applying professional practice standards to {cond_clean}, "
+        f"guided by {vbe_snip}."
     ).capitalize()
 
-    # Variant 5 — Ethical emphasis
+    # ------------------------------------------------------------
+    # 6. Ethical Emphasis Variant
+    # ------------------------------------------------------------
     variants["Ethical Emphasis"] = (
-        f"{verb.lower()} {content} using {sc_desc.lower()} "
-        f"when formulating ethically sound strategies to improve organizational safety culture, "
-        f"grounded in honesty and integrity."
+        f"{verb_l} {content_l} using {sc_snip} when making ethically sound decisions related to {cond_clean}, "
+        f"grounded in {vbe_snip}."
     ).capitalize()
 
-    # ✅ Assign clo_options to variants
+    # ✅ Assign to CLO options for frontend
     clo_options = variants
 
     # ------------------------------
@@ -578,6 +603,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
