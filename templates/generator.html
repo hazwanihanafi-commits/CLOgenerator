@@ -306,7 +306,29 @@ const evidEl   = document.getElementById("evidence");
 const form = document.getElementById("cloForm");
 
 /* ============================================================
-   AUTO-LOAD PROFILE FROM URL (Fixes wrong redirect issue)
+   PLACEHOLDER FUNCTION (must be BEFORE it is called)
+============================================================ */
+function updateContentPlaceholder() {
+    const contentInput = document.querySelector('input[name="content"]');
+    if (!contentInput) return;
+
+    const contentPlaceholderMap = {
+        "health": ["e.g., ECG waveforms","e.g., patient functional assessment data","e.g., clinical rehabilitation outcomes"],
+        "sc":     ["e.g., algorithm complexity output","e.g., debugging logs","e.g., API response datasets"],
+        "eng":    ["e.g., circuit voltage measurements","e.g., CAD structural parameters","e.g., stress–strain test results"],
+        "socs":   ["e.g., demographic indicators","e.g., social behaviour observations","e.g., qualitative interview codes"],
+        "edu":    ["e.g., learning outcome progression","e.g., student performance profiles","e.g., instructional design components"],
+        "bus":    ["e.g., financial ratio analysis","e.g., market segmentation data","e.g., strategic planning matrices"],
+        "arts":   ["e.g., visual composition elements","e.g., colour harmony structures","e.g., creative concept variations"]
+    };
+
+    const profile = profileSel.value || "health";
+    const options = contentPlaceholderMap[profile] || ["Enter content here"];
+    contentInput.placeholder = options[Math.floor(Math.random() * options.length)];
+}
+
+/* ============================================================
+   AUTO-LOAD PROFILE FROM URL
 ============================================================ */
 const params = new URLSearchParams(window.location.search);
 const profileFromURL = params.get("profile");
@@ -314,7 +336,7 @@ const profileFromURL = params.get("profile");
 if (profileFromURL) {
     profileSel.value = profileFromURL;
     profileHidden.value = profileFromURL;
-    updateContentPlaceholder(); 
+    updateContentPlaceholder();   // ✅ now 100% safe
 }
 
 /* ============================================================
