@@ -35,6 +35,14 @@
       </div>
     </div>
   </nav>
+<div class="container mt-3">
+  <div class="alert alert-info shadow-sm" style="border-radius:10px;">
+    <strong>Definitions:</strong><br>
+    <strong>PLO</strong> = Program Learning Outcome<br>
+    <strong>SC</strong> = Sustainability Competency<br>
+    <strong>VBE</strong> = Value-Based Education
+  </div>
+</div>
 
   <main class="container my-4">
 
@@ -227,6 +235,19 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
+  /* --------------------------------------------------
+     AUTO-SELECT PROFILE FROM URL
+  -------------------------------------------------- */
+  const params = new URLSearchParams(window.location.search);
+  const profileFromURL = params.get("profile");
+
+  document.addEventListener("DOMContentLoaded", () => {
+      const sel = document.getElementById("profile");
+      if (sel && profileFromURL) {
+          sel.value = profileFromURL;
+      }
+  });
+
   /* ============== ELEMENTS ============== */
   const profileSel   = document.getElementById('profile');
   const profileHidden= document.getElementById('profileHidden');
