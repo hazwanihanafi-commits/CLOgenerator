@@ -17,7 +17,7 @@ ONEWORD_META = {
         "Remember":   {"criterion": "accurately",     "condition": "recalling information"},
         "Understand": {"criterion": "coherently",     "condition": "explaining concepts"},
         "Apply":      {"criterion": "effectively",    "condition": "applying methods"},
-        "Analyze":    {"criterion": "critically",     "condition": "evaluating case information"},
+        "Analyze":    {"criterion": "critically",     "condition": "analyzing task requirements"},
         "Evaluate":   {"criterion": "independently",  "condition": "making judgments"},
         "Create":     {"criterion": "innovatively",   "condition": "generating ideas"}
     },
@@ -29,14 +29,15 @@ ONEWORD_META = {
         "Characterization": {"criterion": "ethically",       "condition": "behaving professionally"}
     },
     "psychomotor": {
-        "Perception":             {"criterion": "accurately",    "condition": "identifying cues"},
-        "Set":                    {"criterion": "precisely",     "condition": "preparing procedures"},
-        "Guided Response":        {"criterion": "under guidance","condition": "practising skills"},
-        "Mechanism":              {"criterion": "competently",   "condition": "performing techniques"},
-        "Complex Overt Response": {"criterion": "efficiently",   "condition": "executing tasks"},
-        "Adaptation":             {"criterion": "safely",        "condition": "adjusting actions"},
-        "Origination":            {"criterion": "creatively",    "condition": "developing procedures"}
+        "Perception":             {"criterion": "accurately",    "condition": "identifying task cues"},
+        "Set":                    {"criterion": "precisely",     "condition": "preparing required actions"},
+        "Guided Response":        {"criterion": "under guidance","condition": "practising foundational skills"},
+        "Mechanism":              {"criterion": "competently",   "condition": "performing routine skills"},
+        "Complex Overt Response": {"criterion": "efficiently",   "condition": "executing complex tasks"},
+        "Adaptation":             {"criterion": "safely",        "condition": "adjusting performance to context"},
+        "Origination":            {"criterion": "creatively",    "condition": "developing new techniques"}
     }
+
 }
 
 PROFILE_SHEET_MAP = {
@@ -230,14 +231,20 @@ def rubric_generator(clo, verb, criterion, condition_core, sc_desc, vbe):
     else:
         cond = f"{connector} {condition_core}"
 
-    indicator = f"Ability to {verb.lower()} {sc_desc.lower()} {cond} {criterion.lower()} while demonstrating {vbe.lower()}."
+    # --------------------------------------------------------
+    #  NEW VBE-DRIVEN RUBRIC (Replace old rubric fully)
+    # --------------------------------------------------------
+    indicator = (
+        f"Ability to {verb.lower()} {sc_desc.lower()} {cond} "
+        f"in accordance with {vbe.lower()}."
+    )
 
     return {
         "indicator": indicator,
-        "excellent": f"Consistently {criterion.lower()} and applies {sc_desc.lower()} {cond} with clear adherence to {vbe.lower()}.",
-        "good": f"Generally {criterion.lower()} and applies {sc_desc.lower()} {cond} with minor gaps in {vbe.lower()}.",
-        "satisfactory": f"Partially {criterion.lower()}; applies {sc_desc.lower()} {cond} but inconsistently demonstrates {vbe.lower()}.",
-        "poor": f"Does not {criterion.lower()}; unable to apply {sc_desc.lower()} {cond}; lacks adherence to {vbe.lower()}."
+        "excellent": f"Consistently demonstrates {vbe.lower()} and applies {sc_desc.lower()} {cond} effectively.",
+        "good": f"Generally demonstrates {vbe.lower()} and applies {sc_desc.lower()} {cond} with minor gaps.",
+        "satisfactory": f"Partially demonstrates {vbe.lower()}; applies {sc_desc.lower()} {cond} inconsistently.",
+        "poor": f"Does not demonstrate {vbe.lower()}; unable to apply {sc_desc.lower()} {cond} effectively."
     }
 
 # ============================================================
@@ -311,6 +318,11 @@ def generate():
         condition_core = ONEWORD_META[domain][bloom]["condition"]
     else:
         condition_core = condition_raw
+
+    # --- VBE overrides Bloom criterion ---
+    vbe_value = details.get("VBE", "")
+    if vbe_value in VBE_CRITERION:
+        criterion = VBE_CRITERION[vbe_value]
 
     # ------------------------------
     # MAIN CLO
@@ -603,6 +615,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
