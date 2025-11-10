@@ -345,9 +345,12 @@ form.addEventListener('submit', async (e) => {
     // Update Rubric
     populateRubric(data.rubric);
 });
-</script>
 
- /* --------------------------------------------------
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+/* --------------------------------------------------
    ELEMENTS (must be global)
 -------------------------------------------------- */
 const profileSel   = document.getElementById('profile');
@@ -400,7 +403,7 @@ document.addEventListener("DOMContentLoaded", () => {
     profileSel.value = profileFromURL;
   }
 
-  updateContentPlaceholder();   // <<< THIS MUST RUN HERE
+  updateContentPlaceholder();
 });
 
 /* --------------------------------------------------
@@ -416,112 +419,116 @@ profileSel.addEventListener("change", () => {
   window.location.href = url.toString();
 });
 
-  /* ============== HELPERS ============== */
-  function suffix() {
-    const p = profileHidden.value || profileSel.value;
-    return p ? `?profile=${encodeURIComponent(p)}` : "";
-  }
-  async function fetchJSON(url) {
-    const r = await fetch(url);
-    return r.ok ? r.json() : null;
-  }
+/* ================= HELPERS ================= */
+function suffix() {
+  const p = profileHidden.value || profileSel.value;
+  return p ? `?profile=${encodeURIComponent(p)}` : "";
+}
 
-  /* ============== DROPDOWNS ============== */
-  async function refreshBlooms(plo) {
-    bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
-    verbSel.innerHTML  = '<option disabled selected>Select Verb</option>';
-    const data = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}${suffix()}`);
-    if (data) data.forEach(b => {
-      const opt = document.createElement('option');
-      opt.value = opt.textContent = b;
-      bloomSel.appendChild(opt);
-    });
-  }
+async function fetchJSON(url) {
+  const r = await fetch(url);
+  return r.ok ? r.json() : null;
+}
 
-  async function refreshVerbs(plo, bloom) {
-    verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
-    const data = await fetchJSON(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${suffix()}`);
-    if (data) data.forEach(v => {
-      const opt = document.createElement('option');
-      opt.value = opt.textContent = v;
-      verbSel.appendChild(opt);
-    });
-  }
+/* ================= DROPDOWNS ================= */
+async function refreshBlooms(plo) {
+  bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
+  verbSel.innerHTML  = '<option disabled selected>Select Verb</option>';
+  const data = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}${suffix()}`);
+  if (data) data.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = b;
+    bloomSel.appendChild(opt);
+  });
+}
 
-  async function refreshMeta(plo, bloom) {
-    const m = await fetchJSON(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${suffix()}`);
-    if (!m) return;
-    scCode.value = m.sc_code || "";
-    scDesc.value = m.sc_desc || "";
-    vbe.value    = m.vbe    || "";
-    domain.value = m.domain || "";
-    condEl.value = m.condition || "";
-    critEl.value = m.criterion || "";
-    assessEl.value = m.assessment || "";
-    evidEl.value   = m.evidence   || "";
-  }
+async function refreshVerbs(plo, bloom) {
+  verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
+  const data = await fetchJSON(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${suffix()}`);
+  if (data) data.forEach(v => {
+    const opt = document.createElement('option');
+    opt.value = opt.textContent = v;
+    verbSel.appendChild(opt);
+  });
+}
 
-  /* ============== EVENTS ============== */
-  ploSel.addEventListener('change', async () => {
-    profileHidden.value = profileSel.value;
-    await refreshBlooms(ploSel.value);
-    bloomSel.value = ""; verbSel.value = "";
-    condEl.value = critEl.value = assessEl.value = evidEl.value = "";
-    document.getElementById('cloPreviewCard').style.display = 'none';
+async function refreshMeta(plo, bloom) {
+  const m = await fetchJSON(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${suffix()}`);
+  if (!m) return;
+  scCode.value = m.sc_code || "";
+  scDesc.value = m.sc_desc || "";
+  vbe.value    = m.vbe    || "";
+  domain.value = m.domain || "";
+  condEl.value = m.condition || "";
+  critEl.value = m.criterion || "";
+  assessEl.value = m.assessment || "";
+  evidEl.value   = m.evidence   || "";
+}
+
+/* ================= EVENTS ================= */
+ploSel.addEventListener('change', async () => {
+  profileHidden.value = profileSel.value;
+  await refreshBlooms(ploSel.value);
+  bloomSel.value = ""; verbSel.value = "";
+  condEl.value = critEl.value = assessEl.value = evidEl.value = "";
+  document.getElementById('cloPreviewCard').style.display = 'none';
+});
+
+bloomSel.addEventListener('change', async () => {
+  await refreshVerbs(ploSel.value, bloomSel.value);
+  await refreshMeta(ploSel.value, bloomSel.value);
+});
+
+/* ================= RUBRIC VIEW ================= */
+function populateRubric(r) {
+  if (!r) return;
+  document.getElementById('rubricCard').style.display = 'block';
+  document.getElementById('r_indicator').innerText    = r.indicator || "";
+  document.getElementById('r_excellent').innerText    = r.excellent || "";
+  document.getElementById('r_good').innerText         = r.good || "";
+  document.getElementById('r_satisfactory').innerText = r.satisfactory || "";
+  document.getElementById('r_poor').innerText         = r.poor || "";
+}
+
+/* ================= SUBMIT ================= */
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const resp = await fetch("/generate" + suffix(), { method: "POST", body: new FormData(form) });
+  const data = await resp.json();
+
+  document.getElementById('cloPreviewCard').style.display = 'block';
+  document.getElementById('cloPreviewText').innerText = data.clo || "";
+
+  const alt = document.getElementById('altOptions');
+  alt.innerHTML = "";
+  const variants = data.clo_options || {};
+
+  Object.keys(variants).forEach((name) => {
+    const txt = variants[name];
+    const div = document.createElement("div");
+    div.className = "option";
+    div.innerText = txt;
+    div.onclick = () => {
+      document.querySelectorAll("#altOptions .option").forEach(n => n.classList.remove("active-option"));
+      div.classList.add("active-option");
+      document.getElementById('cloPreviewText').innerText = txt;
+    };
+    alt.appendChild(div);
   });
 
-  bloomSel.addEventListener('change', async () => {
-    await refreshVerbs(ploSel.value, bloomSel.value);
-    await refreshMeta(ploSel.value, bloomSel.value);
-  });
+  populateRubric(data.rubric);
+  assessEl.value = data.assessment || "";
+  evidEl.value   = data.evidence   || "";
+});
 
-  /* ============== RUBRIC VIEW ============== */
-  function populateRubric(r) {
-    if (!r) return;
-    document.getElementById('rubricCard').style.display = 'block';
-    document.getElementById('r_indicator').innerText    = r.indicator || "";
-    document.getElementById('r_excellent').innerText    = r.excellent || "";
-    document.getElementById('r_good').innerText         = r.good || "";
-    document.getElementById('r_satisfactory').innerText = r.satisfactory || "";
-    document.getElementById('r_poor').innerText         = r.poor || "";
-  }
+/* ================= COPY ================= */
+document.getElementById('copyCloBtn').addEventListener('click', async () => {
+  const text = (document.getElementById('cloPreviewText').innerText || "").trim();
+  if (!text) return;
+  try { await navigator.clipboard.writeText(text); } catch {}
+});
 
-  /* ============== SUBMIT ============== */
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const resp = await fetch("/generate" + suffix(), { method: "POST", body: new FormData(form) });
-    const data = await resp.json();
-    // CLO main
-    document.getElementById('cloPreviewCard').style.display = 'block';
-    document.getElementById('cloPreviewText').innerText = data.clo || "";
-    // One alternative only
-    const alt = document.getElementById('altOptions');
-    alt.innerHTML = "";
-    const variants = data.clo_options || {};
-   Object.keys(variants).forEach((name) => {
-      const txt = variants[name];
-      const div = document.createElement("div");
-      div.className = "option";
-      div.innerText = txt;
-      div.onclick = () => {
-        document.querySelectorAll("#altOptions .option").forEach(n => n.classList.remove("active-option"));
-        div.classList.add("active-option");
-        document.getElementById('cloPreviewText').innerText = txt;
-      };
-      alt.appendChild(div);
-    });
-    // Rubric + assessment
-    populateRubric(data.rubric);
-    assessEl.value = data.assessment || "";
-    evidEl.value   = data.evidence   || "";
-  });
+</script>
 
-  /* ============== COPY ============== */
-  document.getElementById('copyCloBtn').addEventListener('click', async () => {
-    const text = (document.getElementById('cloPreviewText').innerText || "").trim();
-    if (!text) return;
-    try { await navigator.clipboard.writeText(text); } catch {}
-  });
-  </script>
 </body>
 </html>
