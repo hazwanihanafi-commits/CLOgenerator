@@ -209,7 +209,9 @@ td
   font-style: italic;
   display: block;
   margin-top: 6px;
-	.dark-mode {
+}
+
+.dark-mode {
   background: #121212 !important;
   color: #e9e9e9 !important;
 }
@@ -230,6 +232,5 @@ td
   border-color: #555;
 }
 
-}
 
 
