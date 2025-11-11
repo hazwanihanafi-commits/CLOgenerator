@@ -721,12 +721,38 @@ def download_event_logs_excel():
         download_name="event_logs.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+@app.route("/download_event_logs_excel")
+def download_event_logs_excel():
+    log_file = "event_logs.csv"
+
+    # If file does not exist, return a simple message
+    if not os.path.exists(log_file):
+        return "<p>No log file found.</p>"
+
+    import pandas as pd
+    from io import BytesIO
+
+    df = pd.read_csv(log_file)
+
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Event Logs")
+
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="event_logs.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # ============================================================
 # RUN APP
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
