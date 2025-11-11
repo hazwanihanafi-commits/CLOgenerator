@@ -41,7 +41,6 @@ ONEWORD_META = {
 }
 
 PROFILE_SHEET_MAP = {
-    "": "Mapping",
     "health": "Mapping_health",
     "sc": "Mapping_sc",
     "eng": "Mapping_eng",
@@ -663,6 +662,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
