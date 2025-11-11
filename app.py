@@ -692,14 +692,18 @@ def download_event_logs():
 
 # ============================================================
 # DOWNLOAD EVENT LOGS AS EXCEL
-# ============================================================
-@app.route('/download_event_logs_excel')
+# ============================================================@app.route('/download_event_logs_excel')
 def download_event_logs_excel():
-    csv_path = "event_logs.csv"
+    if not os.path.exists(LOG_PATH):
+        return "<p>No logs available yet.</p>"
 
-    # If log file does not exist, return message
-    if not os.path.exists(csv_path):
-        return "<p>No log file found.</p>"
+    df = pd.read_csv(LOG_PATH)
+    out = BytesIO()
+    df.to_excel(out, index=False, sheet_name="Logs")
+    out.seek(0)
+
+    return send_file(out, as_attachment=True, download_name="analytics_logs.xlsx")
+
 
     # Read CSV
     df = pd.read_csv(csv_path, header=None, names=["event", "page", "details", "timestamp"])
@@ -723,6 +727,7 @@ def download_event_logs_excel():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
