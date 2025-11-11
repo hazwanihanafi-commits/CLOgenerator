@@ -528,5 +528,25 @@ Object.entries(variants).forEach(([label, text]) => {
     populateRubric(data.rubric);
 });
 
+  function logEvent(eventName, details={}) {
+    fetch("/api/log_event", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            event: eventName,
+            page: window.location.pathname,
+            details: JSON.stringify(details)
+        })
+    });
+}
+
+document.getElementById("generateBtn").addEventListener("click", function() {
+    logEvent("generate_clo", {
+        bloom: selectedBloom,
+        programme: document.getElementById("profile").value
+    });
+});
+
+
 });
 </script>
