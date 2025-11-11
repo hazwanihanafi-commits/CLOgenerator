@@ -23,24 +23,6 @@ if not os.path.exists(LOG_PATH):
 def index():
     return render_template('index.html')
 
-app = Flask(__name__, template_folder="templates")
-
-# ======================================
-# STARTUP: Ensure analytics log file exists
-# ======================================
-import os
-
-LOG_PATH = "/opt/render/project/src/logs.csv"
-
-# Create log file with header if not present
-if not os.path.exists(LOG_PATH):
-    with open(LOG_PATH, "w") as f:
-        f.write("timestamp,event,page,details\n")
-
-@app.route('/')
-def index():
-    return render_template('index.html')
-
 WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
 
 # ============================================================
@@ -713,6 +695,7 @@ def log_event():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
