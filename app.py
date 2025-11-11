@@ -680,7 +680,7 @@ def log_event():
         "timestamp": timestamp
     }])
 
-    df.to_csv("event_logs.csv", mode="a", header=False, index=False)
+    df.to_csv(LOG_PATH, mode="a", header=False, index=False)
     return jsonify({"status": "ok"})
 
 # ============================================================
@@ -723,6 +723,7 @@ def download_event_logs_excel():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
