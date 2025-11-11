@@ -8,7 +8,6 @@ app = Flask(__name__, template_folder="templates")
 WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
 
 PROFILE_SHEET_MAP = {
-    "": "Mapping",  # default
     "health": "Mapping_health",
     "sc": "Mapping_sc",
     "eng": "Mapping_eng",
