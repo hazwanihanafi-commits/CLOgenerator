@@ -683,12 +683,19 @@ def log_event():
     df.to_csv("event_logs.csv", mode="a", header=False, index=False)
     return jsonify({"status": "ok"})
 
+# ============================================================
+# DOWNLOAD RAW EVENT LOGS
+# ============================================================
+@app.route('/download_event_logs')
+def download_event_logs():
+    return send_file("event_logs.csv", as_attachment=True, download_name="event_logs.csv")
 
 # ============================================================
 # RUN APP
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
