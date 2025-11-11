@@ -657,11 +657,29 @@ def download_rubric():
     out.seek(0)
     return send_file(out, as_attachment=True, download_name="Rubric.xlsx")
 
+@app.route('/api/log_event', methods=['POST'])
+def log_event():
+    data = request.json
+    timestamp = datetime.utcnow()
+
+    # Save to CSV or database
+    df = pd.DataFrame([{
+        "event": data.get("event"),
+        "page": data.get("page"),
+        "details": data.get("details"),
+        "timestamp": timestamp
+    }])
+
+    df.to_csv("event_logs.csv", mode="a", header=False, index=False)
+    return jsonify({"status": "ok"})
+
+
 # ============================================================
 # RUN APP
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
