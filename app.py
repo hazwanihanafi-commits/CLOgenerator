@@ -691,10 +691,39 @@ def download_event_logs():
     return send_file("event_logs.csv", as_attachment=True, download_name="event_logs.csv")
 
 # ============================================================
+# DOWNLOAD EVENT LOGS AS EXCEL
+# ============================================================
+@app.route('/download_event_logs_excel')
+def download_event_logs_excel():
+    csv_path = "event_logs.csv"
+
+    # If log file does not exist, return message
+    if not os.path.exists(csv_path):
+        return "<p>No log file found.</p>"
+
+    # Read CSV
+    df = pd.read_csv(csv_path, header=None, names=["event", "page", "details", "timestamp"])
+
+    # Convert to Excel in memory
+    from io import BytesIO
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="EventLogs")
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="event_logs.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+# ============================================================
 # RUN APP
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
