@@ -8,14 +8,17 @@ from io import BytesIO
 app = Flask(__name__, template_folder="templates")
 
 # ======================================
-# STARTUP: Ensure analytics log file exists
+# ANALYTICS LOG INITIALIZATION
 # ======================================
-LOG_PATH = "/opt/render/project/src/logs.csv"
+import csv
 
-# Create log file with header if not present
-if not os.path.exists(LOG_PATH):
-    with open(LOG_PATH, "w") as f:
-        f.write("timestamp,event,page,details\n")
+LOG_PATH = os.path.join(os.getcwd(), "event_logs.csv")
+
+# Create log file with header if missing or empty
+if not os.path.exists(LOG_PATH) or os.path.getsize(LOG_PATH) == 0:
+    with open(LOG_PATH, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["timestamp", "event", "page", "details"])
 
 WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
 
@@ -667,91 +670,63 @@ def download_rubric():
     out.seek(0)
     return send_file(out, as_attachment=True, download_name="Rubric.xlsx")
 
-@app.route('/api/log_event', methods=['POST'])
+# =========================
+# API: WRITE LOG EVENT
+# =========================
+@app.route("/api/log_event", methods=["POST"])
 def log_event():
-    data = request.json
-    timestamp = datetime.utcnow()
-
-    # Save to CSV or database
-    df = pd.DataFrame([{
-        "event": data.get("event"),
-        "page": data.get("page"),
-        "details": data.get("details"),
-        "timestamp": timestamp
-    }])
-
-    df.to_csv(LOG_PATH, mode="a", header=False, index=False)
+    data = request.get_json(force=True) or {}
+    timestamp = datetime.utcnow().isoformat()
+    
+    with open(LOG_PATH, "a", newline="") as f:
+        csv.writer(f).writerow([
+            timestamp,
+            data.get("event", ""),
+            data.get("page", ""),
+            data.get("details", "")
+        ])
     return jsonify({"status": "ok"})
 
-# ============================================================
-# DOWNLOAD RAW EVENT LOGS
-# ============================================================
-@app.route('/download_event_logs')
+
+# =========================
+# DOWNLOAD RAW CSV
+# =========================
+@app.route("/download_event_logs")
 def download_event_logs():
-    return send_file("event_logs.csv", as_attachment=True, download_name="event_logs.csv")
-
-# ============================================================
-# DOWNLOAD EVENT LOGS AS EXCEL
-# ============================================================@app.route('/download_event_logs_excel')
-def download_event_logs_excel():
     if not os.path.exists(LOG_PATH):
-        return "<p>No logs available yet.</p>"
-
-    df = pd.read_csv(LOG_PATH)
-    out = BytesIO()
-    df.to_excel(out, index=False, sheet_name="Logs")
-    out.seek(0)
-
-    return send_file(out, as_attachment=True, download_name="analytics_logs.xlsx")
+        return "<p>No log file found.</p>"
+    return send_file(LOG_PATH, as_attachment=True, download_name="event_logs.csv")
 
 
-    # Read CSV
-    df = pd.read_csv(csv_path, header=None, names=["event", "page", "details", "timestamp"])
-
-    # Convert to Excel in memory
-    from io import BytesIO
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="EventLogs")
-    output.seek(0)
-
-    return send_file(
-        output,
-        as_attachment=True,
-        download_name="event_logs.xlsx",
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+# =========================
+# DOWNLOAD AS EXCEL
+# =========================
 @app.route("/download_event_logs_excel")
 def download_event_logs_excel():
-    log_file = "event_logs.csv"
-
-    # If file does not exist, return a simple message
-    if not os.path.exists(log_file):
+    if not os.path.exists(LOG_PATH):
         return "<p>No log file found.</p>"
 
-    import pandas as pd
-    from io import BytesIO
+    df = pd.read_csv(LOG_PATH)
 
-    df = pd.read_csv(log_file)
-
-    output = BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
+    out = BytesIO()
+    with pd.ExcelWriter(out, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="Event Logs")
 
-    output.seek(0)
-
+    out.seek(0)
     return send_file(
-        output,
+        out,
         as_attachment=True,
         download_name="event_logs.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
+
 
 # ============================================================
 # RUN APP
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
