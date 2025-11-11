@@ -10,8 +10,6 @@ app = Flask(__name__, template_folder="templates")
 # ======================================
 # STARTUP: Ensure analytics log file exists
 # ======================================
-import os
-
 LOG_PATH = "/opt/render/project/src/logs.csv"
 
 # Create log file with header if not present
@@ -695,6 +693,7 @@ def log_event():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
