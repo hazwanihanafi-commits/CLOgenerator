@@ -266,6 +266,28 @@ export default function MappingEditor() {
         </div>
       ))}
 
+      /* ============================
+   PLO → SC (Sub-Competency)
+============================ */
+<h2 className="text-lg font-semibold mt-10 mb-2">
+  PLO → SC (Sub-Competency)
+</h2>
+
+{PLO_LIST.map(plo => (
+  <div key={plo} className="border p-3 rounded mb-3">
+    <label className="font-medium">{plo} — SC</label>
+    <input
+      className="w-full border p-2 rounded mt-2"
+      placeholder="e.g., SC4, SC6, SC7"
+      value={SCmapping[plo] || ""}
+      onChange={(e) =>
+        setSCmapping(prev => ({ ...prev, [plo]: e.target.value }))
+      }
+    />
+  </div>
+))}
+
+
       {/* ======================================
            SAVE / RESET BUTTONS
       ====================================== */}
