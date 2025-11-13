@@ -13,9 +13,10 @@ export const IEGtoPEO = {
   IEG5: ["PEO3", "PEO4"]
 };
 export const PEOtoPLO = {
-  PEO1: ["PLO1", "PLO2", "PLO3", "PLO5"],
-  PEO2: ["PLO4", "PLO10"],
-  PEO3: ["PLO3", "PLO8", "PLO11"],
-  PEO4: ["PLO5", "PLO6", "PLO9", "PLO11"]
+  PEO1: ["PLO1", "PLO2", "PLO3", "PLO6", "PLO7"],
+  PEO2: ["PLO11"],
+  PEO3: ["PLO10", "PLO9"],
+  PEO4: ["PLO5"],
+  PEO5: ["PLO8", "PLO4", "PLO9"]
 };
 
