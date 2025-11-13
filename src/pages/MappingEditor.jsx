@@ -287,6 +287,13 @@ export default function MappingEditor() {
   </div>
 ))}
 
+const [SCmapping, setSCmapping] = useState({});
+
+// load from localstorage
+SCmapping: parsed.SCmapping || {},
+
+// save
+SCmapping,
 
       {/* ======================================
            SAVE / RESET BUTTONS
