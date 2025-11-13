@@ -193,10 +193,13 @@
     PLO9: ["Reflective journal","Learning log"],
     PLO10: ["Business plan","Entrepreneurship pitch"],
     PLO11: ["Professional conduct assessment","Case study"]
-  };
+};
 
-  /* ---------- Load mapping (multi-level aware) ---------- */
-  function loadMapping() {
+/* ---------- FORCE FRESH MAPPING (Fixes old cached data) ---------- */
+localStorage.removeItem("USMMapping");
+
+/* ---------- Load mapping (multi-level aware) ---------- */
+function loadMapping() {
     return fetch("/static/data/peo_plo_ieg.json", { cache: "no-store" })
       .then(r => {
         if (!r.ok) throw new Error("Failed to load mapping JSON");
