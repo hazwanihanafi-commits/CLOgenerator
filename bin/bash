@@ -1,0 +1,48 @@
+#!/bin/bash
+
+echo "========================================"
+echo " Running React Build + Sync to Flask    "
+echo "========================================"
+
+# 1. Build the React project
+echo "▶ Running npm install..."
+npm install --legacy-peer-deps
+
+echo "▶ Building React app..."
+npm run build
+
+# 2. Prepare paths
+BUILD_DIR="./build"
+STATIC_JS="./static/js"
+STATIC_CSS="./static/css"
+STATIC_DATA="./static/data"
+
+mkdir -p $STATIC_JS
+mkdir -p $STATIC_CSS
+mkdir -p $STATIC_DATA
+
+echo "▶ Copying generated JS bundle..."
+
+# 3. Copy React build output to Flask static folder (JS)
+BUILD_JS=$(ls $BUILD_DIR/static/js/*.js | head -1)
+
+cp "$BUILD_JS" "$STATIC_JS/advanced_clo_generator.js"
+echo "Copied → $STATIC_JS/advanced_clo_generator.js"
+
+# 4. Copy CSS
+echo "▶ Copying CSS..."
+cp $BUILD_DIR/static/css/*.css $STATIC_CSS/
+
+# 5. Copy JSON data
+echo "▶ Copying JSON data..."
+cp -R ./public/data/* $STATIC_DATA/
+
+# 6. Git add/commit/push
+echo "▶ Committing to Git..."
+git add .
+git commit -m "Auto-build React → Flask static sync"
+git push
+
+echo "========================================"
+echo " Build complete. Ready for Render deploy."
+echo "========================================"
