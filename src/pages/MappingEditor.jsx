@@ -12,6 +12,7 @@ export default function MappingEditor() {
   const [PLOstatements, setPLOstatements] = useState({});
   const [PLOtoVBE, setPLOtoVBE] = useState({});
   const [PLOIndicators, setPLOIndicators] = useState({});
+  const [SCmapping, setSCmapping] = useState({});   // <-- NEW
 
   const LEVELS = ["Diploma", "Degree", "Master", "PhD"];
   const PLO_LIST = Array.from({ length: 11 }, (_, i) => `PLO${i + 1}`);
@@ -25,10 +26,11 @@ export default function MappingEditor() {
   ];
 
   /* --------------------------------------------
-     Load mapping from localStorage OR defaults
+     LOAD from localStorage OR defaults
   -------------------------------------------- */
   useEffect(() => {
     const saved = localStorage.getItem("USMMapping");
+
     if (saved) {
       const parsed = JSON.parse(saved);
 
@@ -38,7 +40,9 @@ export default function MappingEditor() {
       setPLOstatements(parsed.PLOstatements || {});
       setPLOtoVBE(parsed.PLOtoVBE || {});
       setPLOIndicators(parsed.PLOIndicators || {});
+      setSCmapping(parsed.SCmapping || {});          // <-- LOAD SC
     } else {
+      // defaults
       setIEGtoPEO(defaultIEGtoPEO);
       setPEOtoPLO(defaultPEOtoPLO);
 
@@ -52,11 +56,12 @@ export default function MappingEditor() {
       setPLOstatements({});
       setPLOtoVBE({});
       setPLOIndicators({});
+      setSCmapping({});                             // <-- EMPTY SC
     }
   }, []);
 
   /* --------------------------------------------
-      Save to localStorage
+     SAVE to localStorage
   -------------------------------------------- */
   const saveMapping = () => {
     const data = {
@@ -65,53 +70,58 @@ export default function MappingEditor() {
       PEOstatements,
       PLOstatements,
       PLOtoVBE,
-      PLOIndicators
+      PLOIndicators,
+      SCmapping                 // <-- SAVE SC
     };
+
     localStorage.setItem("USMMapping", JSON.stringify(data));
     alert("Mapping saved successfully!");
   };
 
   /* --------------------------------------------
-      Reset to default
+      RESET DEFAULT
   -------------------------------------------- */
   const resetDefault = () => {
     if (!window.confirm("Reset to default mappings?")) return;
 
     setIEGtoPEO(defaultIEGtoPEO);
     setPEOtoPLO(defaultPEOtoPLO);
-
     setPEOstatements({
       Diploma: {},
       Degree: {},
       Master: {},
       PhD: {}
     });
-
     setPLOstatements({});
     setPLOtoVBE({});
     setPLOIndicators({});
+    setSCmapping({});          // <-- RESET SC
+
     localStorage.removeItem("USMMapping");
   };
 
   /* --------------------------------------------
-      Toggle selection for mapping buttons
+      Toggle buttons helper
   -------------------------------------------- */
   const toggleMapping = (map, setMap, key, value) => {
     const current = map[key] || [];
     const updated = current.includes(value)
-      ? current.filter(v => v !== value)
+      ? current.filter((v) => v !== value)
       : [...current, value];
 
     setMap({ ...map, [key]: updated });
   };
 
+  /* --------------------------------------------
+      UI START
+  -------------------------------------------- */
   return (
     <div className="p-6">
       <h1 className="text-xl font-bold mb-6">USM Mapping Editor</h1>
 
-      {/* ======================================
-           IEG → PEO
-      ====================================== */}
+      {/* ======================================================
+          IEG → PEO
+      ====================================================== */}
       <h2 className="text-lg font-semibold mt-6 mb-2">IEG → PEO Mapping</h2>
 
       {Object.keys(IEG).map((ieg) => (
@@ -138,9 +148,9 @@ export default function MappingEditor() {
         </div>
       ))}
 
-      {/* ======================================
-           PEO → PLO Mapping
-      ====================================== */}
+      {/* ======================================================
+          PEO → PLO
+      ====================================================== */}
       <h2 className="text-lg font-semibold mt-10 mb-2">
         PEO → PLO Mapping (11 PLOs)
       </h2>
@@ -167,18 +177,18 @@ export default function MappingEditor() {
         </div>
       ))}
 
-      {/* ======================================
-           PEO STATEMENTS (Levels)
-      ====================================== */}
+      {/* ======================================================
+          PEO STATEMENTS BY LEVEL
+      ====================================================== */}
       <h2 className="text-lg font-semibold mt-10 mb-2">
         PEO Statements (Diploma · Degree · Master · PhD)
       </h2>
 
-      {LEVELS.map(level => (
+      {LEVELS.map((level) => (
         <div key={level} className="border p-3 rounded mb-4">
           <div className="font-medium mb-2">{level}</div>
 
-          {["PEO1", "PEO2", "PEO3", "PEO4", "PEO5"].map(peo => (
+          {["PEO1", "PEO2", "PEO3", "PEO4", "PEO5"].map((peo) => (
             <div key={peo} className="mt-2">
               <label className="text-sm">{peo}</label>
               <textarea
@@ -186,7 +196,7 @@ export default function MappingEditor() {
                 className="w-full border p-2 rounded mt-1"
                 value={PEOstatements[level]?.[peo] || ""}
                 onChange={(e) =>
-                  setPEOstatements(prev => ({
+                  setPEOstatements((prev) => ({
                     ...prev,
                     [level]: { ...prev[level], [peo]: e.target.value }
                   }))
@@ -197,12 +207,12 @@ export default function MappingEditor() {
         </div>
       ))}
 
-      {/* ======================================
-           PLO STATEMENTS
-      ====================================== */}
+      {/* ======================================================
+          PLO STATEMENTS
+      ====================================================== */}
       <h2 className="text-lg font-semibold mt-10 mb-2">PLO Statements</h2>
 
-      {PLO_LIST.map(plo => (
+      {PLO_LIST.map((plo) => (
         <div key={plo} className="border p-3 rounded mb-3">
           <label className="font-medium">{plo}</label>
           <textarea
@@ -210,20 +220,18 @@ export default function MappingEditor() {
             className="w-full border rounded p-2 mt-1"
             value={PLOstatements[plo] || ""}
             onChange={(e) =>
-              setPLOstatements(prev => ({ ...prev, [plo]: e.target.value }))
+              setPLOstatements((prev) => ({ ...prev, [plo]: e.target.value }))
             }
           />
         </div>
       ))}
 
-      {/* ======================================
-           PLO → VBE
-      ====================================== */}
-      <h2 className="text-lg font-semibold mt-10 mb-2">
-        PLO → VBE Mapping
-      </h2>
+      {/* ======================================================
+          PLO → VBE
+      ====================================================== */}
+      <h2 className="text-lg font-semibold mt-10 mb-2">PLO → VBE Mapping</h2>
 
-      {PLO_LIST.map(plo => (
+      {PLO_LIST.map((plo) => (
         <div key={plo} className="border p-3 rounded mb-3">
           <div className="font-medium">{plo}</div>
 
@@ -231,25 +239,27 @@ export default function MappingEditor() {
             className="w-full border rounded p-2 mt-2"
             value={PLOtoVBE[plo] || ""}
             onChange={(e) =>
-              setPLOtoVBE(prev => ({ ...prev, [plo]: e.target.value }))
+              setPLOtoVBE((prev) => ({ ...prev, [plo]: e.target.value }))
             }
           >
             <option value="">-- select VBE --</option>
-            {VBE_OPTIONS.map(v => (
-              <option key={v} value={v}>{v}</option>
+            {VBE_OPTIONS.map((v) => (
+              <option key={v} value={v}>
+                {v}
+              </option>
             ))}
           </select>
         </div>
       ))}
 
-      {/* ======================================
-           PLO → Indicator
-      ====================================== */}
+      {/* ======================================================
+          PLO → INDICATOR
+      ====================================================== */}
       <h2 className="text-lg font-semibold mt-10 mb-2">
         PLO → Indicator (Measurement)
       </h2>
 
-      {PLO_LIST.map(plo => (
+      {PLO_LIST.map((plo) => (
         <div key={plo} className="border p-3 rounded mb-3">
           <label className="font-medium">{plo}</label>
           <input
@@ -257,47 +267,34 @@ export default function MappingEditor() {
             placeholder="% pass exam, ≥70% rubric, ≥3/5 practical"
             value={PLOIndicators[plo] || ""}
             onChange={(e) =>
-              setPLOIndicators(prev => ({
-                ...prev,
-                [plo]: e.target.value
-              }))
+              setPLOIndicators((prev) => ({ ...prev, [plo]: e.target.value }))
             }
           />
         </div>
       ))}
 
-      /* ============================
-   PLO → SC (Sub-Competency)
-============================ */
-<h2 className="text-lg font-semibold mt-10 mb-2">
-  PLO → SC (Sub-Competency)
-</h2>
+      {/* ======================================================
+          PLO → SC (NEW)
+      ====================================================== */}
+      <h2 className="text-lg font-semibold mt-10 mb-2">
+        PLO → SC (Sub-Competency)
+      </h2>
 
-{PLO_LIST.map(plo => (
-  <div key={plo} className="border p-3 rounded mb-3">
-    <label className="font-medium">{plo} — SC</label>
-    <input
-      className="w-full border p-2 rounded mt-2"
-      placeholder="e.g., SC4, SC6, SC7"
-      value={SCmapping[plo] || ""}
-      onChange={(e) =>
-        setSCmapping(prev => ({ ...prev, [plo]: e.target.value }))
-      }
-    />
-  </div>
-))}
+      {PLO_LIST.map((plo) => (
+        <div key={plo} className="border p-3 rounded mb-3">
+          <label className="font-medium">{plo} — SC</label>
+          <input
+            className="w-full border p-2 rounded mt-2"
+            placeholder="e.g., SC2, SC4, SC7"
+            value={SCmapping[plo] || ""}
+            onChange={(e) =>
+              setSCmapping((prev) => ({ ...prev, [plo]: e.target.value }))
+            }
+          />
+        </div>
+      ))}
 
-const [SCmapping, setSCmapping] = useState({});
-
-// load from localstorage
-SCmapping: parsed.SCmapping || {},
-
-// save
-SCmapping,
-
-      {/* ======================================
-           SAVE / RESET BUTTONS
-      ====================================== */}
+      {/* SAVE / RESET */}
       <div className="flex gap-3 mt-10">
         <button
           onClick={saveMapping}
