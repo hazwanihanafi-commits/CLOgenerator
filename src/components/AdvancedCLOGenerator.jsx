@@ -3,30 +3,13 @@ import usePEOPLOIEG from "../hooks/usePEOPLOIEG";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 
-/*
-Advanced CLO Auto-Linker Module
-Features:
-- PEO selector -> auto-fill PLO & IEG
-- Suggest Bloom verbs by cognitive level
-- Auto-suggest assessment methods mapped to PLO types
-- Bulk-generate CLOs for multiple courses
-- Export generated CLOs to XLSX / CSV / JSON
-- Generate printable PDF (via html2canvas + jsPDF) - integration notes included
-
-Dependencies:
-- file-saver
-- xlsx
-- html2canvas (optional, for PDF)
-- jspdf (optional, for PDF)
-
-Install:
-npm install file-saver xlsx html2canvas jspdf
-
-Usage:
-- Place this file in /src/components/AdvancedCLOGenerator.js
-- Ensure usePEOPLOIEG hook loads /public/data/peo_plo_ieg.json
-- Import and render <AdvancedCLOGenerator courseName={...} /> inside your app
-*/
+/**
+ * AdvancedCLOAutoLinker.jsx
+ * - Keeps PEO-first UI & flow
+ * - Supports PLOtoVBE as simple strings (Option 1)
+ * - Includes SC support (will be empty for Option 1 data)
+ * - Exports XLSX/JSON including SC column (empty for Option 1)
+ */
 
 const BLOOM_VERBS = {
   Remember: ["list", "name", "recall", "define"],
@@ -38,23 +21,41 @@ const BLOOM_VERBS = {
 };
 
 const ASSESSMENT_SUGGESTIONS = {
-  PLO1: ["Written exam", "Open-book exam", "Quiz"],
-  PLO2: ["Critical review assignment", "Journal critique"],
-  PLO3: ["Practical test", "Lab report", "OSCE"],
-  PLO4: ["Peer-assessment", "Group project"],
-  PLO5: ["Presentation", "Oral exam", "Poster"],
-  PLO6: ["Digital portfolio", "Data analysis assignment"],
-  PLO7: ["Problem set", "Calculation test"],
-  PLO8: ["Leadership project", "Team-based assignment"],
-  PLO9: ["Reflective journal", "Learning log"],
-  PLO10: ["Business plan", "Entrepreneurship pitch"],
-  PLO11: ["Professional conduct assessment", "Case study"],
+  PLO1: ["Written exam", "Quiz"],
+  PLO2: ["Critical review"],
+  PLO3: ["Practical test", "OSCE"],
+  PLO4: ["Group project", "Peer assessment"],
+  PLO5: ["Presentation", "Oral exam"],
+  PLO6: ["Digital portfolio"],
+  PLO7: ["Calculation test"],
+  PLO8: ["Team-based assignment"],
+  PLO9: ["Business plan", "Pitch"],
+  PLO10: ["Professional ethics assessment"],
+  PLO11: ["Leadership project"]
 };
 
 function dedupe(arr) { return Array.from(new Set(arr)); }
 
-export default function AdvancedCLOGenerator({ courseName = "[Course Name]" }) {
+// Helper: get VBE when mapping is simple string or object (handles both shapes)
+const getVBEfromMapping = (mapping, plo) => {
+  if (!mapping) return "";
+  const v = mapping.PLOtoVBE?.[plo];
+  if (!v) return "";
+  return typeof v === "string" ? v : (v.VBE || "");
+};
+
+// Helper: get SC when mapping may include SC (Option 2/3). For Option1 returns ""
+const getSCfromMapping = (mapping, plo) => {
+  if (!mapping) return "";
+  const v = mapping.PLOtoVBE?.[plo];
+  if (!v) return "";
+  return typeof v === "string" ? "" : (v.SC || "");
+};
+
+export default function AdvancedCLOAutoLinker({ courseName = "[Course Name]" }) {
   const mapping = usePEOPLOIEG();
+
+  // original states kept
   const [selectedPEO, setSelectedPEO] = useState("");
   const [selectedPLOs, setSelectedPLOs] = useState([]);
   const [selectedIEGs, setSelectedIEGs] = useState([]);
@@ -63,29 +64,65 @@ export default function AdvancedCLOGenerator({ courseName = "[Course Name]" }) {
   const [cloText, setCloText] = useState("");
   const [assessmentMethods, setAssessmentMethods] = useState([]);
   const [generatedList, setGeneratedList] = useState([]);
-  const [bulkCourses, setBulkCourses] = useState(""); // newline-separated course codes
+  const [bulkCourses, setBulkCourses] = useState("");
 
+  // When mapping or selectedPEO changes -> auto-fill PLO & IEG
   useEffect(() => {
-    if (!mapping || !selectedPEO) return;
-    setSelectedPLOs(mapping[selectedPEO].PLO || []);
-    setSelectedIEGs(mapping[selectedPEO].IEG || []);
+    if (!mapping || !selectedPEO) {
+      setSelectedPLOs([]);
+      setSelectedIEGs([]);
+      return;
+    }
+    const plos = mapping.PEOtoPLO?.[selectedPEO] || [];
+    setSelectedPLOs(plos);
+
+    // derive IEGs from PLOs via reverse or mapping stored earlier:
+    // your original shape may have PEO->IEG or PLO->IEG. Try mapping[selectedPEO].IEG first
+    if (mapping[selectedPEO]?.IEG) {
+      setSelectedIEGs(mapping[selectedPEO].IEG);
+    } else if (mapping.PLOtoIEG) {
+      // if mapping.PLOtoIEG exists (PLO->IEG), aggregate
+      const iegs = dedupe(plos.flatMap(p => mapping.PLOtoIEG?.[p] || []));
+      setSelectedIEGs(iegs);
+    } else if (mapping.IEGtoPEO) {
+      // fallback: find IEGs where PEO appears (IEG->PEO reverse)
+      const iegs = Object.keys(mapping.IEGtoPEO || {}).filter(ieg =>
+        (mapping.IEGtoPEO[ieg] || []).includes(selectedPEO)
+      );
+      setSelectedIEGs(iegs);
+    } else {
+      setSelectedIEGs([]);
+    }
   }, [mapping, selectedPEO]);
 
+  // Auto-suggest assessment methods based on selectedPLOs
   useEffect(() => {
-    // auto-suggest assessment methods based on selectedPLOs
     const suggestions = selectedPLOs.flatMap(p => ASSESSMENT_SUGGESTIONS[p] || []);
-    setAssessmentMethods(dedupe(suggestions).slice(0,5));
+    setAssessmentMethods(dedupe(suggestions).slice(0, 5));
   }, [selectedPLOs]);
 
   const bloomVerbs = useMemo(() => BLOOM_VERBS[bloomLevel] || [], [bloomLevel]);
 
   function generateCLO(courseLabel = courseName) {
-    if (!selectedPEO) return "";
-    const PLOs = selectedPLOs.join(", ");
+    if (!selectedPEO && selectedPLOs.length === 0) return "";
+
+    const PLOs = selectedPLOs.map(p => {
+      // include SC if present in mapping (Option1: blank)
+      const sc = getSCfromMapping(mapping, p);
+      return sc ? `${p} (SC: ${sc})` : p;
+    }).join(", ");
+
     const IEGs = selectedIEGs.join(", ");
     const verb = customVerb || bloomVerbs[0] || "demonstrate";
 
-    const text = `Upon successful completion of ${courseLabel}, the student will be able to ${verb} ${selectedPLOs.length>0 ? `competencies related to ${PLOs}` : "the expected learning outcomes"}. This aligns to ${selectedPEO} and develops graduate attributes: ${IEGs}. Recommended assessment methods: ${assessmentMethods.join(", ")}.`;
+    // optional inclusion of PLO statements if present
+    const ploStatements = selectedPLOs.map(p => mapping?.PLOstatements?.[p]).filter(Boolean);
+    const ploStatementText = ploStatements.length ? ` PLO statements: ${ploStatements.join("; ")}.` : "";
+
+    const assessmentText = assessmentMethods.length ? ` Recommended assessment methods: ${assessmentMethods.join(", ")}.` : "";
+
+    const text = `Upon successful completion of ${courseLabel}, the student will be able to ${verb} competencies related to ${PLOs}.${ploStatementText} This aligns to ${selectedPEO || "the programme PEO(s)"} and develops graduate attributes: ${IEGs || "N/A"}.${assessmentText}`;
+
     setCloText(text);
     return text;
   }
@@ -103,7 +140,6 @@ export default function AdvancedCLOGenerator({ courseName = "[Course Name]" }) {
       clo: cloText,
       timestamp: new Date().toISOString()
     }]);
-    // clear cloText to avoid duplicate saves
     setCloText("");
   }
 
@@ -112,7 +148,7 @@ export default function AdvancedCLOGenerator({ courseName = "[Course Name]" }) {
     const items = rows.map(r => {
       const label = r;
       const text = generateCLO(label);
-      return { course: label, peo: selectedPEO, plos: selectedPLOs, iegs: selectedIEGs, clo: text };
+      return { course: label, peo: selectedPEO, plos: selectedPLOs, iegs: selectedIEGs, clo: text, timestamp: new Date().toISOString() };
     });
     setGeneratedList(prev => [...prev, ...items]);
   }
@@ -122,7 +158,10 @@ export default function AdvancedCLOGenerator({ courseName = "[Course Name]" }) {
       No: i+1,
       Course: g.course,
       PEO: g.peo,
-      PLOs: g.plos.join("; "),
+      PLOs: g.plos.map(p => {
+        const sc = getSCfromMapping(mapping, p);
+        return sc ? `${p} (SC: ${sc})` : p;
+      }).join("; "),
       IEGs: g.iegs.join("; "),
       Bloom: g.bloom || "",
       Verb: g.verb || "",
@@ -143,6 +182,7 @@ export default function AdvancedCLOGenerator({ courseName = "[Course Name]" }) {
 
   function clearAll() { setGeneratedList([]); }
 
+  /* ---------- UI ---------- */
   return (
     <div className="p-4 bg-white rounded-lg shadow">
       <h2 className="text-xl font-semibold mb-3">Advanced CLO Auto-Linker</h2>
@@ -152,13 +192,21 @@ export default function AdvancedCLOGenerator({ courseName = "[Course Name]" }) {
           <label className="block text-sm font-medium">Select PEO</label>
           <select className="w-full border rounded px-3 py-2 mt-1" value={selectedPEO} onChange={(e)=>setSelectedPEO(e.target.value)}>
             <option value="">-- choose PEO --</option>
-            {mapping && Object.keys(mapping).map(peo => <option key={peo} value={peo}>{peo}</option>)}
+            {mapping && Object.keys(mapping.PEOtoPLO || {}).map(peo => <option key={peo} value={peo}>{peo}</option>)}
           </select>
 
           <div className="mt-3 text-sm">
-            <div className="font-medium">Mapped PLO(s)</div>
+            <div className="font-medium">Mapped PLO(s) { /* SC shown if present */}</div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {selectedPLOs.map(p => <span key={p} className="px-2 py-1 bg-blue-100 rounded">{p}</span>)}
+              {selectedPLOs.map(p => {
+                const sc = getSCfromMapping(mapping, p);
+                return (
+                  <div key={p} className="px-2 py-1 bg-blue-100 rounded">
+                    <div className="font-semibold text-sm">{p}</div>
+                    {sc ? <div className="text-xs">SC: {sc}</div> : null}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -191,7 +239,7 @@ export default function AdvancedCLOGenerator({ courseName = "[Course Name]" }) {
 
         <div>
           <label className="block text-sm font-medium">Course label (used in CLO)</label>
-          <input className="w-full border rounded px-3 py-2" value={courseName} onChange={(e)=>{/* if you'd like to edit per instance, connect prop or state */}} readOnly />
+          <input className="w-full border rounded px-3 py-2" value={courseName} onChange={(e)=>{/* readOnly or leave as prop */}} readOnly />
 
           <div className="mt-3">
             <button onClick={()=> setCloText(generateCLO(courseName))} className="px-4 py-2 bg-blue-600 text-white rounded mr-2">Generate CLO</button>
