@@ -1,0 +1,19 @@
+{
+  "PEO1": {
+    "PLO": ["PLO1","PLO2","PLO3","PLO6","PLO7","PLO9"],
+    "IEG": ["IEG1","IEG2","IEG5"]
+  },
+  "PEO2": {
+    "PLO": ["PLO1","PLO2","PLO3","PLO6","PLO7","PLO8","PLO10"],
+    "IEG": ["IEG1","IEG2","IEG5"]
+  },
+  "PEO3": {
+    "PLO": ["PLO3","PLO4","PLO5","PLO8","PLO10","PLO11"],
+    "IEG": ["IEG3","IEG4"]
+  },
+  "PEO4": {
+    "PLO": ["PLO3","PLO4","PLO8","PLO10","PLO11"],
+    "IEG": ["IEG1","IEG3"]
+  }
+}
+
