@@ -499,3 +499,117 @@ leftCol.appendChild(levelSelect);
 
   // End IIFE
 })();
+
+  /* ---------- Export ---------- */
+  function exportCSV() {
+    if (!generatedListState.length)
+      return alert("Nothing to export");
+
+    const rows = generatedListState.map((g, i) => ({
+      No: i + 1,
+      Course: g.course,
+      Level: g.level,
+      PEO: g.peo,
+      PLOs: g.plos.join("; "),
+      SC: g.sc.join("; "),
+      VBE: g.vbe.join("; "),
+      Indicators: g.indicators.join("; "),
+      CLO: g.clo,
+      SavedAt: g.savedAt
+    }));
+
+    const csv = arrayToCSV(rows);
+    downloadFile(`generated_clos_${fmtDateShort()}.csv`, csv, "text/csv");
+  }
+
+  function exportJSON() {
+    if (!generatedListState.length)
+      return alert("Nothing to export");
+
+    downloadFile(
+      `generated_clos_${fmtDateShort()}.json`,
+      JSON.stringify(generatedListState, null, 2),
+      "application/json"
+    );
+  }
+
+  function clearAll() {
+    if (!confirm("Clear all generated CLOs from this session?")) return;
+    generatedListState = [];
+    renderGeneratedList();
+  }
+
+  /* ---------- Event Wiring ---------- */
+
+  // PEO → auto-populate PLO + IEG
+  peoSelect.addEventListener("change", (e) => {
+    selectedPEO = e.target.value || "";
+
+    // derive PLOs
+    selectedPLOs = mapping?.PEOtoPLO?.[selectedPEO]
+      ? mapping.PEOtoPLO[selectedPEO].slice()
+      : [];
+
+    // derive IEGs (reverse lookup)
+    selectedIEGs = Object.keys(mapping.IEGtoPEO || {}).filter(
+      (ieg) => (mapping.IEGtoPEO[ieg] || []).includes(selectedPEO)
+    );
+
+    renderSelectedPLOs();
+    renderIEGs();
+    renderAssessmentSuggestions();
+  });
+
+  bloomSelect.addEventListener("change", (e) => {
+    bloomLevel = e.target.value;
+  });
+
+  genBtn.addEventListener("click", () => {
+    generateCLO(courseInput.value || "[Course Name]");
+  });
+
+  saveBtn.addEventListener("click", () => {
+    saveGenerated(courseInput.value || "[Course Name]");
+  });
+
+  bulkBtn.addEventListener("click", () => {
+    const rows = (bulkArea.value || "")
+      .split(/\n|,|;/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (!rows.length) {
+      alert("No courses entered");
+      return;
+    }
+
+    rows.forEach((r) => {
+      generateCLO(r);
+      saveGenerated(r);
+    });
+  });
+
+  exportCsvBtn.addEventListener("click", exportCSV);
+  exportJsonBtn.addEventListener("click", exportJSON);
+  clearBtn.addEventListener("click", clearAll);
+
+  /* ---------- Initial Load ---------- */
+  loadMapping()
+    .then(() => {
+      // don't auto-select PEO, let user choose
+      bloomSelect.value = "Apply";
+      renderAssessmentSuggestions();
+    })
+    .catch((err) => {
+      console.error("Failed to initialize CLO generator:", err);
+      appWrap.appendChild(
+        el("div", {
+          class: "muted",
+          html: "Could not load configuration. Check /static/data/peo_plo_ieg.json"
+        })
+      );
+    });
+
+})(); // End IIFE
+
+
