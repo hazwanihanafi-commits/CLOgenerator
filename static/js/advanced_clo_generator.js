@@ -107,10 +107,23 @@
   /* Left column controls */
   const leftCol = el("div", { class: "col" });
 
-  // PEO select
-  leftCol.appendChild(el("label", { class: "clo-label" }, "Select PEO"));
-  const peoSelect = el("select", { class: "clo-select" }, []);
-  leftCol.appendChild(peoSelect);
+// PEO select
+leftCol.appendChild(el("label", { class: "clo-label" }, "Select PEO"));
+const peoSelect = el("select", { class: "clo-select" }, []);
+leftCol.appendChild(peoSelect);
+
+// Programme Level selector (Diploma, Degree, Master, PhD)
+leftCol.appendChild(
+  el("label", { class: "clo-label", style: "margin-top:8px" }, "Programme Level")
+);
+const levelSelect = el("select", { class: "clo-select" }, [
+  el("option", { value: "Diploma" }, "Diploma"),
+  el("option", { value: "Degree", selected: true }, "Degree"),
+  el("option", { value: "Master" }, "Master"),
+  el("option", { value: "PhD" }, "PhD")
+]);
+leftCol.appendChild(levelSelect);
+
 
   // mapped PLO + SC display
   leftCol.appendChild(el("div", { class: "clo-label" }, "Mapped PLO(s)"));
@@ -342,11 +355,14 @@
       const sc = getSC(p);
       return sc ? `${p} (SC: ${sc})` : p;
     }).join(", ");
-    const plostmts = selectedPLOs.map(p => getPLOStatement(p)).filter(Boolean);
+    const plostmts = selectedPLOs
+  .map((plo) => mapping.PLOstatements?.[level]?.[plo] || "")
+  .filter(Boolean);
     const plostmtText = plostmts.length ? ("PLO statements: " + plostmts.join("; ")) : "";
     const vbedomains = Array.from(new Set(selectedPLOs.map(p => getVBE(p)).filter(Boolean))).join(", ");
     const indicators = selectedPLOs.map(p => `${p}: ${getIndicator(p) || "(no indicator set)"}`).join("; ");
-
+    const level = levelSelect.value || "Degree";
+     
     const text = `Upon successful completion of ${courseLabel}, students will be able to ${verb} competencies related to ${ploWithSC}. ${plostmtText} This aligns to ${selectedPEO || "the programme PEO(s)"} and develops graduate attributes: ${selectedIEGs.join(", ") || "N/A"}. VBE: ${vbedomains || "N/A"}. Indicators: ${indicators}.`.trim();
 
     cloArea.value = text;
