@@ -1,27 +1,102 @@
 {
-  "IEGs": ["IEG1", "IEG2", "IEG3", "IEG4", "IEG5"],
-  "PEOs": ["PEO1", "PEO2", "PEO3", "PEO4", "PEO5"],
-  "PLOs": [
-    "PLO1","PLO2","PLO3","PLO4","PLO5",
-    "PLO6","PLO7","PLO8","PLO9","PLO10","PLO11"
-  ],
-
   "IEGtoPEO": {
-    "IEG1": ["PEO1"],
-    "IEG2": ["PEO2"],
-    "IEG3": ["PEO3"],
-    "IEG4": ["PEO4"],
-    "IEG5": ["PEO5"]
+    "IEG1": [
+      "PEO1"
+    ],
+    "IEG2": [
+      "PEO2"
+    ],
+    "IEG3": [
+      "PEO3"
+    ],
+    "IEG4": [
+      "PEO4"
+    ],
+    "IEG5": [
+      "PEO5"
+    ]
   },
-
+  "IEGs": [
+    "IEG1",
+    "IEG2",
+    "IEG3",
+    "IEG4",
+    "IEG5"
+  ],
   "PEOtoPLO": {
-    "PEO1": ["PLO1", "PLO2", "PLO3", "PLO6", "PLO7"],
-    "PEO2": ["PLO11"],
-    "PEO3": ["PLO10", "PLO9"],
-    "PEO4": ["PLO5"],
-    "PEO5": ["PLO8", "PLO4", "PLO9"]
+    "PEO1": [
+      "PLO1",
+      "PLO2",
+      "PLO3",
+      "PLO6",
+      "PLO7"
+    ],
+    "PEO2": [
+      "PLO11"
+    ],
+    "PEO3": [
+      "PLO10",
+      "PLO9"
+    ],
+    "PEO4": [
+      "PLO5"
+    ],
+    "PEO5": [
+      "PLO8",
+      "PLO4",
+      "PLO9"
+    ]
   },
-
+  "PEOs": [
+    "PEO1",
+    "PEO2",
+    "PEO3",
+    "PEO4",
+    "PEO5"
+  ],
+  "PLOs": [
+    "PLO1",
+    "PLO10",
+    "PLO11",
+    "PLO2",
+    "PLO3",
+    "PLO4",
+    "PLO5",
+    "PLO6",
+    "PLO7",
+    "PLO8",
+    "PLO9"
+  ],
+  "PEOstatements": {
+    "Diploma": {
+      "PEO1": "Graduates demonstrate basic professional competencies.",
+      "PEO2": "Graduates uphold ethical and humane values.",
+      "PEO3": "Graduates contribute positively to society.",
+      "PEO4": "Graduates communicate effectively.",
+      "PEO5": "Graduates develop teamwork and personal skills."
+    },
+    "Degree": {
+      "PEO1": "Graduates apply knowledge and skills effectively.",
+      "PEO2": "Graduates uphold ethical and professional values.",
+      "PEO3": "Graduates contribute to sustainable societal development.",
+      "PEO4": "Graduates communicate effectively across contexts.",
+      "PEO5": "Graduates demonstrate leadership and lifelong learning."
+    },
+    "Master": {
+      "PEO1": "Graduates advance specialized professional knowledge.",
+      "PEO2": "Graduates demonstrate ethical judgment in complex situations.",
+      "PEO3": "Graduates lead sustainability-focused initiatives.",
+      "PEO4": "Graduates communicate as disciplinary experts.",
+      "PEO5": "Graduates lead teams and practice lifelong learning."
+    },
+    "PhD": {
+      "PEO1": "Graduates contribute frontier knowledge.",
+      "PEO2": "Graduates exemplify ethical and humanistic values.",
+      "PEO3": "Graduates lead societal transformation.",
+      "PEO4": "Graduates disseminate advanced scholarly work globally.",
+      "PEO5": "Graduates lead research teams."
+    }
+  },
   "PLOstatements": {
     "Diploma": {
       "PLO1": "Demonstrate foundational knowledge of core concepts and principles in the discipline.",
@@ -76,52 +151,6 @@
       "PLO11": "Uphold the highest standards of research ethics and integrity."
     }
   },
-
-  "PEOstatements": {
-    "Diploma": {
-      "PEO1": "Graduates demonstrate basic professional competencies.",
-      "PEO2": "Graduates uphold ethical and humane values.",
-      "PEO3": "Graduates contribute positively to society.",
-      "PEO4": "Graduates communicate effectively.",
-      "PEO5": "Graduates develop teamwork and personal skills."
-    },
-    "Degree": {
-      "PEO1": "Graduates apply knowledge and skills effectively.",
-      "PEO2": "Graduates uphold ethical and professional values.",
-      "PEO3": "Graduates contribute to sustainable societal development.",
-      "PEO4": "Graduates communicate effectively across contexts.",
-      "PEO5": "Graduates demonstrate leadership and lifelong learning."
-    },
-    "Master": {
-      "PEO1": "Graduates advance specialized professional knowledge.",
-      "PEO2": "Graduates demonstrate ethical judgment in complex situations.",
-      "PEO3": "Graduates lead sustainability-focused initiatives.",
-      "PEO4": "Graduates communicate as disciplinary experts.",
-      "PEO5": "Graduates lead teams and practice lifelong learning."
-    },
-    "PhD": {
-      "PEO1": "Graduates contribute frontier knowledge.",
-      "PEO2": "Graduates exemplify ethical and humanistic values.",
-      "PEO3": "Graduates lead societal transformation.",
-      "PEO4": "Graduates disseminate advanced scholarly work globally.",
-      "PEO5": "Graduates lead research teams."
-    }
-  },
-
-  "PLOtoVBE": {
-    "PLO1": "Professionalism",
-    "PLO2": "Critical Thinking",
-    "PLO3": "Responsibility",
-    "PLO4": "Respect",
-    "PLO5": "Communication Ethics",
-    "PLO6": "Digital Citizenship",
-    "PLO7": "Integrity in Quantitative Work",
-    "PLO8": "Leadership Values",
-    "PLO9": "Personal Well-being",
-    "PLO10": "Innovation & Entrepreneurship",
-    "PLO11": "Ethical Reasoning"
-  },
-
   "PLOIndicators": {
     "PLO1": "≥ 60% exam performance",
     "PLO2": "≥ 60% case analysis",
@@ -135,7 +164,19 @@
     "PLO10": "≥ 3/5 innovation rubric",
     "PLO11": "≥ 3/5 ethics rubric; zero violations"
   },
-
+  "PLOtoVBE": {
+    "PLO1": "Professionalism",
+    "PLO2": "Critical Thinking",
+    "PLO3": "Responsibility",
+    "PLO4": "Respect",
+    "PLO5": "Communication Ethics",
+    "PLO6": "Digital Citizenship",
+    "PLO7": "Integrity in Quantitative Work",
+    "PLO8": "Leadership Values",
+    "PLO9": "Personal Well-being",
+    "PLO10": "Innovation & Entrepreneurship",
+    "PLO11": "Ethical Reasoning"
+  },
   "SCmapping": {
     "PLO1": "SC1",
     "PLO2": "SC2",
