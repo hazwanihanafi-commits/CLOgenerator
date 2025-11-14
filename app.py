@@ -6,6 +6,9 @@ from openpyxl import load_workbook
 from io import BytesIO
 from datetime import datetime
 
+# ----------------------------------------
+# PATH SETUP
+# ----------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(
@@ -14,40 +17,158 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, "templates")
 )
 
+print("BOOT: STATIC =", app.static_folder)
+print("BOOT: TEMPLATES =", app.template_folder)
+
+# ----------------------------------------
+# FILE PATHS
+# ----------------------------------------
 WORKBOOK_PATH = os.path.join(BASE_DIR, "SCLOG.xlsx")
 FRONT_JSON = os.path.join(app.static_folder, "data", "SCLOG_front.json")
 
-# ----------------------------------------------------
-# LOAD FRONT JSON (IEG, PEO, PLO, Statements, Indicators)
-# ----------------------------------------------------
-with open(FRONT_JSON, "r", encoding="utf-8") as f:
-    MAP = json.load(f)
+# ----------------------------------------
+# SAFE JSON LOADER (prevent crash)
+# ----------------------------------------
+def safe_load_json(path):
+    print(f"BOOT: Loading JSON → {path}")
+    if not os.path.exists(path):
+        print("ERROR: JSON file not found:", path)
+        return {}
 
-
-# ----------------------------------------------------
-# HELPERS TO LOAD EXCEL SHEETS
-# ----------------------------------------------------
-def load_df(sheet):
-    """Load a sheet safely"""
     try:
-        return pd.read_excel(WORKBOOK_PATH, sheet_name=sheet, engine="openpyxl")
-    except Exception:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        print("JSON LOAD ERROR:", e)
+        return {}
+
+# Load IEG/PEO/PLO mapping from SCLOG_front.json safely
+IEP = safe_load_json(FRONT_JSON)
+
+# Ensure JSON keys exist (avoid KeyError later)
+DEFAULT_IEP = {
+    "IEGs": [],
+    "PEOs": [],
+    "PLOs": [],
+    "IEGtoPEO": {},
+    "PEOtoPLO": {},
+    "PLOstatements": {},
+    "PEOstatements": {},
+    "PLOtoVBE": {},
+    "PLOIndicators": {},
+    "SCmapping": {}
+}
+
+for k, v in DEFAULT_IEP.items():
+    if k not in IEP:
+        IEP[k] = v
+
+print("BOOT: JSON mapping loaded successfully.")
+print("BOOT: IEG count:", len(IEP.get("IEGs", [])))
+print("BOOT: PEO count:", len(IEP.get("PEOs", [])))
+print("BOOT: PLO count:", len(IEP.get("PLOs", [])))
+
+# ----------------------------------------
+# SAFE EXCEL CHECK (prevent crash)
+# ----------------------------------------
+if not os.path.exists(WORKBOOK_PATH):
+    print("WARNING: SCLOG.xlsx NOT FOUND:", WORKBOOK_PATH)
+else:
+    print("BOOT: Excel workbook detected:", WORKBOOK_PATH)
+
+# ------------------------------
+# Ensure MAP variable (JSON mapping) available
+# ------------------------------
+MAP = IEP  # keep naming used by the routes later
+
+# ------------------------------
+# Safe Excel loader (small wrapper)
+# ------------------------------
+def load_df(sheet_name):
+    """
+    Safely load a sheet from SCLOG.xlsx into a pandas DataFrame.
+    Returns empty DataFrame on failure.
+    """
+    if not os.path.exists(WORKBOOK_PATH):
+        print("load_df: workbook not found:", WORKBOOK_PATH)
+        return pd.DataFrame()
+    try:
+        return pd.read_excel(WORKBOOK_PATH, sheet_name=sheet_name, engine="openpyxl")
+    except Exception as e:
+        print(f"load_df: failed to read sheet '{sheet_name}':", e)
         return pd.DataFrame()
 
+# ------------------------------
+# Mapping sheet resolver
+# ------------------------------
+# If you have multiple profile-specific mapping sheet names, set them here:
+PROFILE_SHEET_MAP = {
+    "health": "Mapping_health",
+    "sc": "Mapping_sc",
+    "eng": "Mapping_eng",
+    "socs": "Mapping_socs",
+    "edu": "Mapping_edu",
+    "bus": "Mapping_bus",
+    "arts": "Mapping_arts"
+}
 
 def get_mapping_sheet(profile):
-    """Return SC Mapping sheet based on profile"""
-    mapping_sheets = {
-        "health": "Mapping_health",
-        "sc": "Mapping_sc",
-        "eng": "Mapping_eng",
-        "socs": "Mapping_socs",
-        "edu": "Mapping_edu",
-        "bus": "Mapping_bus",
-        "arts": "Mapping_arts"
-    }
-    return load_df(mapping_sheets.get(profile, "Mapping_sc"))
+    """
+    Return DataFrame for mapping sheet corresponding to profile.
+    profile: 'sc','health', etc.
+    """
+    sheet = PROFILE_SHEET_MAP.get(profile, "Mapping")
+    df = load_df(sheet)
+    if df.empty:
+        # fallback: try a generic "Mapping" sheet if present
+        df = load_df("Mapping")
+    return df
 
+# ------------------------------
+# get_meta_data helper (used by generate)
+# Returns a dict similar to api_get_meta output
+# ------------------------------
+def get_meta_data(plo, bloom, profile="sc"):
+    details = get_plo_details(plo, profile)
+    if not details:
+        return {}
+
+    # Domain → Bloom criterion
+    domain = (details.get("Domain") or "").lower()
+    criterion = ""
+    condition = ""
+
+    df = load_df("Criterion")
+    if not df.empty:
+        df.columns = [c.strip() for c in df.columns]
+        # safer mask with lowercasing and fillna
+        left = df.iloc[:, 0].astype(str).str.lower().fillna("")
+        right = df.iloc[:, 1].astype(str).str.lower().fillna("")
+        mask = (left == domain) & (right == bloom.lower())
+        if mask.any():
+            row = df[mask].iloc[0]
+            criterion = str(row.iloc[2]) if len(row) > 2 else ""
+            condition = str(row.iloc[3]) if len(row) > 3 else ""
+
+    # default fallback
+    if not condition:
+        condition = {
+            "cognitive": "interpreting tasks",
+            "affective": "engaging with peers",
+            "psychomotor": "performing skills"
+        }.get(domain, "")
+
+    connector = "by" if domain == "psychomotor" else "when"
+    condition_final = f"{connector} {condition}"
+
+    return {
+        "sc_code": details.get("SC_Code", ""),
+        "sc_desc": details.get("SC_Desc", ""),
+        "vbe": details.get("VBE", ""),
+        "domain": domain,
+        "criterion": criterion,
+        "condition": condition_final
+    }
 
 # ----------------------------------------------------
 # GET PLO DETAILS (from Excel → Mapping_sc etc.)
@@ -238,8 +359,20 @@ def generate():
     sc_desc = details["SC_Desc"]
     vbe = details["VBE"]
 
-    # Meta from Excel
-    meta = get_meta_data(plo, bloom, profile=None) if False else None
+# ---------------------------------------
+# META (criterion + condition) – correct
+# ---------------------------------------
+meta_res = get_meta_data(plo, bloom, profile)
+
+condition_core = (
+    meta_res.get("condition", "")
+            .replace("when ", "")
+            .replace("by ", "")
+            .strip()
+)
+
+criterion = meta_res.get("criterion", "")
+
 
     # Condition + Criterion
     meta_res = api_get_meta(plo, bloom).json
@@ -306,3 +439,4 @@ def generate():
 # ----------------------------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
