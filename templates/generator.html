@@ -4,25 +4,10 @@
   <meta charset="utf-8" />
   <title>SCLOG Smart CLO Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- Google Analytics (GA4) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-HMBYNXRLBE"></script>
-  <script>
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){ dataLayer.push(arguments); }
-    gtag('js', new Date());
-    gtag('config', 'G-HMBYNXRLBE');
-  </script>
-
-  <!-- Bootstrap + Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
-
-  <!-- Optional custom CSS -->
   <link href="{{ url_for('static', filename='custom.css') }}" rel="stylesheet" />
-
   <style>
-    /* Minor local styles for readability */
     .card-elev { border-radius: 12px; box-shadow: 0 6px 18px rgba(23,102,216,0.06); }
     .bg-brand { background: linear-gradient(90deg,#1158c7,#1b7de6); }
     .loader { display:inline-block; width:16px; height:16px; border:2px solid #e9f2ff; border-top-color:#1766d8; border-radius:50%; animation:spin 1s linear infinite; }
@@ -34,8 +19,6 @@
   </style>
 </head>
 <body class="bg-light">
-
-  <!-- NAV -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-brand py-3">
     <div class="container">
       <span class="navbar-brand fw-bold"><i class="bi bi-stars me-2"></i> SCLOG — Smart CLO Generator</span>
@@ -59,17 +42,13 @@
       <form id="cloForm" method="post" class="p-3">
         <input type="hidden" id="profileHidden" name="profile" />
         <div class="row g-4">
-
-          <!-- LEFT: Mapping / PLO -->
           <div class="col-lg-5">
             <div class="card p-3 h-100">
               <h5 class="mb-3">Course & Mapping</h5>
-
               <div class="mb-2">
                 <label class="form-label">Course (code / name)</label>
                 <input name="course" class="form-control" placeholder="e.g., CLIN101 - Clinical Skills" />
               </div>
-
               <div class="mb-2">
                 <label class="form-label">Level</label>
                 <select id="level" name="level" class="form-select">
@@ -80,7 +59,6 @@
                 </select>
               </div>
 
-              <!-- IEG / PEO / PLO -->
               <div class="mb-2">
                 <label class="form-label">IEG *</label>
                 <select id="ieg" name="ieg" class="form-select">
@@ -102,7 +80,6 @@
                 </select>
               </div>
 
-              <!-- mapping summary -->
               <div class="mt-3">
                 <div class="meta-grid">
                   <div class="meta-card">
@@ -124,7 +101,6 @@
                 </div>
               </div>
 
-              <!-- IEG/PEO/PLO statements + indicator -->
               <div class="alert alert-light mt-3">
                 <div class="mb-1"><strong>IEG Statement:</strong> <span id="ieg_statement" class="muted-small">—</span></div>
                 <div class="mb-1"><strong>PEO Statement:</strong> <span id="peo_statement" class="muted-small">—</span></div>
@@ -139,7 +115,6 @@
             </div>
           </div>
 
-          <!-- RIGHT: Bloom & CLO builder -->
           <div class="col-lg-7">
             <div class="card p-3 h-100">
               <h5 class="mb-3">Bloom & CLO Builder</h5>
@@ -184,7 +159,6 @@
                   <div id="busy" style="display:none;"><span class="loader"></span> Generating…</div>
                 </div>
 
-                <!-- Preview area -->
                 <div class="col-12 mt-3" id="previewPanel" style="display:none;">
                   <div class="card card-elev p-3">
                     <div class="d-flex justify-content-between align-items-start">
@@ -208,7 +182,6 @@
                   </div>
                 </div>
 
-                <!-- Rubric -->
                 <div class="col-12 mt-3" id="rubricPanel" style="display:none;">
                   <div class="card card-elev p-3">
                     <h6 class="mb-2">Rubric</h6>
@@ -224,11 +197,11 @@
                   </div>
                 </div>
 
-              </div> <!-- row -->
-            </div> <!-- card -->
+              </div>
+            </div>
           </div>
 
-        </div> <!-- row -->
+        </div>
       </form>
     </div>
   </main>
@@ -237,12 +210,10 @@
     SCLOG Generator — Developed by Assoc. Prof. Dr. Hazwani Ahmad Yusof @ USM
   </footer>
 
-  <!-- Libraries -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
   <script>
-  // === Utility helpers & element refs ===
+  // ---------- helpers ----------
   const $id = id => document.getElementById(id);
 
   const profileSel = $id('profile');
@@ -286,7 +257,7 @@
   const r_satisfactory = $id('r_satisfactory');
   const r_poor = $id('r_poor');
 
-  // init profile from URL (shareable)
+  // initialize profile from URL or default
   (function initProfileFromURL(){
     const params = new URLSearchParams(window.location.search);
     const p = params.get('profile');
@@ -304,120 +275,72 @@
     return res.json();
   }
 
-  function suffix() {
-    const p = profileHidden.value || profileSel.value;
-    return p ? `?profile=${encodeURIComponent(p)}` : "";
-  }
-
-  /* ============================================================
-     Load IEG / base PLOs from static mapping
-  ============================================================ */
-  async function loadIEGandPLOs(){
+  // ---------- mapping loader ----------
+  let MAPPING = null;
+  async function loadMapping() {
     try {
-      const map = await fetchJSON('/static/data/peo_plo_ieg.json');
-      // populate IEGs
+      MAPPING = await fetchJSON('/api/mapping');
+      console.log('mapping loaded', MAPPING);
+
+      // IEG dropdown
       iegSel.innerHTML = '<option value="">— Select IEG —</option>';
-      (map.IEGs || []).forEach(i => iegSel.append(new Option(i,i)));
+      (MAPPING.IEGs || []).forEach(i => iegSel.append(new Option(i, i)));
 
-      // pre-populate PLO master list as fallback
+      // preload PLO master for quick access
       ploSel.innerHTML = '<option value="">— Select PLO —</option>';
-      (map.PLOs || []).forEach(p => ploSel.append(new Option(p,p)));
+      (MAPPING.PLOs || []).forEach(p => ploSel.append(new Option(p, p)));
+
     } catch (e) {
-      console.warn('Failed loading mapping JSON', e);
+      console.error('Failed loading mapping', e);
+      alert('Failed to load mapping. Check /api/mapping');
     }
   }
 
-  /* ============================================================
-     IEG → PEO → PLO cascade (static JSON fallback + API)
-  ============================================================ */
-  iegSel.addEventListener('change', async () => {
+  // ---------- cascade handlers ----------
+  iegSel.addEventListener('change', () => {
     const ieg = iegSel.value;
-    peoSel.innerHTML = '<option value="">Loading…</option>';
+    peoSel.innerHTML = '<option value="">— Select PEO —</option>';
     ploSel.innerHTML = '<option value="">— Select PLO —</option>';
-    try {
-      // attempt API first
-      const peos = await fetchJSON(`/api/get_peos/${encodeURIComponent(ieg)}`).catch(()=>null);
-      if (peos && Array.isArray(peos) && peos.length) {
-        peoSel.innerHTML = '<option value="">— Select PEO —</option>';
-        peos.forEach(p => peoSel.append(new Option(p,p)));
-      } else {
-        // fallback to static file mapping for PEO list
-        const map = await fetchJSON('/static/data/peo_plo_ieg.json').catch(()=>null);
-        const list = (map && map.IEGtoPEO && map.IEGtoPEO[ieg]) || [];
-        peoSel.innerHTML = '<option value="">— Select PEO —</option>';
-        list.forEach(p => peoSel.append(new Option(p,p)));
-      }
+    iegStatementEl.textContent = ieg || '—';
+    peoStatementEl.textContent = '—';
+    ploStatementEl.textContent = '—';
+    ploIndicatorEl.textContent = '—';
+    scCodeEl.textContent = '';
+    scDescEl.textContent = '';
+    vbeEl.textContent = '';
+    domainEl.textContent = '';
 
-      // update IEG statement if present in static mapping
-      try {
-        const map = await fetchJSON('/static/data/peo_plo_ieg.json');
-        iegStatementEl.textContent = (map && map.IEGtoPEO && map.IEGtoPEO[ieg]) ? (map.IEGtoPEO[ieg].join(', ') ? '' : '') : ieg || '—';
-        // we don't have direct IEG statements in all JSON variants; keep simple
-        iegStatementEl.textContent = ieg || '—';
-      } catch(e){ iegStatementEl.textContent = ieg || '—'; }
-      peoStatementEl.textContent = '—';
-      ploStatementEl.textContent = '—';
-      ploIndicatorEl.textContent = '—';
-    } catch (e) {
-      console.error('IEG->PEO error', e);
-      peoSel.innerHTML = '<option value="">— Error loading PEOs —</option>';
-    }
+    if (!ieg || !MAPPING) return;
+    const peos = MAPPING.IEGtoPEO?.[ieg] || [];
+    peos.forEach(p => peoSel.append(new Option(p, p)));
   });
 
-  peoSel.addEventListener('change', async () => {
+  peoSel.addEventListener('change', () => {
     const peo = peoSel.value;
-    ploSel.innerHTML = '<option value="">Loading…</option>';
-    try {
-      // Try API
-      const plos = await fetchJSON(`/api/get_plos/${encodeURIComponent(peo)}`).catch(()=>null);
-      if (plos && Array.isArray(plos) && plos.length) {
-        ploSel.innerHTML = '<option value="">— Select PLO —</option>';
-        plos.forEach(p => ploSel.append(new Option(p,p)));
-      } else {
-        // fallback to static mapping
-        const map = await fetchJSON('/static/data/peo_plo_ieg.json').catch(()=>null);
-        const arr = (map && map.PEOtoPLO && map.PEOtoPLO[peo]) || [];
-        ploSel.innerHTML = '<option value="">— Select PLO —</option>';
-        arr.forEach(p => ploSel.append(new Option(p,p)));
-      }
+    ploSel.innerHTML = '<option value="">— Select PLO —</option>';
+    peoStatementEl.textContent = '—';
+    ploStatementEl.textContent = '—';
+    ploIndicatorEl.textContent = '—';
+    scCodeEl.textContent = '';
+    scDescEl.textContent = '';
+    vbeEl.textContent = '';
+    domainEl.textContent = '';
 
-      // load PEO statement if available
-      try {
-        const level = levelSel.value || 'Degree';
-        const stmt = await fetchJSON(`/api/get_statement/${encodeURIComponent(level)}/PEO/${encodeURIComponent(peo)}`).catch(()=>null);
-        peoStatementEl.textContent = stmt || (await (await fetch('/static/data/peo_plo_ieg.json')).then(r=>r.json())).PEOstatements?.[level]?.[peo] || '—';
-      } catch(e){ peoStatementEl.textContent = '—'; }
-      ploStatementEl.textContent = '—';
-      ploIndicatorEl.textContent = '—';
-    } catch (e) {
-      console.error('PEO->PLO error', e);
-      ploSel.innerHTML = '<option value="">— Error loading PLOs —</option>';
-    }
+    if (!peo || !MAPPING) return;
+    const plos = MAPPING.PEOtoPLO?.[peo] || [];
+    plos.forEach(p => ploSel.append(new Option(p, p)));
+
+    const level = levelSel.value || 'Degree';
+    const stmt = MAPPING.PEOstatements?.[level]?.[peo] || '—';
+    peoStatementEl.textContent = stmt;
   });
 
-  /* ============================================================
-     PLO select: load Blooms (API), PLO statement + indicator
-  ============================================================ */
-  async function refreshBlooms(plo) {
-    bloomSel.innerHTML = '<option disabled selected>Loading...</option>';
-    verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
-
-    try {
-      const data = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}${suffix()}`).catch(()=>null);
-      bloomSel.innerHTML = '<option disabled selected>Select Bloom</option>';
-      if (!data) return;
-      data.forEach(b => bloomSel.append(new Option(b, b)));
-    } catch(e){
-      console.error('refreshBlooms', e);
-      bloomSel.innerHTML = '<option value="">— Error loading blooms —</option>';
-    }
-  }
-
+  // when bloom selected, fetch verbs via existing API (which uses workbook Bloom sheets)
   async function refreshVerbs(plo, bloom) {
     verbSel.innerHTML = '<option disabled selected>Loading...</option>';
     try {
-      const data = await fetchJSON(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${suffix()}`).catch(()=>null);
-      verbSel.innerHTML = '<option disabled selected>Select Verb</option>';
+      const data = await fetchJSON(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${encodeURIComponent(profileHidden.value || profileSel.value)}`).catch(()=>null);
+      verbSel.innerHTML = '<option value="">— Select Verb —</option>';
       if (!data) return;
       data.forEach(v => verbSel.append(new Option(v, v)));
     } catch(e){
@@ -426,9 +349,67 @@
     }
   }
 
-  async function refreshMeta(plo, bloom) {
+  async function refreshBlooms(plo) {
+    bloomSel.innerHTML = '<option disabled selected>Loading...</option>';
     try {
-      const m = await fetchJSON(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}${suffix()}`).catch(()=>null);
+      const data = await fetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}?profile=${encodeURIComponent(profileHidden.value || profileSel.value)}`).catch(()=>null);
+      bloomSel.innerHTML = '<option value="">— Select Bloom —</option>';
+      if (!data) return;
+      data.forEach(b => bloomSel.append(new Option(b, b)));
+    } catch(e){
+      console.error('refreshBlooms', e);
+      bloomSel.innerHTML = '<option value="">— Error loading blooms —</option>';
+    }
+  }
+
+  // PLO selected: populate PLO statement (local) and fetch meta (sc/vbe/domain) via /api/get_meta/<plo>/<bloom> WHEN bloom chosen
+  ploSel.addEventListener('change', async () => {
+    const plo = ploSel.value;
+    // reset meta and bloom/verb
+    scCodeEl.textContent = '';
+    scDescEl.textContent = '';
+    vbeEl.textContent = '';
+    domainEl.textContent = '';
+    ploStatementEl.textContent = '—';
+    ploIndicatorEl.textContent = '—';
+    bloomSel.innerHTML = '<option value="">— Select Bloom —</option>';
+    verbSel.innerHTML = '<option value="">— Select Verb —</option>';
+
+    if (!plo) return;
+
+    // auto-select PEO if mapping contains it
+    if (MAPPING && MAPPING.PEOtoPLO) {
+      for (const [peo, arr] of Object.entries(MAPPING.PEOtoPLO)) {
+        if (Array.isArray(arr) && arr.includes(plo)) {
+          peoSel.value = peo;
+          const level = levelSel.value || 'Degree';
+          peoStatementEl.textContent = MAPPING.PEOstatements?.[level]?.[peo] || '—';
+          break;
+        }
+      }
+    }
+
+    // local PLO statement (level)
+    const level = levelSel.value || 'Degree';
+    ploStatementEl.textContent = MAPPING.PLOstatements?.[level]?.[plo] || '—';
+
+    // PLO indicator (local mapping)
+    ploIndicatorEl.textContent = MAPPING.PLOIndicators?.[plo] || '—';
+
+    // load blooms for selected plo
+    await refreshBlooms(plo);
+  });
+
+  bloomSel.addEventListener('change', async () => {
+    const bloom = bloomSel.value;
+    const plo = ploSel.value;
+    if (!bloom || !plo) return;
+    // load verbs (depends on workbook Bloom sheets)
+    await refreshVerbs(plo, bloom);
+
+    // fetch meta (SC code, SC desc, VBE, domain, criterion, condition, assessment, evidence)
+    try {
+      const m = await fetchJSON(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${encodeURIComponent(profileHidden.value || profileSel.value)}`).catch(()=>null);
       if (!m) return;
       scCodeEl.textContent = m.sc_code || '';
       scDescEl.textContent = m.sc_desc || '';
@@ -436,81 +417,15 @@
       domainEl.textContent = m.domain || '';
       conditionEl.value = m.condition || '';
       criterionEl.value = m.criterion || '';
-      // assessment & evidence returned by generate; but also fill local if present
-      if (m.assessment) $id('assessment')?.value = m.assessment;
-      if (m.evidence) $id('evidence')?.value = m.evidence;
+      if (m.assessment) console.debug('assessment:', m.assessment);
+      if (m.evidence) console.debug('evidence:', m.evidence);
     } catch(e){
-      console.error('refreshMeta', e);
+      console.error('get_meta error', e);
     }
-  }
-
-  ploSel.addEventListener('change', async () => {
-    const plo = ploSel.value;
-    profileHidden.value = profileSel.value;
-
-    // reset bloom/verb and meta
-    bloomSel.innerHTML = '<option value="">— Select Bloom —</option>';
-    verbSel.innerHTML = '<option value="">— Select Verb —</option>';
-    conditionEl.value = '';
-    criterionEl.value = '';
-    $id('assessment')?.value = '';
-    $id('evidence')?.value = '';
-
-    if (!plo) return;
-
-    await refreshBlooms(plo);
-
-    // PLO statement & indicator (try API, fallback to static JSON)
-    const level = levelSel.value || 'Degree';
-    try {
-      const stmt = await fetchJSON(`/api/get_statement/${encodeURIComponent(level)}/PLO/${encodeURIComponent(plo)}`).catch(()=>null);
-      if (stmt) ploStatementEl.textContent = stmt;
-      else {
-        const map = await fetchJSON('/static/data/peo_plo_ieg.json').catch(()=>null);
-        ploStatementEl.textContent = (map && map.PLOstatements && map.PLOstatements[level] && map.PLOstatements[level][plo]) || '—';
-      }
-    } catch(e) { ploStatementEl.textContent = '—'; }
-
-    // PLO indicator
-    try {
-      const ind = await fetchJSON(`/api/get_indicator/${encodeURIComponent(plo)}`).catch(()=>null);
-      if (ind) ploIndicatorEl.textContent = ind;
-      else {
-        const map = await fetchJSON('/static/data/peo_plo_ieg.json').catch(()=>null);
-        ploIndicatorEl.textContent = (map && map.PLOIndicators && map.PLOIndicators[plo]) || '—';
-      }
-    } catch(e){ ploIndicatorEl.textContent = '—'; }
-
-    // Try auto-select PEO if mapping contains PEO->PLO (helpful)
-    try {
-      const map = await fetchJSON('/static/data/peo_plo_ieg.json').catch(()=>null);
-      if (map && map.PEOtoPLO) {
-        for (const [peo, arr] of Object.entries(map.PEOtoPLO)) {
-          if (Array.isArray(arr) && arr.includes(plo)) {
-            peoSel.value = peo;
-            // load peo statement
-            try {
-              const peostmt = await fetchJSON(`/api/get_statement/${encodeURIComponent(level)}/PEO/${encodeURIComponent(peo)}`).catch(()=>null);
-              if (peostmt) peoStatementEl.textContent = peostmt;
-              else peoStatementEl.textContent = map.PEOstatements?.[level]?.[peo] || '—';
-            } catch(e){}
-            break;
-          }
-        }
-      }
-    } catch(e){}
-  });
-
-  bloomSel.addEventListener('change', async () => {
-    const bloom = bloomSel.value;
-    const plo = ploSel.value;
-    if (!bloom || !plo) return;
-    await refreshVerbs(plo, bloom);
-    await refreshMeta(plo, bloom);
   });
 
   // load initial mapping
-  loadIEGandPLOs();
+  loadMapping();
 
   // profile change handler
   profileSel.addEventListener('change', () => {
@@ -520,11 +435,8 @@
     window.history.replaceState({}, '', url.toString());
   });
 
-  /* ============================================================
-     Generate CLO (POST /generate)
-  ============================================================ */
+  // ---------- Generate CLO ----------
   generateBtn.addEventListener('click', async () => {
-    // simple validation
     if (!ploSel.value || !bloomSel.value || !verbSel.value || !contentInput.value.trim()) {
       alert('Please select PLO, Bloom, Verb and fill Content.');
       return;
@@ -582,11 +494,7 @@
         r_poor.innerText = data.rubric.poor || '';
       }
 
-      // fill assessment/evidence if returned
-      if (data.assessment) $id('assessment')?.value = data.assessment;
-      if (data.evidence) $id('evidence')?.value = data.evidence;
-
-      // update statements & indicator in UI (backend may return)
+      // update mapping metadata
       if (data.sc_code) scCodeEl.textContent = data.sc_code;
       if (data.sc_desc) scDescEl.textContent = data.sc_desc;
       if (data.vbe) vbeEl.textContent = data.vbe;
@@ -595,8 +503,6 @@
       if (data.peo) peoStatementEl.textContent = data.peo;
       if (data.plo_statement) ploStatementEl.textContent = data.plo_statement;
       if (data.plo_indicator) ploIndicatorEl.textContent = data.plo_indicator;
-
-      try { gtag('event', 'clo_generated', { profile: profileHidden.value || profileSel.value, plo: ploSel.value, bloom: bloomSel.value }); } catch(e){}
 
     } catch (err) {
       console.error(err);
@@ -627,11 +533,8 @@
     }
   });
 
-  // small helper
-  function $id(id) { return document.getElementById(id); }
-
   // expose for debug
-  window.SCLOG = { loadIEGandPLOs };
+  window.SCLOG = { loadMapping };
 
   </script>
 </body>
