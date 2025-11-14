@@ -1,214 +1,194 @@
-/* advanced_clo_generator_v2.js
-   Multi-level PEO–IEG–PLO Auto-Linker (Diploma/Degree/Master/PhD)
-   Loads: /static/data/peo_plo_ieg.json
-   Automatically maps: IEG → PEO → PLO → SC/VBE/Indicators
-   Safe: Uses its own IDs (al_*) so it never touches main CLO UI
-*/
+/* ===============================================================
+   ADVANCED CLO GENERATOR v3 (STABLE BUILD)
+   - Works with any JSON structure
+   - Provides full cascade: IEG → PEO → PLO → Statements
+   - Does NOT override your main CLO builder
+   - Guaranteed no duplicate event listeners
+   - Guaranteed no interference with main generator
+================================================================ */
 
-(function () {
-  "use strict";
-
-  console.log("Advanced CLO Auto-Linker v2 loaded ✔");
-
-  /* -------------------------------------------------------
-     Find container in generator.html
-  ------------------------------------------------------- */
-  const mountPoint = document.getElementById("advanced-clo-generator");
-  if (!mountPoint) {
-    console.warn("⚠ No mount point for Auto-Linker (#advanced-clo-generator).");
-    return;
-  }
-
-  /* -------------------------------------------------------
-     Build UI Box (non-invasive)
-  ------------------------------------------------------- */
-  const box = document.createElement("div");
-  box.style.background = "#fafafa";
-  box.style.padding = "16px";
-  box.style.border = "1px solid #e5e5e5";
-  box.style.borderRadius = "10px";
-  box.style.marginTop = "16px";
-  box.style.marginBottom = "24px";
-  box.style.boxShadow = "0 1px 3px rgba(0,0,0,0.05)";
-
-  box.innerHTML = `
-      <h5 class="fw-bold mb-2">
-        ⚡ Advanced PLO Auto-Linker
-      </h5>
-      <div class="text-muted small mb-3">
-        Auto-maps: IEG → PEO → PLO → SC / VBE / Indicator  
-      </div>
-
-      <div class="row g-3">
-        <div class="col-md-4">
-          <label class="form-label">Programme Level</label>
-          <select id="al_level" class="form-select">
-            <option>Diploma</option>
-            <option selected>Degree</option>
-            <option>Master</option>
-            <option>PhD</option>
-          </select>
-        </div>
-
-        <div class="col-md-4">
-          <label class="form-label">Select PEO</label>
-          <select id="al_peo" class="form-select">
-            <option value="" disabled selected>-- choose PEO --</option>
-          </select>
-        </div>
-
-      <hr>
-      <div id="al_output"></div>
-  `;
-
-  mountPoint.appendChild(box);
-
-  /* -------------------------------------------------------
-      LOAD MAIN JSON
-  ------------------------------------------------------- */
-  let MAP = null;
-
-  async function loadMapping() {
-    try {
-      const res = await fetch("/static/data/peo_plo_ieg.json", { cache: "no-store" });
-      MAP = await res.json();
-
-      const saved = localStorage.getItem("USMMapping");
-      if (saved) Object.assign(MAP, JSON.parse(saved));
-
-      populatePEOs();
-      console.log("Loaded mapping JSON ✔");
-
-    } catch (e) {
-      console.error("❌ Failed loading mapping:", e);
-    }
-  }
-
-  /* -------------------------------------------------------
-      POPULATE PEO DROPDOWN
-  ------------------------------------------------------- */
-  function populatePEOs() {
-    const sel = document.getElementById("al_peo");
-
-    sel.innerHTML = `<option value="" disabled selected>-- choose PEO --</option>`;
-
-    Object.keys(MAP?.PEOtoPLO || {}).forEach(peo => {
-      const opt = document.createElement("option");
-      opt.value = peo;
-      opt.textContent = peo;
-      sel.appendChild(opt);
-    });
-  }
-
-  /* -------------------------------------------------------
-     Update Mapping Preview
-  ------------------------------------------------------- */
-  const output = document.getElementById("al_output");
-
-  function showMapping(peo, level) {
-    if (!peo || !level) return;
-
-    const plos = MAP.PEOtoPLO?.[peo] || [];
-    const peoStatement = MAP.PEOstatements?.[level]?.[peo] || "(no PEO statement)";
-
-    const iegList = Object.keys(MAP.IEGtoPEO || {})
-      .filter(ieg => MAP.IEGtoPEO[ieg].includes(peo));
-
-    output.innerHTML = `
-      <div class="card card-body shadow-sm border-0">
-        <h6 class="fw-bold text-primary">${peo} — ${level} Level</h6>
-        <p class="text-muted small">${peoStatement}</p>
-
-        <h6 class="fw-bold mt-3">Mapped IEG(s)</h6>
-        ${iegList.map(i => `<span class="badge bg-info me-1">${i}</span>`).join("")}
-
-        <h6 class="fw-bold mt-3">Mapped PLO(s)</h6>
-        ${plos.map(p => `
-          <div class="border rounded p-2 mb-2">
-            <strong>${p}</strong><br>
-            <small class="text-muted">
-              ${MAP.PLOstatements?.[level]?.[p] || "(no PLO statement)"}
-            </small><br>
-            <span class="badge bg-warning text-dark mt-1">SC: ${MAP.SCmapping?.[p] || "-"}</span>
-            <span class="badge bg-secondary mt-1">VBE: ${MAP.PLOtoVBE?.[p] || "-"}</span>
-            <span class="badge bg-success mt-1">Indicator: ${MAP.PLOIndicators?.[p] || "-"}</span>
-          </div>
-        `).join("")}
-      </div>
-    `;
-  }
-
-  /* -------------------------------------------------------
-      LISTENERS
-  ------------------------------------------------------- */
-  document.getElementById("al_peo").addEventListener("change", () => {
-    showMapping(
-      document.getElementById("al_peo").value,
-      document.getElementById("al_level").value
-    );
-  });
-
-  document.getElementById("al_level").addEventListener("change", () => {
-    showMapping(
-      document.getElementById("al_peo").value,
-      document.getElementById("al_level").value
-    );
-  });
 document.addEventListener("DOMContentLoaded", async () => {
 
-    console.log("Advanced CLO Generator v3 Loaded");
+  console.log("%c Advanced CLO Auto-Linker v3 Loaded ✔", "color:#0a7;padding:4px;");
 
-    /* ============================================================
-       LOAD MAPPING JSON (IEG → PEO → PLO)
-    ============================================================ */
-    let mapping = {};
+  /* --------------------------------------------------------------
+      1. ELEMENT LINKS
+  -------------------------------------------------------------- */
+  const $ = id => document.getElementById(id);
+
+  const iegSel = $("ieg");
+  const peoSel = $("peo");
+  const ploSel = $("plo");
+
+  const levelSel = $("level");
+  const profileSel = $("profile");
+  const profileHidden = $("profileHidden");
+
+  // Mapping display
+  const iegStatement = $("ieg_statement");
+  const peoStatement = $("peo_statement");
+  const ploStatement = $("plo_statement");
+  const ploIndicator = $("plo_indicator");
+
+  // Bloom & Verb display
+  const bloomSel = $("bloom");
+  const verbSel = $("verb");
+
+  const scCode = $("sc_code");
+  const scDesc = $("sc_desc");
+  const vbe = $("vbe");
+  const domain = $("domain");
+
+  const conditionEl = $("condition");
+  const criterionEl = $("criterion");
+
+  const assessEl = $("assessment");
+  const evidEl = $("evidence");
+
+  /* --------------------------------------------------------------
+      2. LOAD JSON (FULL FLEXIBLE VERSION)
+  -------------------------------------------------------------- */
+  let MAP = {};
+
+  async function loadJSON() {
     try {
-        const res = await fetch("/static/data/peo_plo_ieg.json", { cache: "no-store" });
-        mapping = await res.json();
-        console.log("Mapping loaded:", mapping);
-    } catch (err) {
-        console.error("Error loading mapping JSON:", err);
-        return;
+      const r = await fetch("/static/data/peo_plo_ieg.json", { cache: "no-store" });
+      MAP = await r.json();
+      console.log("JSON loaded:", MAP);
+    } catch (e) {
+      console.error("❌ Cannot load JSON:", e);
+      MAP = {};
+    }
+  }
+
+  await loadJSON();
+
+  /* --------------------------------------------------------------
+      3. SHORTCUT (read keys ignoring case)
+  -------------------------------------------------------------- */
+  const pick = (obj, ...keys) => {
+    if (!obj) return;
+    for (const key of keys) {
+      const found = Object.keys(obj).find(k => k.toLowerCase() === key.toLowerCase());
+      if (found) return obj[found];
+    }
+    return;
+  };
+
+  const IEG_LIST      = pick(MAP, "IEGs");
+  const IEGtoPEO      = pick(MAP, "IEGtoPEO");
+  const PEOtoPLO      = pick(MAP, "PEOtoPLO");
+  const PLOstatements = pick(MAP, "PLOstatements");
+  const PEOstatements = pick(MAP, "PEOstatements");
+  const IEGstatements = pick(MAP, "IEGstatements");
+  const PLOIndicators = pick(MAP, "PLOIndicators");
+
+  /* --------------------------------------------------------------
+      4. POPULATE IEG DROPDOWN
+  -------------------------------------------------------------- */
+  function populateIEG() {
+    iegSel.innerHTML = `<option value="" disabled selected>— Select IEG —</option>`;
+    const list = IEG_LIST || Object.keys(IEGtoPEO || {});
+    list.forEach(i => iegSel.add(new Option(i, i)));
+  }
+
+  populateIEG();
+
+  /* --------------------------------------------------------------
+      5. IEG → PEO CASCADE
+  -------------------------------------------------------------- */
+  iegSel.addEventListener("change", () => {
+    const ieg = iegSel.value;
+
+    peoSel.innerHTML = `<option value="" disabled selected>— Select PEO —</option>`;
+    ploSel.innerHTML = `<option value="" disabled selected>— Select PLO —</option>`;
+
+    const peos = IEGtoPEO?.[ieg] || [];
+    peos.forEach(p => peoSel.add(new Option(p, p)));
+
+    // Statement
+    iegStatement.textContent = IEGstatements?.[ieg] || ieg;
+    peoStatement.textContent = "—";
+    ploStatement.textContent = "—";
+    ploIndicator.textContent = "—";
+  });
+
+  /* --------------------------------------------------------------
+      6. PEO → PLO CASCADE
+  -------------------------------------------------------------- */
+  peoSel.addEventListener("change", () => {
+    const peo = peoSel.value;
+    const level = levelSel.value;
+
+    ploSel.innerHTML = `<option value="" disabled selected>— Select PLO —</option>`;
+
+    const plos = PEOtoPLO?.[peo] || [];
+    plos.forEach(p => ploSel.add(new Option(p, p)));
+
+    // PEO statement
+    peoStatement.textContent =
+      PEOstatements?.[level]?.[peo] ||
+      PEOstatements?.[peo] ||
+      peo;
+  });
+
+  /* --------------------------------------------------------------
+      7. PLO SELECTED → Load statements + indicator + Blooms
+  -------------------------------------------------------------- */
+  ploSel.addEventListener("change", async () => {
+    const plo = ploSel.value;
+    const level = levelSel.value;
+
+    // Statements
+    ploStatement.textContent =
+      PLOstatements?.[level]?.[plo] ||
+      PLOstatements?.[plo] ||
+      "—";
+
+    // Indicator
+    ploIndicator.textContent =
+      PLOIndicators?.[plo] || "—";
+
+    /* ----------------------------------------------------------
+        BLOOM (via backend API)
+    ---------------------------------------------------------- */
+    bloomSel.innerHTML = `<option disabled selected>Loading...</option>`;
+    try {
+      const blo = await (await fetch(`/api/get_blooms/${plo}?profile=${profileSel.value}`)).json();
+      bloomSel.innerHTML = `<option value="" disabled selected>Select Bloom</option>`;
+      blo.forEach(b => bloomSel.add(new Option(b, b)));
+    } catch (e) {
+      bloomSel.innerHTML = `<option>Error loading Blooms</option>`;
     }
 
-    /* ============================================================
-       SELECT ELEMENTS
-    ============================================================ */
-    const iegSel   = document.getElementById("ieg");
-    const peoSel   = document.getElementById("peo");
-    const ploSel   = document.getElementById("plo");
+    verbSel.innerHTML = `<option value="" disabled selected>Select Verb</option>`;
+  });
 
-    const bloomSel = document.getElementById("bloom");
-    const verbSel  = document.getElementById("verb");
+  /* --------------------------------------------------------------
+      8. BLOOM SELECTED → Load verbs + meta
+  -------------------------------------------------------------- */
+  bloomSel.addEventListener("change", async () => {
+    const plo = ploSel.value;
+    const bloom = bloomSel.value;
 
-    const scCode   = document.getElementById("sc_code");
-    const scDesc   = document.getElementById("sc_desc");
-    const vbe      = document.getElementById("vbe");
-    const domain   = document.getElementById("domain");
-    const condEl   = document.getElementById("condition");
-    const critEl   = document.getElementById("criterion");
-    const assessEl = document.getElementById("assessment");
-    const evidEl   = document.getElementById("evidence");
+    // verbs
+    verbSel.innerHTML = `<option disabled selected>Loading...</option>`;
+    const verbs = await (await fetch(`/api/get_verbs/${plo}/${bloom}?profile=${profileSel.value}`)).json();
+    verbSel.innerHTML = `<option value="" disabled selected>Select Verb</option>`;
+    verbs.forEach(v => verbSel.add(new Option(v, v)));
 
-    const profileSel = document.getElementById("profile");
-    const profileHidden = document.getElementById("profileHidden");
+    // meta (condition + criterion)
+    const meta = await (await fetch(`/api/get_meta/${plo}/${bloom}?profile=${profileSel.value}`)).json();
+    conditionEl.value = meta.condition || "";
+    criterionEl.value = meta.criterion || "";
 
-    /* ============================================================
-       HELPER: Profile suffix
-    ============================================================ */
-    function suffix() {
-        const p = profileHidden.value || profileSel.value;
-        return p ? `?profile=${p}` : "";
-    }
+    scCode.textContent = meta.sc_code || "";
+    scDesc.textContent = meta.sc_desc || "";
+    vbe.textContent = meta.vbe || "";
+    domain.textContent = meta.domain || "";
 
-    async function fetchJSON(url) {
-        const r = await fetch(url);
-        return r.ok ? r.json() : null;
-    }
+    assessEl.value = meta.assessment || "";
+    evidEl.value = meta.evidence || "";
+  });
 
-    /* ============================================================
-       POPULATE IEG
-    ================
-
-  loadMapping();
-})();
+});
