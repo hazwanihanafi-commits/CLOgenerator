@@ -88,11 +88,27 @@
 
                   <label class="form-label mt-3">PLO *</label>
                   <select id="plo" name="plo" class="form-select" required>
-                    <option value="" disabled selected>Select PLO</option>
-                    {% for p in plos %}
-                        <option value="{{ p }}">{{ p }}</option>
-                    {% endfor %}
-                  </select>
+    <option value="" disabled selected>Select PLO</option>
+</select>
+
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const res = await fetch("/static/peo_plo_ieg_v2.json", { cache: "no-store" });
+        if (!res.ok) throw new Error("Mapping file missing");
+        
+        const mapping = await res.json();
+        const ploList = mapping.PLOs || [];
+        const ploSel = document.getElementById("plo");
+
+        ploList.forEach(p => {
+            ploSel.append(new Option(p, p));
+        });
+    } catch (err) {
+        console.error("Failed loading PLO list:", err);
+    }
+});
+</script>
 
                   <div class="row mt-3">
                     <div class="col-md-4">
