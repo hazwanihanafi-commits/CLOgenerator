@@ -1,98 +1,184 @@
-:root{
-  --brand:#5a2ca0;
-  --brand-ink:#3b2f5b;
-  --soft:#f7f7fb;
-  --card:#ffffff;
-  --ink:#1d1530;
+/* ============================================================
+   SCLOG Smart CLO Generator – Custom Styles
+   ============================================================ */
+
+/* --- General --- */
+body {
+  background: #f7f9fc;
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  color: #1e293b;
 }
 
-.bg-soft{ background:var(--soft); }
-
-.bg-brand{ background:var(--brand); }
-
-.btn-brand{
-  background:var(--brand);
-  border-color:var(--brand);
-  color:#fff;
-}
-.btn-brand:hover{ filter:brightness(.95); color:#fff; }
-
-.card-elev{
-  border:0;
-  border-radius:1rem;
-  background:var(--card);
-  box-shadow:0 10px 26px rgba(20,16,40,.12);
+.bg-soft {
+  background: #f7f9fc !important;
 }
 
-.icon-badge{
-  width:40px; height:40px;
-  border-radius:12px;
-  background:#ede6ff;
-  color:var(--brand);
-  display:inline-flex; align-items:center; justify-content:center;
-  margin-right:.35rem;
+/* --- Navbar Branding --- */
+.bg-brand {
+  background: linear-gradient(90deg, #1158c7, #1b7de6) !important;
 }
 
-/* Variant Cards */
-.option {
-    padding: 14px 18px;
-    margin-bottom: 12px;
-    border: 1px solid #d0d0d0;
-    border-radius: 12px;
-    background: #fafafa;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    position: relative;
+.navbar-brand {
+  font-size: 1.15rem;
+  letter-spacing: 0.3px;
 }
 
-.option:hover {
-    background: #f0f8ff;
-    border-color: #0d6efd;
+/* --- Cards & Elevation --- */
+.card-elev {
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(23, 102, 216, 0.07);
 }
 
-.active-option {
-    border-color: #0d6efd;
-    background: #e7f0ff;
-    box-shadow: 0 0 8px rgba(13,110,253,0.3);
+.card {
+  border-radius: 12px !important;
+  border: 1px solid #ebeff6 !important;
 }
 
-.variant-title {
-    font-weight: 600;
-    color: #0d6efd;
-    font-size: 0.92rem;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+/* --- Form Controls --- */
+.form-label {
+  font-weight: 500;
+  color: #344767;
 }
 
-.variant-body {
+.form-control, 
+.form-select {
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #dce3f0;
+  font-size: 0.95rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #1766d8;
+  box-shadow: 0 0 0 2px rgba(23, 102, 216, 0.15);
+}
+
+/* --- Icon Badges --- */
+.icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff5ff;
+  color: #1766d8;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  margin-right: 6px;
+  font-size: 0.9rem;
+}
+
+/* --- Alerts --- */
+.alert-info {
+  background: #edf6ff;
+  border: 1px solid #d7e9ff;
+  color: #0d3c88;
+  font-size: 0.9rem;
+}
+
+/* --- Meta Cards (SC, VBE, Domain) --- */
+.meta-card {
+  border: 1px solid #e4eaf5;
+  background: #fafcff;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.text-muted-small,
+.text-muted-small {
+  font-size: 0.78rem;
+  color: #64748b !important;
+}
+
+/* --- Variant Items --- */
+.variant-item {
+  border-radius: 10px;
+  border: 1px solid #eaf0fb;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.variant-item:hover {
+  background: #f4f9ff;
+  border-color: #d7e8ff;
+}
+
+/* --- Buttons --- */
+.btn-brand {
+  background: #1766d8;
+  border-color: #1766d8;
+  color: #fff;
+  font-weight: 500;
+}
+
+.btn-brand:hover {
+  background: #0e4fab;
+  border-color: #0e4fab;
+  color: #fff;
+}
+
+.btn-outline-success,
+.btn-outline-secondary {
+  border-radius: 8px !important;
+}
+
+.btn-sm {
+  border-radius: 8px !important;
+}
+
+/* --- CLO Preview --- */
+#cloPreviewCard,
+#rubricCard {
+  border: 1px solid #e7ecf5;
+  background: #ffffff;
+  border-radius: 12px;
+}
+
+#cloPreviewText {
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+
+/* --- Rubric Table --- */
+.table td, .table th {
+  font-size: 0.92rem;
+  border-color: #e4e9f2 !important;
+}
+
+.table th {
+  width: 20%;
+  background: #f3f7ff;
+  color: #344767;
+  font-weight: 600 !important;
+}
+
+/* --- Loader --- */
+.loader {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #dbe7ff;
+  border-top-color: #1766d8;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Footer --- */
+footer {
+  color: #94a3b8 !important;
+}
+
+/* --- Mobile Tweaks --- */
+@media (max-width: 768px) {
+  .navbar-brand {
+    font-size: 1rem;
+  }
+  .form-label {
     font-size: 0.9rem;
-    color: #333;
+  }
 }
-
-/* Copy button inside variant card */
-.variant-copy-btn {
-    position: absolute;
-    top: 12px;
-    right: 14px;
-    font-size: 0.8rem;
-    background: white;
-    border: 1px solid #bbb;
-    border-radius: 8px;
-    padding: 3px 6px;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-.variant-copy-btn:hover {
-    background: #e7f0ff;
-    border-color: #0d6efd;
-}
-
-/* Collapsible area */
-#variantContainer {
-    display: none;
-    margin-top: 12px;
-}
-
