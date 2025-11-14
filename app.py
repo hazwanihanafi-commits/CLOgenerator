@@ -1,12 +1,10 @@
-# app.py — corrected, complete
+import pandas as pd
 import os
 import json
+from flask import Flask, render_template, request, jsonify, send_file
+from openpyxl import Workbook, load_workbook
 from io import BytesIO
 from datetime import datetime
-
-from flask import Flask, render_template, request, jsonify, send_file
-import pandas as pd
-from openpyxl import Workbook, load_workbook
 
 # ----------------------------------------
 # PATH SETUP
@@ -19,32 +17,32 @@ app = Flask(
     template_folder=os.path.join(BASE_DIR, "templates")
 )
 
-WORKBOOK_PATH = os.path.join(BASE_DIR, "SCLOG.xlsx")
-FRONT_JSON_PATH = os.path.join(app.static_folder, "data", "SCLOG_front.json")
-
 print("BOOT: STATIC =", app.static_folder)
 print("BOOT: TEMPLATES =", app.template_folder)
-print("BOOT: WORKBOOK_PATH =", WORKBOOK_PATH)
-print("BOOT: FRONT_JSON_PATH =", FRONT_JSON_PATH)
-
 
 # ----------------------------------------
-# Load mapping JSON safely
+# FILE PATHS
+# ----------------------------------------
+WORKBOOK_PATH = os.path.join(BASE_DIR, "SCLOG.xlsx")
+FRONT_JSON = os.path.join(app.static_folder, "data", "SCLOG_front.json")
+
+# ----------------------------------------
+# SAFE JSON LOADER
 # ----------------------------------------
 def safe_load_json(path):
+    print(f"BOOT: Loading JSON → {path}")
     if not os.path.exists(path):
-        app.logger.warning("JSON mapping not found: %s", path)
+        print("WARN: JSON file not found:", path)
         return {}
     try:
         with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
     except Exception as e:
-        app.logger.exception("Failed to load JSON mapping %s: %s", path, e)
+        print("JSON LOAD ERROR:", e)
         return {}
 
-MAP = safe_load_json(FRONT_JSON_PATH) or {}
-
-# Ensure keys exist
+# Load mapping JSON (front-end friendly)
+MAP = safe_load_json(FRONT_JSON)
 DEFAULT_KEYS = {
     "IEGs": [], "PEOs": [], "PLOs": [],
     "IEGtoPEO": {}, "PEOtoPLO": {},
@@ -52,25 +50,68 @@ DEFAULT_KEYS = {
     "PLOtoVBE": {}, "PLOIndicators": {}, "SCmapping": {}
 }
 for k, v in DEFAULT_KEYS.items():
-    MAP.setdefault(k, v)
+    if k not in MAP:
+        MAP[k] = v
+
+print("BOOT: mapping counts -> IEGs:", len(MAP.get("IEGs", [])),
+      "PEOs:", len(MAP.get("PEOs", [])),
+      "PLOs:", len(MAP.get("PLOs", [])))
 
 # ----------------------------------------
-# Utility: safe Excel loader to pandas DataFrame
+# SIMPLE CONTENT SUGGESTIONS (frontend keeps same list)
 # ----------------------------------------
-def load_df(sheet_name):
-    """Return pandas DataFrame for sheet_name or empty DataFrame on failure."""
+FIELD_CONTENT_MAP = {
+    "Computer Science": [
+        "debug algorithms", "design software modules",
+        "analyze data structures", "implement machine learning models",
+        "develop RESTful APIs"
+    ],
+    "Medical & Health": [
+        "interpret ECG waveforms", "assess patient vital signs",
+        "perform clinical screenings", "analyze medical imaging",
+        "evaluate rehabilitation progress"
+    ],
+    "Engineering": [
+        "apply thermodynamics principles", "analyze structural loads",
+        "simulate mechanical systems", "perform quality testing",
+        "design basic prototypes"
+    ],
+    "Social Sciences": [
+        "evaluate community case studies", "analyze social policy impact",
+        "interpret behavioral data", "conduct needs assessments",
+        "design surveys"
+    ],
+    "Education": [
+        "design learning activities", "evaluate student performance",
+        "develop curriculum materials", "apply instructional strategies",
+        "design assessment rubrics"
+    ],
+    "Business": [
+        "analyze market trends", "evaluate financial reports",
+        "develop business strategies", "conduct SWOT analysis",
+        "build simple financial models"
+    ],
+    "Arts & Humanities": [
+        "interpret visual artworks", "analyze literary texts",
+        "evaluate cultural narratives", "produce creative concepts",
+        "write reflective critiques"
+    ]
+}
+
+# ----------------------------------------
+# EXCEL SAFE LOADER
+# ----------------------------------------
+def load_df(sheet_name: str):
     if not os.path.exists(WORKBOOK_PATH):
-        app.logger.warning("Workbook not found: %s", WORKBOOK_PATH)
+        # silent fallback if workbook not present in deployment
         return pd.DataFrame()
     try:
         return pd.read_excel(WORKBOOK_PATH, sheet_name=sheet_name, engine="openpyxl")
-    except Exception as e:
-        app.logger.warning("Failed to read sheet '%s': %s", sheet_name, e)
+    except Exception:
         return pd.DataFrame()
 
-
 # ----------------------------------------
-# Profile -> mapping sheet names
+# PROFILE → MAPPING sheet names
 # ----------------------------------------
 PROFILE_SHEET_MAP = {
     "health": "Mapping_health",
@@ -83,40 +124,31 @@ PROFILE_SHEET_MAP = {
 }
 
 def get_mapping_sheet(profile):
-    """Return mapping DataFrame for profile, fallback to generic 'Mapping'."""
     sheet = PROFILE_SHEET_MAP.get(profile, "Mapping")
     df = load_df(sheet)
     if df.empty:
         df = load_df("Mapping")
     return df
 
-
-# ----------------------------------------
-# PLO details from mapping sheet
-# ----------------------------------------
 def get_plo_details(plo, profile="sc"):
-    if not plo:
-        return None
     df = get_mapping_sheet(profile)
     if df.empty:
         return None
     df.columns = [str(c).strip() for c in df.columns]
     col_plo = df.columns[0]
-    mask = df[col_plo].astype(str).str.upper().str.strip() == str(plo).strip().upper()
-    if not mask.any():
+    row = df[df[col_plo].astype(str).str.upper() == str(plo).upper()]
+    if row.empty:
         return None
-    row = df[mask].iloc[0]
+    r = row.iloc[0]
     return {
-        "PLO": row.get(col_plo, plo),
-        "SC_Code": row.get("SC Code", "") or row.get("SCCode", "") or "",
-        "SC_Desc": row.get("SC Description", "") or row.get("SCDescription", "") or "",
-        "VBE": row.get("VBE", "") or "",
-        "Domain": row.get("Domain", "") or ""
+        "SC_Code": r.get("SC Code", "") or r.get("SCCode", ""),
+        "SC_Desc": r.get("SC Description", "") or r.get("SC Description".strip(), ""),
+        "VBE": r.get("VBE", ""),
+        "Domain": r.get("Domain", "")
     }
 
-
 # ----------------------------------------
-# get_meta_data helper (criterion + condition)
+# META retrieval (criterion + condition)
 # ----------------------------------------
 def get_meta_data(plo, bloom, profile="sc"):
     details = get_plo_details(plo, profile)
@@ -128,20 +160,18 @@ def get_meta_data(plo, bloom, profile="sc"):
     df = load_df("Criterion")
     if not df.empty:
         df.columns = [c.strip() for c in df.columns]
-        # build mask safely
         left = df.iloc[:, 0].astype(str).str.lower().fillna("")
         right = df.iloc[:, 1].astype(str).str.lower().fillna("")
-        mask = (left == domain) & (right == str(bloom).lower())
+        mask = (left == domain) & (right == bloom.lower())
         if mask.any():
             row = df[mask].iloc[0]
-            # guard for row length
-            if len(row) >= 3: criterion = str(row.iloc[2])
-            if len(row) >= 4: condition = str(row.iloc[3])
+            criterion = str(row.iloc[2]) if len(row) > 2 else ""
+            condition = str(row.iloc[3]) if len(row) > 3 else ""
     if not condition:
         condition = {
             "cognitive": "interpreting tasks",
             "affective": "engaging with peers",
-            "psychomotor": "performing skills"
+            "psychomotor": "performing practical skills"
         }.get(domain, "")
     connector = "by" if domain == "psychomotor" else "when"
     condition_final = f"{connector} {condition}"
@@ -154,143 +184,79 @@ def get_meta_data(plo, bloom, profile="sc"):
         "condition": condition_final
     }
 
-
 # ----------------------------------------
-# Assessment & Evidence engine
+# ASSESSMENT & EVIDENCE ENGINE
 # ----------------------------------------
-def get_assessment(plo, bloom, domain):
+def get_assessments_and_evidence(bloom, domain):
     """
-    Return a list of suggested assessment methods for a (plo, bloom, domain).
-    This mapping is intentionally simple and can be extended.
+    Returns list of (assessment_method, evidence_list) appropriate for bloom/domain.
     """
-    if not bloom:
-        return []
+    elm_assess = []
+    domain = (domain or "").lower()
+    bloom_k = (bloom or "").lower()
 
-    b = bloom.lower().strip()
-    d = (domain or "").lower().strip()
-
-    # cognitive mapping (common bloom verbs/levels)
-    cognitive = {
-        "remember": ["MCQ", "Recall Quiz"],
-        "understand": ["Short Answer Test", "Concept Explanation"],
-        "apply": ["Case Study", "Problem-Solving Task"],
-        "analyse": ["Data Analysis Task", "Critique Assignment"],
-        "analyze": ["Data Analysis Task", "Critique Assignment"],
-        "evaluate": ["Evaluation Report", "Evidence-Based Review"],
-        "create": ["Design Project", "Research Proposal"]
+    # cognitive examples (map a few common blooms)
+    cognitive_map = {
+        "remember": ("MCQ / Quiz", ["Score report", "Item analysis"]),
+        "understand": ("Short answer / Explanation", ["Answers", "Marker rubric"]),
+        "apply": ("Case study / Problem-solving", ["Case report", "Rubric"]),
+        "analyze": ("Data analysis task", ["Analysis file", "Evaluator notes"]),
+        "evaluate": ("Evidence-based critique", ["Report", "Assessment rubric"]),
+        "create": ("Design / Project", ["Project deliverables", "Prototype", "Rubric"])
     }
 
-    psychomotor = {
-        # placeholder labels — align with your Bloom sheet if uses different terms
-        "perform": ["OSCE", "Skills Test", "Practical Exam"],
-        "demonstrate": ["Skill Demonstration", "Checklist Assessment"]
+    psychomotor_map = {
+        "skill": ("OSCE / Skills test", ["OSCE checklist", "Examiner score sheet"]),
+        "demonstrate": ("Practical demonstration", ["Skills checklist", "Instructor feedback"])
     }
 
-    affective = {
-        "value": ["Reflection Log", "Value-Based Assignment"],
-        "respond": ["Group Participation", "Peer Evaluation"],
-        "receive": ["Observation Checklist"]
+    affective_map = {
+        "receive": ("Observation / Participation", ["Attendance log", "Peer feedback"]),
+        "respond": ("Reflection / Group work", ["Reflection journal", "Peer review"]),
+        "value": ("Portfolio / Reflection", ["Portfolio", "Supervisor notes"])
     }
 
-    # Preference: domain-specific mapping
-    if d == "psychomotor":
-        # use psychomotor mapping if bloom matches key; fallback to general
-        return psychomotor.get(b, ["OSCE", "Skills Test"])
-    if d == "affective":
-        return affective.get(b, ["Reflection Log", "Peer Evaluation"])
-    return cognitive.get(b, ["Assignment", "Quiz"])
+    if domain == "psychomotor":
+        # try lookup by bloom keywords
+        if "perform" in bloom_k or "demonstr" in bloom_k or "skill" in bloom_k:
+            return [psychomotor_map["skill"]]
+        return [psychomotor_map["demonstrate"]]
 
+    if domain == "affective":
+        if "value" in bloom_k:
+            return [affective_map["value"]]
+        if "respond" in bloom_k:
+            return [affective_map["respond"]]
+        return [affective_map["receive"]]
 
-def get_evidence(assessment_method):
-    """Return list of evidence items for a given assessment method (approximate)."""
-    if not assessment_method:
-        return []
-    key = assessment_method.lower()
-    evidence_map = {
-        "mcq": ["Score report", "Automated grade output"],
-        "recall quiz": ["Quiz score", "Answer log"],
-        "short answer": ["Marked answers", "Marker rubric"],
-        "case study": ["Case analysis rubric", "Annotated report"],
-        "problem-solving": ["Solution sheet", "Reasoning steps"],
-        "data analysis": ["Analysis report", "Code / spreadsheet"],
-        "critique": ["Critique essay", "Evaluator comments"],
-        "evaluation report": ["Evaluation sheet", "Analytical justification"],
-        "design project": ["Project files", "Prototype", "Design documentation"],
-        "research proposal": ["Proposal document", "Panel feedback"],
-        "osce": ["OSCE checklist", "Examiner score sheet"],
-        "skills test": ["Performance score", "Competency checklist"],
-        "skill demonstration": ["Skills checklist", "Instructor feedback"],
-        "reflection log": ["Reflection journal", "Instructor comments"],
-        "portfolio": ["Portfolio files", "Growth documentation"],
-        "group participation": ["Peer evaluation", "Participation log"],
-    }
-    # find best match
-    for k, v in evidence_map.items():
-        if k in key:
-            return v
-    # fallback
-    return ["Performance evidence", "Rubric score"]
-
+    # cognitive fallback: try direct lookup
+    for key in cognitive_map:
+        if key in bloom_k:
+            elm_assess.append(cognitive_map[key])
+            break
+    if not elm_assess:
+        # generic
+        elm_assess.append(("Assignment / Test", ["Submission file", "Grading rubric"]))
+    return elm_assess
 
 # ----------------------------------------
-# Content suggestions mapping (for frontend)
-# ----------------------------------------
-CONTENT_SUGGESTIONS = {
-  "Computer Science": [
-    "debug algorithms", "design software modules", "analyze data structures",
-    "implement machine learning models", "develop APIs"
-  ],
-  "Medical & Health": [
-    "interpret ECG waveforms", "assess patient vital signs", "perform clinical screenings",
-    "analyze medical imaging", "evaluate rehabilitation progress"
-  ],
-  "Engineering": [
-    "apply thermodynamics principles", "analyze structural loads",
-    "simulate mechanical systems", "perform quality testing"
-  ],
-  "Social Sciences": [
-    "evaluate community case studies", "analyze social policy impact",
-    "interpret behavioral data", "conduct needs assessments"
-  ],
-  "Education": [
-    "design learning activities", "evaluate student performance",
-    "develop curriculum materials", "apply instructional strategies"
-  ],
-  "Business": [
-    "analyze market trends", "evaluate financial reports",
-    "develop business strategies", "conduct SWOT analysis"
-  ],
-  "Arts & Humanities": [
-    "interpret visual artworks", "analyze literary texts",
-    "evaluate cultural narratives", "produce creative concepts"
-  ]
-}
-
-
-# ----------------------------------------
-# ROUTES: UI + APIs
+# API Endpoints
 # ----------------------------------------
 @app.route("/")
 def index():
-    # Render your existing generator.html from templates
     return render_template("generator.html")
-
 
 @app.route("/api/mapping")
 def api_mapping():
-    # Return the frontend JSON mapping (MAP)
     return jsonify(MAP)
-
 
 @app.route("/api/get_peos/<ieg>")
 def api_get_peos(ieg):
     return jsonify(MAP.get("IEGtoPEO", {}).get(ieg, []))
 
-
 @app.route("/api/get_plos/<peo>")
 def api_get_plos(peo):
     return jsonify(MAP.get("PEOtoPLO", {}).get(peo, []))
-
 
 @app.route("/api/get_blooms/<plo>")
 def api_get_blooms(plo):
@@ -310,7 +276,6 @@ def api_get_blooms(plo):
     blooms = df.iloc[:, 0].dropna().astype(str).tolist()
     return jsonify(blooms)
 
-
 @app.route("/api/get_verbs/<plo>/<bloom>")
 def api_get_verbs(plo, bloom):
     profile = request.args.get("profile", "sc").lower()
@@ -329,130 +294,130 @@ def api_get_verbs(plo, bloom):
     mask = df.iloc[:, 0].astype(str).str.lower() == bloom.lower()
     if not mask.any():
         return jsonify([])
-    # assume verbs are in second column as comma-separated
-    verbs_cell = df[mask].iloc[0, 1]
-    if pd.isna(verbs_cell):
-        return jsonify([])
-    verbs = [v.strip() for v in str(verbs_cell).split(",") if v.strip()]
+    verbs = [v.strip() for v in str(df[mask].iloc[0, 1]).split(",") if v.strip()]
     return jsonify(verbs)
-
 
 @app.route("/api/get_meta/<plo>/<bloom>")
 def api_get_meta(plo, bloom):
     profile = request.args.get("profile", "sc").lower()
     return jsonify(get_meta_data(plo, bloom, profile))
 
+@app.route("/api/content/<field>")
+def api_content(field):
+    # field URL may come as "Medical%20%26%20Health"; decode loosely by replacing '_' or '%20'
+    name = field.replace("_", " ").replace("%20", " ")
+    # tolerant match
+    for key in FIELD_CONTENT_MAP:
+        if key.lower().startswith(name.lower()) or name.lower().startswith(key.lower()):
+            return jsonify(FIELD_CONTENT_MAP[key])
+    # fallback empty list
+    return jsonify(FIELD_CONTENT_MAP.get(name, []))
 
 @app.route("/api/get_statement/<level>/<stype>/<code>")
 def api_get_statement(level, stype, code):
-    # level: Diploma/Degree/Master/PhD ; stype: PEO or PLO ; code: e.g., PLO1
-    stype = (stype or "").upper()
-    level = level if level in MAP.get("PLOstatements", {}) else "Degree"
+    stype = stype.upper()
     if stype == "PEO":
         return jsonify(MAP.get("PEOstatements", {}).get(level, {}).get(code, ""))
     if stype == "PLO":
         return jsonify(MAP.get("PLOstatements", {}).get(level, {}).get(code, ""))
     return jsonify("")
 
-
-@app.route("/api/content_suggestions/<field>")
-def api_content_suggestions(field):
-    # return suggestions for frontend content input
-    return jsonify(CONTENT_SUGGESTIONS.get(field, []))
-
-
 # ----------------------------------------
-# GENERATE CLO
+# CLO GENERATION
 # ----------------------------------------
-# We'll keep a simple in-memory storage for the last generated CLO to support downloads
 LAST_CLO_DATA = {}
 
 @app.route("/generate", methods=["POST"])
 def generate():
+    global LAST_CLO_DATA
     profile = (request.form.get("profile") or "sc").lower()
     plo = (request.form.get("plo") or "").strip()
     bloom = (request.form.get("bloom") or "").strip()
     verb = (request.form.get("verb") or "").strip()
     content = (request.form.get("content") or "").strip()
+    field = (request.form.get("field") or "").strip()
     level = (request.form.get("level") or "Degree").strip()
 
-    if not plo or not bloom or not verb or not content:
-        return jsonify({"error": "Please provide plo, bloom, verb and content"}), 400
+    if not plo or not bloom or not verb:
+        return jsonify({"error": "Missing required fields (plo, bloom, verb)"}), 400
 
     details = get_plo_details(plo, profile)
     if not details:
         return jsonify({"error": f"PLO '{plo}' not found for profile '{profile}'"}), 400
 
-    sc_desc = details.get("SC_Desc", "")
-    vbe = details.get("VBE", "")
     domain = (details.get("Domain") or "").lower()
+    sc_desc = details.get("SC_Desc") or ""
+    vbe = details.get("VBE") or ""
 
-    # meta
-    meta_res = get_meta_data(plo, bloom, profile) or {}
-    raw_condition = meta_res.get("condition", "")
-    condition_core = raw_condition.replace("when ", "").replace("by ", "").strip()
-    criterion = meta_res.get("criterion", "")
+    # If content empty, pick suggested content based on 'field' if available
+    if not content:
+        if field and field in FIELD_CONTENT_MAP and FIELD_CONTENT_MAP[field]:
+            content = FIELD_CONTENT_MAP[field][0]
+        else:
+            # pick a generic suggestion from mapping or PLO text
+            content = MAP.get("PLOs", [plo])[0] if plo else "task"
+
+    # Meta (criterion + condition)
+    meta = get_meta_data(plo, bloom, profile)
+    condition_core = meta.get("condition", "").replace("when ", "").replace("by ", "").strip()
+    criterion = meta.get("criterion", "")
 
     connector = "by" if domain == "psychomotor" else "when"
 
-    # build CLO sentence (simple, robust)
-    clo = (
-        f"{verb.lower()} {content} using {sc_desc.lower()} "
-        f"{connector} {condition_core} guided by {vbe.lower()}."
-    ).capitalize()
+    # Construct CLO sentence (simple template used here)
+    clo = f"{verb.lower()} {content} using {sc_desc.lower()} {connector} {condition_core} guided by {vbe.lower()}."
+    if not clo.endswith("."):
+        clo = clo + "."
+    clo = clo.capitalize()
 
-    # Generate variants
+    # Variants
     variants = {
         "Standard": clo,
         "Critical Thinking": clo.replace("using", "critically using"),
         "Problem-Solving": clo.replace("using", "by applying structured problem-solving approaches to"),
         "Action-Oriented": clo.replace("when", "while"),
-        "Professional Practice": clo.replace("guided by", "in accordance with"),
+        "Professional Practice": clo + " (apply professional practice)",
+        "Ethical Emphasis": clo + " (consider ethical implications)"
     }
 
-    # find PEO & IEG from MAP
-    peo = None
-    ieg = None
+    # auto chain: peo, ieg
+    peo_selected = None
+    ieg_selected = None
     for p, plos in MAP.get("PEOtoPLO", {}).items():
         if plo in plos:
-            peo = p
+            peo_selected = p
             break
-    for i, peos in MAP.get("IEGtoPEO", {}).items():
-        if peo and peo in peos:
-            ieg = i
-            break
+    if peo_selected:
+        for i, peos in MAP.get("IEGtoPEO", {}).items():
+            if peo_selected in peos:
+                ieg_selected = i
+                break
 
-    # statements
     plo_statement = MAP.get("PLOstatements", {}).get(level, {}).get(plo, "")
-    peo_statement = MAP.get("PEOstatements", {}).get(level, {}).get(peo, "")
+    peo_statement = MAP.get("PEOstatements", {}).get(level, {}).get(peo_selected, "")
 
-    # Assessment and evidence
-    assessments = get_assessment(plo, bloom, domain) or []
-    evidence_accum = []
-    for a in assessments:
-        ev = get_evidence(a) or []
-        for e in ev:
-            if e not in evidence_accum:
-                evidence_accum.append(e)
+    # assessment & evidence suggestions
+    assessments = get_assessments_and_evidence(bloom, domain)
+    # build human friendly list
+    assessment_out = []
+    for a, evid in assessments:
+        assessment_out.append({"assessment": a, "evidence": evid})
 
-    # Rubric (basic auto-gen)
+    # rubric (basic)
     rubric = {
-        "indicator": f"Ability to {verb.lower()} {sc_desc.lower()} { 'when ' + condition_core if connector=='when' else 'by ' + condition_core } in accordance with {vbe.lower()}",
-        "excellent": f"Consistently demonstrates {vbe.lower()} and applies {sc_desc.lower()} {connector} {condition_core} with high accuracy and clarity.",
+        "indicator": f"Ability to {verb.lower()} {sc_desc.lower()} {connector} {condition_core}",
+        "excellent": f"Consistently demonstrates {vbe.lower()} and applies {sc_desc.lower()} {connector} {condition_core} with high accuracy.",
         "good": f"Generally demonstrates {vbe.lower()} and applies {sc_desc.lower()} {connector} {condition_core} with minor gaps.",
         "satisfactory": f"Partially demonstrates {vbe.lower()}; applies {sc_desc.lower()} {connector} {condition_core} inconsistently.",
         "poor": f"Does not demonstrate {vbe.lower()}; unable to apply {sc_desc.lower()} {connector} {condition_core} effectively."
     }
 
-    # Save last generated data for downloads
-    global LAST_CLO_DATA
+    # save last generated CLO data for downloads
     LAST_CLO_DATA = {
-        "generated_at": datetime.now().isoformat(timespec="minutes"),
         "clo": clo,
-        "clo_options": variants,
         "plo": plo,
-        "peo": peo,
-        "ieg": ieg,
+        "peo": peo_selected,
+        "ieg": ieg_selected,
         "plo_statement": plo_statement,
         "peo_statement": peo_statement,
         "sc_code": details.get("SC_Code", ""),
@@ -461,9 +426,9 @@ def generate():
         "domain": domain,
         "criterion": criterion,
         "condition": condition_core,
-        "assessment": assessments,
-        "evidence": evidence_accum,
-        "rubric": rubric
+        "assessments": assessment_out,
+        "rubric": rubric,
+        "generated_at": datetime.now().isoformat()
     }
 
     return jsonify({
@@ -475,27 +440,24 @@ def generate():
         "domain": domain,
         "criterion": criterion,
         "condition": condition_core,
-        "ieg": ieg,
-        "peo": peo,
+        "ieg": ieg_selected,
+        "peo": peo_selected,
         "plo_statement": plo_statement,
         "peo_statement": peo_statement,
-        "assessment": assessments,
-        "evidence": evidence_accum,
+        "assessments": assessment_out,
         "rubric": rubric
     })
 
-
 # ----------------------------------------
-# Download endpoints (use LAST_CLO_DATA)
+# DOWNLOADS
 # ----------------------------------------
 @app.route("/download")
 def download_clo():
     global LAST_CLO_DATA
     if not LAST_CLO_DATA:
-        return "No CLO available. Generate a CLO first.", 400
+        return "No CLO available. Please generate first.", 400
 
     data = LAST_CLO_DATA
-
     wb = Workbook()
     ws = wb.active
     ws.title = "CLO"
@@ -514,70 +476,48 @@ def download_clo():
     ws.append(["Domain", data.get("domain", "")])
     ws.append(["Criterion", data.get("criterion", "")])
     ws.append(["Condition", data.get("condition", "")])
-
     ws.append([])
-    ws.append(["Assessment Methods"])
-    for a in data.get("assessment", []):
-        ws.append([a])
+    ws.append(["Assessments & Evidence"])
+    for a in data.get("assessments", []):
+        ws.append([a.get("assessment"), ", ".join(a.get("evidence", []))])
     ws.append([])
-    ws.append(["Evidence (measures)"])
-    for e in data.get("evidence", []):
-        ws.append([e])
+    ws.append(["Rubric Indicator", data["rubric"]["indicator"]])
+    ws.append(["Excellent", data["rubric"]["excellent"]])
+    ws.append(["Good", data["rubric"]["good"]])
+    ws.append(["Satisfactory", data["rubric"]["satisfactory"]])
+    ws.append(["Poor", data["rubric"]["poor"]])
 
-    ws.append([])
-    ws.append(["Rubric Indicator", data["rubric"].get("indicator", "")])
-    ws.append(["Excellent", data["rubric"].get("excellent", "")])
-    ws.append(["Good", data["rubric"].get("good", "")])
-    ws.append(["Satisfactory", data["rubric"].get("satisfactory", "")])
-    ws.append(["Poor", data["rubric"].get("poor", "")])
-
-    output = BytesIO()
-    wb.save(output)
-    output.seek(0)
-
+    out = BytesIO()
+    wb.save(out)
+    out.seek(0)
     filename = f"CLO_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
-    return send_file(
-        output,
-        as_attachment=True,
-        download_name=filename,
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
+    return send_file(out, as_attachment=True, download_name=filename,
+                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 @app.route("/download_rubric")
 def download_rubric():
     global LAST_CLO_DATA
     if not LAST_CLO_DATA:
-        return "No rubric available. Generate a CLO first.", 400
-
+        return "No Rubric available. Please generate first.", 400
     data = LAST_CLO_DATA
     wb = Workbook()
     ws = wb.active
     ws.title = "Rubric"
-
     ws.append(["Rubric Component", "Description"])
-    ws.append(["Indicator", data["rubric"].get("indicator", "")])
-    ws.append(["Excellent", data["rubric"].get("excellent", "")])
-    ws.append(["Good", data["rubric"].get("good", "")])
-    ws.append(["Satisfactory", data["rubric"].get("satisfactory", "")])
-    ws.append(["Poor", data["rubric"].get("poor", "")])
-
-    output = BytesIO()
-    wb.save(output)
-    output.seek(0)
-
+    ws.append(["Indicator", data["rubric"]["indicator"]])
+    ws.append(["Excellent", data["rubric"]["excellent"]])
+    ws.append(["Good", data["rubric"]["good"]])
+    ws.append(["Satisfactory", data["rubric"]["satisfactory"]])
+    ws.append(["Poor", data["rubric"]["poor"]])
+    out = BytesIO()
+    wb.save(out)
+    out.seek(0)
     filename = f"Rubric_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
-    return send_file(
-        output,
-        as_attachment=True,
-        download_name=filename,
-        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
-
+    return send_file(out, as_attachment=True, download_name=filename,
+                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 # ----------------------------------------
-# Run
+# RUN
 # ----------------------------------------
 if __name__ == "__main__":
-    # For local debug
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(debug=True)
