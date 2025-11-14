@@ -324,10 +324,13 @@ def write_clo_table(df):
 # ============================================================
 @app.route("/")
 def index():
-    profile = request.args.get("profile","").lower()
-    df_map = get_mapping_dict(profile)
+    profile = request.args.get("profile", "health")
 
-    plos = df_map[df_map.columns[0]].dropna().astype(str).tolist() if not df_map.empty else []
+    mapping_path = os.path.join(app.static_folder, "peo_plo_ieg_v2.json")
+    with open(mapping_path, "r") as f:
+        mapping = json.load(f)
+
+    plos = mapping.get("PLOs", [])
 
     return render_template("generator.html", plos=plos, profile=profile)
 
@@ -670,6 +673,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
