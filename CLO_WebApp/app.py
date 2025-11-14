@@ -7,8 +7,8 @@ from io import BytesIO
 
 app = Flask(
     __name__,
-    template_folder="CLO_WebApp/templates",
-    static_folder="CLO_WebApp/static"
+    static_folder="static",
+    template_folder="templates"
 )
 
 WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
@@ -667,6 +667,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
