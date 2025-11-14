@@ -359,7 +359,7 @@ def generate():
     sc_desc = details["SC_Desc"]
     vbe = details["VBE"]
 
-    # ---------------------------------------
+# ---------------------------------------
 # META (criterion + condition) – correct
 # ---------------------------------------
 meta_res = get_meta_data(plo, bloom, profile)
@@ -373,25 +373,25 @@ condition_core = (
 
 criterion = meta_res.get("criterion", "")
 
-    connector = "when" if domain != "psychomotor" else "by"
+connector = "when" if domain != "psychomotor" else "by"
 
-    clo = (
-        f"{verb.lower()} {content} using {sc_desc.lower()} "
-        f"{connector} {condition_core} "
-        f"guided by {vbe.lower()}."
-    ).capitalize()
+clo = (
+    f"{verb.lower()} {content} using {sc_desc.lower()} "
+    f"{connector} {condition_core} "
+    f"guided by {vbe.lower()}."
+).capitalize()
 
-    # Variants
-    variants = {
-        "Standard": clo,
-        "Critical Thinking": clo.replace("using", "critically using"),
-        "Action": clo.replace("when", "while"),
-    }
+# Variants
+variants = {
+    "Standard": clo,
+    "Critical Thinking": clo.replace("using", "critically using"),
+    "Action": clo.replace("when", "while"),
+}
 
-    # IEG–PEO chain
-    peo = None
-    ieg = None
-
+# IEG–PEO chain
+peo = None
+ieg = None
+    
     for p, plos in MAP["PEOtoPLO"].items():
         if plo in plos:
             peo = p
@@ -433,5 +433,6 @@ criterion = meta_res.get("criterion", "")
 # ----------------------------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
