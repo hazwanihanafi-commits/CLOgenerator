@@ -359,39 +359,43 @@ def generate():
     sc_desc = details["SC_Desc"]
     vbe = details["VBE"]
 
-# ---------------------------------------
-# META (criterion + condition) – correct
-# ---------------------------------------
-meta_res = get_meta_data(plo, bloom, profile)
+    # ---------------------------------------
+    # META (criterion + condition) – correct
+    # ---------------------------------------
+    meta_res = get_meta_data(plo, bloom, profile)
 
-condition_core = (
-    meta_res.get("condition", "")
-            .replace("when ", "")
-            .replace("by ", "")
-            .strip()
-)
+    condition_core = (
+        meta_res.get("condition", "")
+                .replace("when ", "")
+                .replace("by ", "")
+                .strip()
+    )
 
-criterion = meta_res.get("criterion", "")
+    criterion = meta_res.get("criterion", "")
 
-connector = "when" if domain != "psychomotor" else "by"
+    connector = "when" if domain != "psychomotor" else "by"
 
-clo = (
-    f"{verb.lower()} {content} using {sc_desc.lower()} "
-    f"{connector} {condition_core} "
-    f"guided by {vbe.lower()}."
-).capitalize()
+    clo = (
+        f"{verb.lower()} {content} using {sc_desc.lower()} "
+        f"{connector} {condition_core} "
+        f"guided by {vbe.lower()}."
+    ).capitalize()
 
-# Variants
-variants = {
-    "Standard": clo,
-    "Critical Thinking": clo.replace("using", "critically using"),
-    "Action": clo.replace("when", "while"),
-}
+    # ---------------------------------------
+    # Variants
+    # ---------------------------------------
+    variants = {
+        "Standard": clo,
+        "Critical Thinking": clo.replace("using", "critically using"),
+        "Action": clo.replace("when", "while"),
+    }
 
-# IEG–PEO chain
-peo = None
-ieg = None
-    
+    # ---------------------------------------
+    # IEG–PEO chain
+    # ---------------------------------------
+    peo = None
+    ieg = None
+
     for p, plos in MAP["PEOtoPLO"].items():
         if plo in plos:
             peo = p
@@ -415,24 +419,16 @@ ieg = None
         "ieg": ieg,
         "peo": peo,
         "plo_statement": plo_statement,
-        "peo_statement": peo_statement,
-        "assessment": "",
-        "evidence": "",
-        "rubric": {
-            "indicator": f"Ability to {verb.lower()} {sc_desc.lower()}",
-            "excellent": "Performs at an excellent level",
-            "good": "Performs well",
-            "satisfactory": "Meets minimum level",
-            "poor": "Below expected"
-        }
-    })
-
+        "peo_statement": peo_
+    }
+})
 
 # ----------------------------------------------------
 # RUN APP
 # ----------------------------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
