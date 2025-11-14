@@ -1,17 +1,17 @@
-from flask import Flask, render_template, request, jsonify
-import json
 import os
+import json
+from flask import Flask, render_template, request, jsonify
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(
     __name__,
-    template_folder=os.path.join(BASE_DIR, "templates"),
-    static_folder=os.path.join(BASE_DIR, "static")
+    static_folder=os.path.join(BASE_DIR, "static"),
+    template_folder=os.path.join(BASE_DIR, "templates")
 )
 
-print("TEMPLATE PATH:", app.template_folder)
-print("STATIC PATH:", app.static_folder)
+print("STATIC =", app.static_folder)
+print("TEMPLATES =", app.template_folder)
 
 
 WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
@@ -326,16 +326,14 @@ def write_clo_table(df):
 def index():
     profile = request.args.get("profile", "health")
 
-    # Correct path: static/data/peo_plo_ieg.json
-    mapping_path = os.path.join(app.static_folder, "data", "peo_plo_ieg.json")
+    json_path = os.path.join(app.static_folder, "data", "peo_plo_ieg.json")
 
-    with open(mapping_path, "r") as f:
+    with open(json_path, "r") as f:
         mapping = json.load(f)
 
     plos = mapping.get("PLOs", [])
 
     return render_template("generator.html", plos=plos, profile=profile)
-
 
 # ============================================================
 # GENERATE CLO
@@ -676,6 +674,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
