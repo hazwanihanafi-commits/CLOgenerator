@@ -1,15 +1,18 @@
-from flask import Flask, render_template, request, jsonify, send_file, redirect, url_for
-import pandas as pd
+from flask import Flask, render_template, request, jsonify
+import json
 import os
-from datetime import datetime
-from openpyxl import load_workbook
-from io import BytesIO
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(
     __name__,
-    static_folder="static",
-    template_folder="templates"
+    template_folder=os.path.join(BASE_DIR, "templates"),
+    static_folder=os.path.join(BASE_DIR, "static")
 )
+
+print("TEMPLATE PATH:", app.template_folder)
+print("STATIC PATH:", app.static_folder)
+
 
 WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
 
@@ -667,6 +670,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
