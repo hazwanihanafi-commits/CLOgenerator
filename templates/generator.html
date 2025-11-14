@@ -26,7 +26,7 @@
 <body class="bg-soft">
 
   <!-- Advanced CLO Auto-Linker -->
-<div id="advanced_clo_generator_v2.js"></div>
+<div id="advanced_clo_generator_v3.js"></div>
 
 
   <!-- NAVBAR -->
@@ -94,7 +94,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
     try {
-        const res = await fetch("/static/peo_plo_ieg.json", { cache: "no-store" });
+        const res = await fetch("/static/data/peo_plo_ieg.json", { cache: "no-store" });
         if (!res.ok) throw new Error("Mapping file missing");
         
         const mapping = await res.json();
@@ -562,7 +562,7 @@ document.addEventListener("DOMContentLoaded", () => {
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 <!-- Advanced CLO Auto-Linker Module -->
-<script src="/static/js/advanced_clo_generator_v2.js"></script>
+<script src="/static/js/advanced_clo_generator_v3.js"></script>
 
   <script>
 document.addEventListener("DOMContentLoaded", async () => {
