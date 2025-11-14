@@ -326,14 +326,16 @@ def write_clo_table(df):
 def index():
     profile = request.args.get("profile", "health")
 
-    import os
-mapping_path = os.path.join("static", "data", "peo_plo_ieg.json")
+    # Correct path: static/data/peo_plo_ieg.json
+    mapping_path = os.path.join(app.static_folder, "data", "peo_plo_ieg.json")
+
     with open(mapping_path, "r") as f:
         mapping = json.load(f)
 
     plos = mapping.get("PLOs", [])
 
     return render_template("generator.html", plos=plos, profile=profile)
+
 
 # ============================================================
 # GENERATE CLO
@@ -674,6 +676,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
