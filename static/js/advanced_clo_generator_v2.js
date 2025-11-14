@@ -33,11 +33,10 @@
 
   box.innerHTML = `
       <h5 class="fw-bold mb-2">
-        ⚡ Advanced CLO Auto-Linker
+        ⚡ Advanced PLO Auto-Linker
       </h5>
       <div class="text-muted small mb-3">
         Auto-maps: IEG → PEO → PLO → SC / VBE / Indicator  
-        <br>Source: /static/data/peo_plo_ieg.json
       </div>
 
       <div class="row g-3">
@@ -57,18 +56,6 @@
             <option value="" disabled selected>-- choose PEO --</option>
           </select>
         </div>
-
-        <div class="col-md-4">
-          <label class="form-label">Bloom Level</label>
-          <select id="al_bloom" class="form-select">
-            <option>Understand</option>
-            <option selected>Apply</option>
-            <option>Analyze</option>
-            <option>Evaluate</option>
-            <option>Create</option>
-          </select>
-        </div>
-      </div>
 
       <hr>
       <div id="al_output"></div>
