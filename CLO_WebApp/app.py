@@ -5,7 +5,11 @@ from datetime import datetime
 from openpyxl import load_workbook
 from io import BytesIO
 
-app = Flask(__name__, template_folder="templates", static_folder="static")
+app = Flask(
+    __name__,
+    template_folder="CLO_WebApp/templates",
+    static_folder="CLO_WebApp/static"
+)
 
 WORKBOOK_PATH = os.path.join(os.getcwd(), "SCLOG.xlsx")
 
@@ -663,6 +667,7 @@ def download_rubric():
 # ============================================================
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
