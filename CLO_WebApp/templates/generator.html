@@ -563,6 +563,25 @@ document.addEventListener("DOMContentLoaded", () => {
 
 <!-- Advanced CLO Auto-Linker Module -->
 <script src="/static/js/advanced_clo_generator_v2.js"></script>
-  
+
+  <script>
+document.addEventListener("DOMContentLoaded", async () => {
+    const ploSel = document.getElementById("plo");
+
+    if (ploSel.options.length <= 1) {
+        try {
+            const res = await fetch("/static/peo_plo_ieg_v2.json", { cache: "no-store" });
+            const map = await res.json();
+
+            ploSel.innerHTML = '<option disabled selected>Select PLO</option>';
+            map.PLOs.forEach(p => ploSel.append(new Option(p, p)));
+
+        } catch (err) {
+            ploSel.innerHTML = '<option disabled>Error loading PLOs</option>';
+        }
+    }
+});
+</script>
+
 </body>
 </html>
