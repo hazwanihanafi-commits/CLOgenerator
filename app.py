@@ -324,6 +324,29 @@ def generate():
     plo_statement = MAP["PLOstatements"][level].get(plo, "")
     peo_statement = MAP["PEOstatements"][level].get(peo, "")
 
+    # Store in memory for download functions
+    global LAST_CLO_DATA
+    LAST_CLO_DATA = {
+        "clo": clo,
+        "plo": plo,
+        "peo": peo,
+        "plo_statement": plo_statement,
+        "peo_statement": peo_statement,
+        "sc_code": details["SC_Code"],
+        "sc_desc": sc_desc,
+        "vbe": vbe,
+        "domain": domain,
+        "criterion": criterion,
+        "condition": condition_core,
+        "rubric": {
+            "indicator": f"Ability to {verb.lower()} {sc_desc.lower()}",
+            "excellent": "Performs at an excellent level",
+            "good": "Performs well",
+            "satisfactory": "Meets minimum level",
+            "poor": "Below expected"
+        }
+    }
+
     return jsonify({
         "clo": clo,
         "clo_options": variants,
@@ -336,15 +359,94 @@ def generate():
         "ieg": ieg,
         "peo": peo,
         "plo_statement": plo_statement,
-        "peo_statement": peo_statement,
+        "peo_statement": peo_statement
     })
+    from openpyxl import Workbook
+from flask import send_file
 
 @app.route("/")
 def index():
     return render_template("generator.html")
+    
+@app.route("/download")
+def download_clo():
+    # Get last generated CLO stored in session-like global
+    global LAST_CLO_DATA
+
+    if "LAST_CLO_DATA" not in globals() or not LAST_CLO_DATA:
+        return "No CLO available. Please generate first.", 400
+
+    data = LAST_CLO_DATA
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "CLO"
+
+    ws.append(["Field", "Value"])
+    ws.append(["CLO", data.get("clo","")])
+    ws.append(["PLO", data.get("plo","")])
+    ws.append(["PLO Statement", data.get("plo_statement","")])
+    ws.append(["PEO", data.get("peo","")])
+    ws.append(["PEO Statement", data.get("peo_statement","")])
+    ws.append(["SC Code", data.get("sc_code","")])
+    ws.append(["SC Description", data.get("sc_desc","")])
+    ws.append(["VBE", data.get("vbe","")])
+    ws.append(["Domain", data.get("domain","")])
+    ws.append(["Criterion", data.get("criterion","")])
+    ws.append(["Condition", data.get("condition","")])
+
+    ws.append([])
+    ws.append(["Rubric Indicator", data["rubric"]["indicator"]])
+    ws.append(["Excellent", data["rubric"]["excellent"]])
+    ws.append(["Good", data["rubric"]["good"]])
+    ws.append(["Satisfactory", data["rubric"]["satisfactory"]])
+    ws.append(["Poor", data["rubric"]["poor"]])
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=f"CLO_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+@app.route("/download_rubric")
+def download_rubric():
+    global LAST_CLO_DATA
+
+    if "LAST_CLO_DATA" not in globals() or not LAST_CLO_DATA:
+        return "No Rubric available. Please generate CLO first.", 400
+
+    data = LAST_CLO_DATA
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Rubric"
+
+    ws.append(["Rubric Component", "Description"])
+    ws.append(["Indicator", data["rubric"]["indicator"]])
+    ws.append(["Excellent", data["rubric"]["excellent"]])
+    ws.append(["Good", data["rubric"]["good"]])
+    ws.append(["Satisfactory", data["rubric"]["satisfactory"]])
+    ws.append(["Poor", data["rubric"]["poor"]])
+
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=f"Rubric_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 # RUN
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
