@@ -2,398 +2,255 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>SCLOG Smart CLO Generator</title>
+  <title>SCLOG — Smart CLO Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
-  <link href="{{ url_for('static', filename='custom.css') }}" rel="stylesheet" />
+
   <style>
-    .card-elev { border-radius: 12px; box-shadow: 0 6px 18px rgba(23,102,216,0.06); }
-    .bg-brand { background: linear-gradient(90deg,#1158c7,#1b7de6); }
-    .loader { display:inline-block; width:16px; height:16px; border:2px solid #e9f2ff; border-top-color:#1766d8; border-radius:50%; animation:spin 1s linear infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .variant-item { background:#fff; border:1px solid #eef4ff; border-radius:8px; padding:10px; margin-bottom:8px; cursor:pointer; }
-    .muted-small { color:#6b7280; font-size:0.95rem; }
-    .meta-grid { display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:10px; }
-    .meta-card { background:#fff; border:1px solid #f0f4ff; padding:10px; border-radius:8px; }
+    body { background:#f7f9fc; }
+    .card-box {
+      background:#fff; border-radius:12px;
+      padding:20px; box-shadow:0 5px 15px rgba(0,0,0,.05);
+    }
   </style>
 </head>
-<body class="bg-light">
-  <nav class="navbar navbar-expand-lg navbar-dark bg-brand py-3">
-    <div class="container">
-      <span class="navbar-brand fw-bold"><i class="bi bi-stars me-2"></i> SCLOG — Smart CLO Generator</span>
-      <div class="ms-auto d-flex align-items-center gap-2">
-        <label class="text-white-50 small mb-0 me-2">Profile</label>
-        <select id="profile" class="form-select form-select-sm">
-          <option value="health">Medical & Health Sciences</option>
-          <option value="sc">Computer Science & IT</option>
-          <option value="eng">Engineering & Technology</option>
-          <option value="socs">Social Sciences</option>
-          <option value="edu">Education</option>
-          <option value="bus">Business & Management</option>
-          <option value="arts">Arts & Humanities</option>
+<body class="p-3">
+
+<div class="container">
+
+  <h3 class="mb-4 fw-bold">SCLOG — Smart CLO Generator</h3>
+
+  <div class="card-box mb-4">
+    <h5 class="fw-bold mb-3">IEG → PEO → PLO Mapping</h5>
+
+    <div class="row g-3">
+
+      <div class="col-md-4">
+        <label class="form-label">IEG</label>
+        <select id="ieg" class="form-select">
+          <option value="">Select IEG</option>
         </select>
       </div>
+
+      <div class="col-md-4">
+        <label class="form-label">PEO</label>
+        <select id="peo" class="form-select">
+          <option value="">Select PEO</option>
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label class="form-label">PLO</label>
+        <select id="plo" class="form-select">
+          <option value="">Select PLO</option>
+        </select>
+      </div>
+
     </div>
-  </nav>
+  </div>
 
-  <main class="container my-4">
-    <div class="card card-elev">
-      <form id="cloForm" method="post" class="p-3">
-        <input type="hidden" id="profileHidden" name="profile" />
-        <div class="row g-4">
-          <!-- LEFT: Mapping / PLO -->
-          <div class="col-lg-5">
-            <div class="card p-3 h-100">
-              <h5 class="mb-3">Course & Mapping</h5>
 
-              <div class="mb-2">
-                <label class="form-label">Course (code / name)</label>
-                <input name="course" class="form-control" placeholder="e.g., CLIN101 - Clinical Skills" />
-              </div>
+  <div class="card-box mb-4">
+    <h5 class="fw-bold mb-3">Bloom & Verb</h5>
 
-              <div class="mb-2">
-                <label class="form-label">Level</label>
-                <select id="level" name="level" class="form-select">
-                  <option>Degree</option>
-                  <option>Diploma</option>
-                  <option>Master</option>
-                  <option>PhD</option>
-                </select>
-              </div>
+    <div class="row g-3">
 
-              <div class="mb-2">
-                <label class="form-label">IEG *</label>
-                <select id="ieg" name="ieg" class="form-select">
-                  <option value="">— Select IEG —</option>
-                </select>
-              </div>
+      <div class="col-md-4">
+        <label class="form-label">Bloom Level</label>
+        <select id="bloom" class="form-select">
+          <option value="">Select Bloom</option>
+        </select>
+      </div>
 
-              <div class="mb-2">
-                <label class="form-label">PEO (auto)</label>
-                <input id="peo" name="peo" class="form-control" readonly />
-              </div>
+      <div class="col-md-4">
+        <label class="form-label">Verb</label>
+        <select id="verb" class="form-select">
+          <option value="">Select Verb</option>
+        </select>
+      </div>
 
-              <div class="mb-2">
-                <label class="form-label">PLO *</label>
-                <select id="plo" name="plo" class="form-select" required>
-                  <option value="">— Select PLO —</option>
-                </select>
-              </div>
+      <div class="col-md-4">
+        <label class="form-label">Content</label>
+        <input id="content" type="text" class="form-control" placeholder="e.g., interpret ECG signals">
+      </div>
 
-              <div class="mt-3">
-                <div class="meta-grid">
-                  <div class="meta-card">
-                    <div class="text-muted-small">SC Code</div>
-                    <div id="sc_code" class="fw-semibold"></div>
-                  </div>
-                  <div class="meta-card">
-                    <div class="text-muted-small">SC Description</div>
-                    <div id="sc_desc" class="fw-semibold"></div>
-                  </div>
-                  <div class="meta-card">
-                    <div class="text-muted-small">VBE</div>
-                    <div id="vbe" class="fw-semibold"></div>
-                  </div>
-                  <div class="meta-card">
-                    <div class="text-muted-small">Domain</div>
-                    <div id="domain" class="fw-semibold"></div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="alert alert-light mt-3">
-                <div class="mb-1"><strong>IEG Statement:</strong> <span id="ieg_statement" class="muted-small">—</span></div>
-                <div class="mb-1"><strong>PEO Statement:</strong> <span id="peo_statement" class="muted-small">—</span></div>
-                <div class="mb-1"><strong>PLO Statement:</strong> <span id="plo_statement" class="muted-small">—</span></div>
-                <div class="mb-1"><strong>PLO Indicator:</strong> <span id="plo_indicator" class="muted-small">—</span></div>
-              </div>
-
-              <div class="d-flex gap-2 mt-3">
-                <a href="/download" class="btn btn-outline-success btn-sm"><i class="bi bi-download me-1"></i> Download CLO Table</a>
-                <a href="/download_rubric" class="btn btn-outline-secondary btn-sm"><i class="bi bi-file-earmark-text me-1"></i> Download Rubric</a>
-              </div>
-            </div>
-          </div>
-          <!-- RIGHT: Bloom & CLO builder -->
-          <div class="col-lg-7">
-            <div class="card p-3 h-100">
-              <h5 class="mb-3">Bloom & CLO Builder</h5>
-
-              <div class="row g-2">
-                <div class="col-md-6">
-                  <label class="form-label">Bloom</label>
-                  <select id="bloom" name="bloom" class="form-select" required>
-                    <option value="">— Select Bloom —</option>
-                  </select>
-                </div>
-
-                <div class="col-md-6">
-                  <label class="form-label">Verb</label>
-                  <select id="verb" name="verb" class="form-select" required>
-                    <option value="">— Select Verb —</option>
-                  </select>
-                </div>
-
-                <div class="col-12 mt-2">
-                  <label class="form-label">Content (topic / object)</label>
-                  <input id="content" name="content" class="form-control" placeholder="e.g., interpret ECG waveforms, design an intervention plan" required />
-                </div>
-
-                <div class="col-md-6 mt-2">
-                  <label class="form-label">Condition</label>
-                  <input id="condition" name="condition" class="form-control" readonly />
-                </div>
-
-                <div class="col-md-6 mt-2">
-                  <label class="form-label">Criterion</label>
-                  <input id="criterion" name="criterion" class="form-control" readonly />
-                </div>
-
-                <div class="col-md-6 mt-2">
-                  <label class="form-label">Coursework %</label>
-                  <input id="cw" name="cw" type="number" min="0" max="100" class="form-control" placeholder="e.g., 40" />
-                </div>
-
-                <div class="col-12 mt-3 d-flex align-items-center gap-2">
-                  <button id="generateBtn" type="button" class="btn btn-primary"><i class="bi bi-magic me-1"></i> Generate CLO</button>
-                  <div id="busy" style="display:none;"><span class="loader"></span> Generating…</div>
-                </div>
-
-                <!-- Preview area -->
-                <div class="col-12 mt-3" id="previewPanel" style="display:none;">
-                  <div class="card card-elev p-3">
-                    <div class="d-flex justify-content-between align-items-start">
-                      <div>
-                        <h6 class="mb-1">Generated CLO</h6>
-                        <div id="cloPreviewText" class="fw-semibold"></div>
-                      </div>
-                      <div class="text-end">
-                        <button id="copyCloBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-clipboard"></i> Copy</button>
-                      </div>
-                    </div>
-
-                    <div class="mt-3 d-flex justify-content-between align-items-center">
-                      <div><small class="text-muted">Alternative variants</small></div>
-                      <button id="toggleVariants" class="btn btn-sm btn-outline-primary">Show variants</button>
-                    </div>
-
-                    <div id="variantsPanel" style="display:none; margin-top:10px;"></div>
-                  </div>
-                </div>
-
-                <!-- Rubric -->
-                <div class="col-12 mt-3" id="rubricPanel" style="display:none;">
-                  <div class="card card-elev p-3">
-                    <h6 class="mb-2">Rubric</h6>
-                    <div class="table-responsive">
-                      <table class="table table-sm">
-                        <tr><th>Indicator</th><td id="r_indicator"></td></tr>
-                        <tr><th>Excellent</th><td id="r_excellent"></td></tr>
-                        <tr><th>Good</th><td id="r_good"></td></tr>
-                        <tr><th>Satisfactory</th><td id="r_satisfactory"></td></tr>
-                        <tr><th>Poor</th><td id="r_poor"></td></tr>
-                      </table>
-                    </div>
-                  </div>
-                </div>
-
-              </div> <!-- row -->
-            </div> <!-- card -->
-          </div>
-
-        </div> <!-- row -->
-      </form>
     </div>
-  </main>
+  </div>
 
-  <footer class="text-center small text-muted mb-4">
-    SCLOG Generator — Developed by Assoc. Prof. Dr. Hazwani Ahmad Yusof @ USM
-  </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <div class="card-box mb-4">
+    <h5 class="fw-bold mb-3">Auto-Filled Metadata</h5>
+
+    <div class="row g-3">
+
+      <div class="col-md-3">
+        <label class="form-label">SC Code</label>
+        <input id="sc_code" class="form-control" readonly>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">SC Description</label>
+        <input id="sc_desc" class="form-control" readonly>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">VBE</label>
+        <input id="vbe" class="form-control" readonly>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Domain</label>
+        <input id="domain" class="form-control" readonly>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Condition</label>
+        <input id="condition" class="form-control" readonly>
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Criterion</label>
+        <input id="criterion" class="form-control" readonly>
+      </div>
+
+    </div>
+  </div>
+
+
+  <div class="card-box mb-4">
+    <h5 class="fw-bold mb-3">Generate CLO</h5>
+
+    <button id="generate" class="btn btn-primary">Generate CLO</button>
+
+    <div id="clo_block" class="mt-3" style="display:none;">
+      <h6 class="fw-bold">Generated CLO</h6>
+      <div id="clo_text" class="border rounded p-2 bg-light"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-/* ---------------------------
-    BASE ELEMENTS
-----------------------------*/
-const $ = id => document.getElementById(id);
+/* -------------------------
+     1. LOAD IEG LIST
+--------------------------*/
+fetch("/api/mapping")
+  .then(r => r.json())
+  .then(data => {
+      window.MAP = data;
 
-const levelSel      = $("level");
-const iegSel        = $("ieg");
-const peoSel        = $("peo");
-const ploSel        = $("plo");
+      let iegSel = document.getElementById("ieg");
+      data.IEGs.forEach(i => {
+         let opt = new Option(i, i);
+         iegSel.add(opt);
+      });
+  });
 
-const bloomSel      = $("bloom");
-const verbSel       = $("verb");
+/* -------------------------
+     2. IEG → PEO
+--------------------------*/
+document.getElementById("ieg").addEventListener("change", function() {
+    let ieg = this.value;
+    let peoSel = document.getElementById("peo");
+    peoSel.innerHTML = '<option value="">Select PEO</option>';
 
-const scCodeEl      = $("sc_code");
-const scDescEl      = $("sc_desc");
-const vbeEl         = $("vbe");
-const domainEl      = $("domain");
+    if (!ieg) return;
 
-const conditionEl   = $("condition");
-const criterionEl   = $("criterion");
-
-const iegStatementEl = $("ieg_statement");
-const peoStatementEl = $("peo_statement");
-const ploStatementEl = $("plo_statement");
-const ploIndicatorEl = $("plo_indicator");
-
-/* ---------------------------
-    LOAD FULL MAPPING FROM API
-----------------------------*/
-let MAP = null;
-
-async function loadMapping() {
-    const res = await fetch("/api/mapping");
-    MAP = await res.json();
-
-    // Populate IEG dropdown
-    iegSel.innerHTML = `<option value="">— Select IEG —</option>`;
-    MAP.IEGs.forEach(i => iegSel.append(new Option(i, i)));
-}
-loadMapping();
-
-/* ---------------------------
-      IEG → PEO
-----------------------------*/
-iegSel.addEventListener("change", () => {
-    const ieg = iegSel.value;
-    peoSel.innerHTML = `<option value="">— Select PEO —</option>`;
-
-    (MAP.IEGtoPEO[ieg] || []).forEach(peo => {
-        peoSel.append(new Option(peo, peo));
-    });
-
-    // Display IEG statement if exists
-    iegStatementEl.textContent = ieg;
+    fetch(`/api/get_peos/${ieg}`)
+      .then(r => r.json())
+      .then(list => {
+         list.forEach(p => peoSel.add(new Option(p, p)));
+      });
 });
 
-/* ---------------------------
-      PEO → PLO
-----------------------------*/
-peoSel.addEventListener("change", () => {
-    const peo = peoSel.value;
-    ploSel.innerHTML = `<option value="">— Select PLO —</option>`;
 
-    (MAP.PEOtoPLO[peo] || []).forEach(plo => {
-        ploSel.append(new Option(plo, plo));
-    });
+/* -------------------------
+     3. PEO → PLO
+--------------------------*/
+document.getElementById("peo").addEventListener("change", function() {
+    let peo = this.value;
+    let ploSel = document.getElementById("plo");
+    ploSel.innerHTML = '<option value="">Select PLO</option>';
 
-    // Auto load PEO statement based on level
-    const lvl = levelSel.value || "Degree";
-    peoStatementEl.textContent =
-        MAP.PEOstatements[lvl]?.[peo] || "—";
+    fetch(`/api/get_plos/${peo}`)
+      .then(r => r.json())
+      .then(list => {
+         list.forEach(p => ploSel.add(new Option(p, p)));
+      });
 });
 
-/* ---------------------------
-      PLO SELECTED → LOAD:
-      ✓ PLO Statement
-      ✓ Indicator
-      ✓ SC Code / Description
-      ✓ VBE
-      ✓ Domain
-      ✓ Bloom list
-----------------------------*/
-ploSel.addEventListener("change", async () => {
-    const plo = ploSel.value;
-    const lvl = levelSel.value || "Degree";
 
-    // PLO statement
-    ploStatementEl.textContent =
-        MAP.PLOstatements[lvl]?.[plo] || "—";
+/* -------------------------
+     4. PLO → Bloom
+--------------------------*/
+document.getElementById("plo").addEventListener("change", function() {
+    let plo = this.value;
+    let bloomSel = document.getElementById("bloom");
+    bloomSel.innerHTML = '<option value="">Loading…</option>';
 
-    // Indicator
-    ploIndicatorEl.textContent =
-        MAP.PLOIndicators[plo] || "—";
-
-    // Mapping from Excel sheet via backend
-    const profile = new URLSearchParams(window.location.search).get("profile") || "health";
-
-    // Fetch blooms
-    const blooms = await (await fetch(`/api/get_blooms/${plo}?profile=${profile}`)).json();
-    bloomSel.innerHTML = `<option value="">— Select Bloom —</option>`;
-    blooms.forEach(b => bloomSel.append(new Option(b, b)));
-
-    // Clear verb, meta
-    verbSel.innerHTML = `<option value="">— Select Verb —</option>`;
-    scCodeEl.textContent = "";
-    scDescEl.textContent = "";
-    vbeEl.textContent = "";
-    domainEl.textContent = "";
-    conditionEl.value = "";
-    criterionEl.value = "";
+    fetch(`/api/get_blooms/${plo}?profile=sc`)
+      .then(r => r.json())
+      .then(list => {
+         bloomSel.innerHTML = '<option value="">Select Bloom</option>';
+         list.forEach(b => bloomSel.add(new Option(b, b)));
+      });
 });
 
-/* ---------------------------
-      BLOOM → VERBS + META
-----------------------------*/
-bloomSel.addEventListener("change", async () => {
-    const plo = ploSel.value;
-    const bloom = bloomSel.value;
-    if (!plo || !bloom) return;
 
-    const profile = new URLSearchParams(window.location.search).get("profile") || "health";
+/* -------------------------
+     5. Bloom → Verbs
+--------------------------*/
+document.getElementById("bloom").addEventListener("change", function() {
+    let bloom = this.value;
+    let plo = document.getElementById("plo").value;
 
-    // Load verbs
-    const verbs = await (await fetch(`/api/get_verbs/${plo}/${bloom}?profile=${profile}`)).json();
-    verbSel.innerHTML = `<option value="">— Select Verb —</option>`;
-    verbs.forEach(v => verbSel.append(new Option(v, v)));
+    fetch(`/api/get_verbs/${plo}/${bloom}?profile=sc`)
+      .then(r => r.json())
+      .then(list => {
+         let verbSel = document.getElementById("verb");
+         verbSel.innerHTML = '<option value="">Select Verb</option>';
+         list.forEach(v => verbSel.add(new Option(v, v)));
+      });
 
-    // Load meta
-    const meta = await (await fetch(`/api/get_meta/${plo}/${bloom}?profile=${profile}`)).json();
-    scCodeEl.textContent = meta.sc_code || "";
-    scDescEl.textContent = meta.sc_desc || "";
-    vbeEl.textContent = meta.vbe || "";
-    domainEl.textContent = meta.domain || "";
-    conditionEl.value = meta.condition || "";
-    criterionEl.value = meta.criterion || "";
+    /* Load Meta */
+    fetch(`/api/get_meta/${plo}/${bloom}?profile=sc`)
+      .then(r=>r.json())
+      .then(m => {
+         document.getElementById("sc_code").value = m.sc_code;
+         document.getElementById("sc_desc").value = m.sc_desc;
+         document.getElementById("vbe").value = m.vbe;
+         document.getElementById("domain").value = m.domain;
+         document.getElementById("condition").value = m.condition;
+         document.getElementById("criterion").value = m.criterion;
+      });
 });
 
-/* ---------------------------
-    CLO GENERATION (POST)
-----------------------------*/
-document.getElementById("generateBtn").addEventListener("click", async () => {
-    const fd = new FormData();
-    fd.append("plo", ploSel.value);
-    fd.append("bloom", bloomSel.value);
-    fd.append("verb", verbSel.value);
+
+/* -------------------------
+     6. GENERATE CLO
+--------------------------*/
+document.getElementById("generate").addEventListener("click", function() {
+
+    let fd = new FormData();
+    fd.append("profile", "sc");
+    fd.append("plo", document.getElementById("plo").value);
+    fd.append("bloom", document.getElementById("bloom").value);
+    fd.append("verb", document.getElementById("verb").value);
     fd.append("content", document.getElementById("content").value);
-    fd.append("course", document.querySelector("input[name='course']").value);
-    fd.append("cw", document.getElementById("cw").value);
-    fd.append("level", levelSel.value);
-    fd.append("profile", new URLSearchParams(window.location.search).get("profile") || "health");
+    fd.append("course", "");
+    fd.append("cw", "");
+    fd.append("level", "Degree");
 
-    const res = await fetch("/generate", { method: "POST", body: fd });
-    const data = await res.json();
-
-    if (data.error) {
-        alert(data.error);
-        return;
-    }
-
-    // Show CLO
-    document.getElementById("previewPanel").style.display = "block";
-    document.getElementById("cloPreviewText").textContent = data.clo;
-
-    // Variants
-    const vp = document.getElementById("variantsPanel");
-    vp.innerHTML = "";
-    Object.entries(data.clo_options).forEach(([label, text]) => {
-        const div = document.createElement("div");
-        div.className = "variant-item";
-        div.innerHTML = `<strong>${label}</strong><div>${text}</div>`;
-        div.onclick = () => document.getElementById("cloPreviewText").textContent = text;
-        vp.appendChild(div);
-    });
-
-    // Rubric
-    document.getElementById("rubricPanel").style.display = "block";
-    document.getElementById("r_indicator").textContent = data.rubric.indicator;
-    document.getElementById("r_excellent").textContent = data.rubric.excellent;
-    document.getElementById("r_good").textContent = data.rubric.good;
-    document.getElementById("r_satisfactory").textContent = data.rubric.satisfactory;
-    document.getElementById("r_poor").textContent = data.rubric.poor;
+    fetch("/generate", {method:"POST", body:fd})
+      .then(r => r.json())
+      .then(res => {
+        document.getElementById("clo_text").innerText = res.clo;
+        document.getElementById("clo_block").style.display = "block";
+      });
 });
 </script>
 
