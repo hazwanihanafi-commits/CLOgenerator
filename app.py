@@ -352,107 +352,148 @@ LAST_CLO_DATA = {}
 @app.route("/generate", methods=["POST"])
 def generate():
     profile = request.form.get("profile", "sc").lower()
-    plo = (request.form.get("plo") or "").strip()
-    bloom = (request.form.get("bloom") or "").strip()
-    verb = (request.form.get("verb") or "").strip()
-    content = (request.form.get("content") or "").strip()
-    level = (request.form.get("level") or "Degree").strip()
 
-    if not (plo and bloom and verb and content):
-        return jsonify({"error": "Missing required fields (plo, bloom, verb, content)"}), 400
+    plo = request.form.get("plo", "")
+    bloom = request.form.get("bloom", "")
+    verb = request.form.get("verb", "")
+    content = request.form.get("content", "")
+    level = request.form.get("level", "Degree")
 
     details = get_plo_details(plo, profile)
     if not details:
-        return jsonify({"error": "PLO not found for profile"}), 400
+        return jsonify({"error": "Invalid PLO"}), 400
 
-    domain = (details.get("Domain") or "").lower()
-    sc_desc = details.get("SC_Desc","")
-    vbe = details.get("VBE","")
+    domain = details["Domain"].lower()
+    sc_desc = details["SC_Desc"]
+    vbe = details["VBE"]
 
-    meta = get_meta_data(plo, bloom, profile)
-    condition_core = meta.get("condition", "").replace("when ", "").replace("by ", "").strip()
-    criterion = meta.get("criterion","")
+    # ------------------------------------------------------
+    # CLEAN UP: Fix duplicated verb issue
+    # ------------------------------------------------------
+    content_words = content.strip().lower().split()
 
-    connector = "by" if domain == "psychomotor" else "when"
+    # Common academic verbs list
+    ACTION_VERBS = {
+        "investigate","analyse","analyze","evaluate","interpret","assess","examine",
+        "apply","perform","demonstrate","measure","design","explain"
+    }
 
+    # If content already starts with a verb → remove Bloom verb from content
+    if content_words and content_words[0] in ACTION_VERBS:
+        # Keep content starting ONE word after the verb
+        content_clean = " ".join(content_words[1:])
+    else:
+        content_clean = content.strip()
+
+    # ------------------------------------------------------
+    # META extraction
+    # ------------------------------------------------------
+    meta_res = get_meta_data(plo, bloom, profile)
+
+    condition_core = (
+        meta_res["condition"]
+        .replace("when ", "")
+        .replace("by ", "")
+        .strip()
+    )
+
+    criterion = meta_res["criterion"]
+    connector = "when" if domain != "psychomotor" else "by"
+
+    # ------------------------------------------------------
+    # CLO generation (cleaned)
+    # ------------------------------------------------------
     clo = (
-        f"{verb.lower()} {content} using {sc_desc.lower()} {connector} {condition_core} guided by {vbe.lower()}."
+        f"{verb.lower()} {content_clean} using {sc_desc.lower()} "
+        f"{connector} {condition_core} guided by {vbe.lower()}."
     ).capitalize()
 
-    # variants
+    # ------------------------------------------------------
+    # Variant generation
+    # ------------------------------------------------------
     variants = {
         "Standard": clo,
         "Critical Thinking": clo.replace("using", "critically using"),
-        "Problem-Solving": clo.replace("when", "while applying problem-solving strategies"),
-        "Action-Oriented": clo.replace("when", "while performing tasks"),
-        "Professional Practice": clo.replace("guided by", "aligned with"),
-        "Ethical Emphasis": clo.replace("guided by", "grounded in ethical principles")
+        "Action": clo.replace("when", "while"),
     }
 
-    # chain IEG <- PEO <- PLO
+    # ------------------------------------------------------
+    # IEG → PEO mapping
+    # ------------------------------------------------------
     peo = None
     ieg = None
-    for p, plos in MAP.get("PEOtoPLO", {}).items():
+
+    for p, plos in MAP["PEOtoPLO"].items():
         if plo in plos:
             peo = p
             break
-    for i, peos in MAP.get("IEGtoPEO", {}).items():
-        if peo and peo in peos:
+
+    for i, peos in MAP["IEGtoPEO"].items():
+        if peo in peos:
             ieg = i
             break
 
-    plo_statement = MAP.get("PLOstatements", {}).get(level, {}).get(plo, "")
-    peo_statement = MAP.get("PEOstatements", {}).get(level, {}).get(peo, "")
-    plo_indicator = MAP.get("PLOIndicators", {}).get(plo, "")
+    # ------------------------------------------------------
+    # Statements
+    # ------------------------------------------------------
+    plo_statement = MAP["PLOstatements"][level].get(plo, "")
+    peo_statement = MAP["PEOstatements"][level].get(peo, "")
+    plo_indicator = MAP["PLOIndicators"].get(plo, "")
 
-    # assessment + evidence
+    # ------------------------------------------------------
+    # Assessment & Evidence suggestions
+    # ------------------------------------------------------
     assessments = get_assessment(plo, bloom, domain)
-    evidence_map = {a: get_evidence_for(a) for a in assessments}
 
-    # store globally for download
+    evidence_output = {}
+    for a in assessments:
+        evidence_output[a] = get_evidence(a)
+
+    # ------------------------------------------------------
+    # Save for Excel download (now includes variants)
+    # ------------------------------------------------------
     global LAST_CLO_DATA
     LAST_CLO_DATA = {
         "clo": clo,
+        "variants": variants,           # ← NEW: store all variant CLOs
         "plo": plo,
         "peo": peo,
         "ieg": ieg,
         "plo_statement": plo_statement,
         "peo_statement": peo_statement,
         "plo_indicator": plo_indicator,
-        "sc_code": details.get("SC_Code",""),
+        "sc_code": details["SC_Code"],
         "sc_desc": sc_desc,
         "vbe": vbe,
         "domain": domain,
         "criterion": criterion,
         "condition": condition_core,
+        "assessments": assessments,
+        "evidence": evidence_output,
         "rubric": {
             "indicator": f"Ability to {verb.lower()} {sc_desc.lower()}",
             "excellent": "Performs at an excellent level",
             "good": "Performs well",
             "satisfactory": "Meets minimum level",
             "poor": "Below expected"
-        },
-        "assessments": assessments,
-        "evidence": evidence_map
+        }
     }
 
     return jsonify({
         "clo": clo,
         "clo_options": variants,
-        "sc_code": details.get("SC_Code",""),
+        "peo": peo,
+        "ieg": ieg,
+        "sc_code": details["SC_Code"],
         "sc_desc": sc_desc,
         "vbe": vbe,
-        "domain": domain,
         "criterion": criterion,
         "condition": condition_core,
-        "ieg": ieg,
-        "peo": peo,
         "plo_statement": plo_statement,
         "peo_statement": peo_statement,
         "plo_indicator": plo_indicator,
         "assessments": assessments,
-        "evidence": evidence_map,
-        "rubric": LAST_CLO_DATA["rubric"]
+        "evidence": evidence_output
     })
 
 # -----------------------
@@ -540,3 +581,4 @@ def index():
 # -----------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
+
