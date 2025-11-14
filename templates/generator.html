@@ -4,707 +4,447 @@
   <meta charset="utf-8" />
   <title>SCLOG — Smart CLO Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
   <style>
     :root{
-      --brand: #1158c7;
-      --muted: #6b7280;
-      --card-radius: 12px;
-      --glass: rgba(255,255,255,0.85);
+      --bg:#f7f9fc; --card:#fff; --text:#1f2937;
     }
-    [data-theme="dark"]{
-      --brand: #62a0ff;
-      --muted: #9aa4b2;
-      --glass: rgba(8,10,15,0.7);
-      background: #071126;
-      color: #e6eef9;
+    .dark {
+      --bg:#0b1220; --card:#0f1724; --text:#e6eef8;
     }
-    body { background: linear-gradient(180deg,#f4f8ff, #f7fbff); min-height:100vh; }
-    [data-theme="dark"] body { background: #071126; }
-    .app-shell{ display:grid; grid-template-columns: 260px 1fr; gap:20px; padding:20px; max-width:1200px; margin:18px auto; }
-    .sidebar{ background:var(--glass); border-radius:var(--card-radius); padding:18px; box-shadow:0 6px 20px rgba(16,24,40,0.06); }
-    [data-theme="dark"] .sidebar{ box-shadow:none; }
-    .brand { display:flex; align-items:center; gap:12px; font-weight:700; color:var(--brand); }
-    [data-theme="dark"] .brand { color:var(--brand); }
-    .nav-pill { cursor:pointer; }
-    .card-panel{ background:var(--glass); border-radius:12px; padding:14px; box-shadow:0 6px 20px rgba(16,24,40,0.04); }
-    .field-tag{ font-size:.85rem; padding:.25rem .5rem; border-radius:6px; background:rgba(17,88,199,0.08); color:var(--brand); }
-    .muted { color:var(--muted); font-size:.95rem; }
-    .loader{ width:18px;height:18px;border:3px solid rgba(0,0,0,0.08); border-top-color:var(--brand); border-radius:50%; animation:spin 1s linear infinite; display:inline-block; }
-    @keyframes spin{ to { transform:rotate(360deg); } }
-    .variants-panel .variant{ border:1px solid rgba(16,24,40,0.06); padding:10px; border-radius:8px; margin-bottom:8px; background:#fff; cursor:pointer;}
-    [data-theme="dark"] .variants-panel .variant{ background:#0b1626; border-color: rgba(255,255,255,0.04); }
-    .floating-actions{ position:fixed; right:18px; bottom:18px; display:flex; flex-direction:column; gap:10px; z-index:9999; }
-    .theme-switch{ display:flex; gap:8px; align-items:center; }
-    .tab-content { padding-top:8px; }
-    @media (max-width: 900px) {
-      .app-shell{ grid-template-columns: 1fr; padding:12px; }
-      .sidebar{ order:2; }
+    body { background:var(--bg); color:var(--text); }
+    .card-panel { background:var(--card); border-radius:12px; padding:16px; box-shadow:0 6px 20px rgba(2,6,23,0.06); }
+    .sidebar { height:100vh; position:sticky; top:0; padding:16px; }
+    .variant-item { cursor:pointer; border-radius:8px; padding:8px; background:rgba(0,0,0,0.03); margin-bottom:8px; }
+    .muted { color: #6b7280; font-size:0.9rem; }
+    .small-muted { color: #9aa4b2; font-size:0.85rem; }
+    .suggest-btn { margin-right:6px; margin-bottom:6px; }
+    @media (max-width:991px) {
+      .sidebar { height:auto; position:relative; }
     }
-    /* subtle focus */
-    input:focus, select:focus, textarea:focus{ outline: 2px solid rgba(17,88,199,0.12); border-radius:6px; }
-    /* responsive smaller */
-    .small-muted { color:var(--muted); font-size:.85rem; }
   </style>
 </head>
-<body data-theme="">
-  <div class="app-shell">
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-      <div class="mb-3 brand">
-        <i class="bi bi-stars fs-3"></i>
-        <div>
-          <div style="font-size:1.05rem">SCLOG</div>
-          <div class="small-muted">Smart CLO Generator</div>
-        </div>
-      </div>
-
-      <hr />
-
-      <nav class="mb-3">
-        <div class="list-group" id="tabNav">
-          <a class="list-group-item list-group-item-action active nav-pill" data-target="#tab-generator">Generator</a>
-          <a class="list-group-item list-group-item-action nav-pill" data-target="#tab-assess">Assessment & Evidence</a>
-          <a class="list-group-item list-group-item-action nav-pill" data-target="#tab-export">Download & Export</a>
-        </div>
-      </nav>
-
-      <div class="mb-3">
-        <div class="small-muted mb-1">Theme</div>
-        <div class="theme-switch">
-          <div class="form-check form-switch">
-            <input class="form-check-input" type="checkbox" id="darkToggle">
-            <label class="form-check-label small-muted" for="darkToggle">Dark mode</label>
+<body>
+  <div class="container-fluid">
+    <div class="row">
+      <!-- SIDEBAR -->
+      <aside class="col-lg-3 sidebar">
+        <div class="card-panel">
+          <div class="d-flex align-items-center justify-content-between mb-3">
+            <h4 class="h5 mb-0">SCLOG</h4>
+            <div>
+              <button id="darkToggle" class="btn btn-sm btn-outline-secondary">Dark</button>
+            </div>
           </div>
-          <div class="ms-auto small-muted" title="Primary color">Blue</div>
-        </div>
-      </div>
 
-      <hr />
+          <div class="mb-2">
+            <label class="form-label small-muted">Profile</label>
+            <select id="profile" class="form-select form-select-sm">
+              <option value="health">Medical & Health</option>
+              <option value="sc" selected>Computer Science</option>
+              <option value="eng">Engineering</option>
+              <option value="socs">Social Sciences</option>
+              <option value="edu">Education</option>
+              <option value="bus">Business</option>
+              <option value="arts">Arts & Humanities</option>
+            </select>
+          </div>
 
-      <div class="small-muted">Quick actions</div>
-      <div class="d-grid gap-2 mt-2">
-        <button id="copyMain" class="btn btn-outline-primary btn-sm"><i class="bi bi-clipboard"></i> Copy CLO</button>
-        <button id="downloadCloBtn" class="btn btn-outline-success btn-sm"><i class="bi bi-download"></i> Download CLO</button>
-        <button id="downloadRubricBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-file-earmark-text"></i> Download Rubric</button>
-      </div>
+          <div class="mb-2">
+            <label class="form-label small-muted">Field (for content suggestions)</label>
+            <select id="fieldSelect" class="form-select form-select-sm">
+              <option>Computer Science</option>
+              <option>Medical & Health</option>
+              <option>Engineering</option>
+              <option>Social Sciences</option>
+              <option>Education</option>
+              <option>Business</option>
+              <option>Arts & Humanities</option>
+            </select>
+          </div>
 
-      <div class="mt-4 small-muted">About</div>
-      <div class="small-muted">Developed for USM — generator integrated with SCLOG mapping & Excel sheets</div>
-    </aside>
+          <div class="mb-3">
+            <label class="form-label small-muted">Level</label>
+            <select id="level" class="form-select form-select-sm">
+              <option>Degree</option>
+              <option>Diploma</option>
+              <option>Master</option>
+              <option>PhD</option>
+            </select>
+          </div>
 
-    <!-- MAIN -->
-    <main>
+          <div class="d-grid gap-2">
+            <button id="downloadBtn" class="btn btn-outline-success btn-sm">Download CLO Excel</button>
+            <button id="downloadRubricBtn" class="btn btn-outline-secondary btn-sm">Download Rubric</button>
+          </div>
 
-      <!-- TOP: Field selector -->
-      <div class="d-flex gap-3 align-items-center mb-3">
-        <div class="me-auto">
-          <span class="field-tag" id="fieldTag">Field: <strong id="fieldLabel">Computer Science</strong></span>
-        </div>
-        <div class="d-flex gap-2">
-          <select id="fieldSelect" class="form-select form-select-sm" style="min-width:210px;">
-            <option>Computer Science</option>
-            <option>Medical & Health</option>
-            <option>Engineering</option>
-            <option>Social Sciences</option>
-            <option>Education</option>
-            <option>Business</option>
-            <option>Arts & Humanities</option>
-          </select>
-          <div class="small-muted">Profile: <strong id="profileLabel">sc</strong></div>
-        </div>
-      </div>
+          <hr />
 
-      <!-- TABS CONTENT -->
-      <div class="card-panel">
-        <div class="row">
-          <div class="col-12">
-            <div class="tab-content">
+          <div>
+            <h6 class="mb-1">Quick content suggestions</h6>
+            <div id="suggestionsArea" class="d-flex flex-wrap"></div>
+          </div>
 
-              <!-- TAB: Generator -->
-              <section id="tab-generator" class="tab-pane active">
+          <hr />
 
-                <div class="row g-3">
-                  <!-- Left column: mapping -->
-                  <div class="col-lg-5">
-                    <div class="card-panel">
-                      <h5 class="mb-2">IEG → PEO → PLO mapping</h5>
-
-                      <div class="mb-2">
-                        <label class="form-label small-muted">IEG</label>
-                        <select id="iegSel" class="form-select">
-                          <option value="">— Select IEG —</option>
-                        </select>
-                      </div>
-
-                      <div class="mb-2">
-                        <label class="form-label small-muted">PEO</label>
-                        <select id="peoSel" class="form-select">
-                          <option value="">— Select PEO —</option>
-                        </select>
-                      </div>
-
-                      <div class="mb-2">
-                        <label class="form-label small-muted">PLO</label>
-                        <select id="ploSel" class="form-select">
-                          <option value="">— Select PLO —</option>
-                        </select>
-                      </div>
-
-                      <div class="mt-3">
-                        <div class="small-muted">PLO Statement</div>
-                        <div id="ploStatement" class="fw-semibold">—</div>
-
-                        <div class="small-muted mt-2">PLO Indicator</div>
-                        <div id="ploIndicator" class="fw-semibold">—</div>
-
-                        <div class="small-muted mt-2">PEO Statement</div>
-                        <div id="peoStatement" class="fw-semibold">—</div>
-
-                        <div class="small-muted mt-2">IEG</div>
-                        <div id="iegStatement" class="fw-semibold">—</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Right column: builder -->
-                  <div class="col-lg-7">
-                    <div class="card-panel">
-                      <h5 class="mb-2">Bloom & CLO Builder</h5>
-
-                      <div class="row g-2 align-items-end">
-                        <div class="col-md-5">
-                          <label class="form-label small-muted">Bloom</label>
-                          <select id="bloomSel" class="form-select">
-                            <option value="">— Select Bloom —</option>
-                          </select>
-                        </div>
-
-                        <div class="col-md-4">
-                          <label class="form-label small-muted">Verb</label>
-                          <select id="verbSel" class="form-select">
-                            <option value="">— Select Verb —</option>
-                          </select>
-                        </div>
-
-                        <div class="col-md-3">
-                          <label class="form-label small-muted">Coursework %</label>
-                          <input id="cw" type="number" class="form-control" min="0" max="100" placeholder="e.g., 40">
-                        </div>
-
-                        <div class="col-12 mt-2">
-                          <label class="form-label small-muted">Content (topic / object)</label>
-                          <div class="input-group">
-                            <input id="contentInput" class="form-control" placeholder="Start typing or choose suggestion..." />
-                            <button id="suggestToggle" class="btn btn-outline-secondary" title="Show suggestions"><i class="bi bi-lightbulb"></i></button>
-                          </div>
-
-                          <div id="suggestions" class="mt-2" style="display:none;"></div>
-                        </div>
-
-                        <div class="col-md-6 mt-2">
-                          <label class="form-label small-muted">Condition</label>
-                          <input id="conditionInput" class="form-control" readonly />
-                        </div>
-
-                        <div class="col-md-6 mt-2">
-                          <label class="form-label small-muted">Criterion</label>
-                          <input id="criterionInput" class="form-control" readonly />
-                        </div>
-
-                        <div class="col-12 mt-3 d-flex gap-2">
-                          <button id="generateBtn" class="btn btn-primary"><i class="bi bi-magic"></i> Generate CLO</button>
-                          <button id="copyBtn" class="btn btn-outline-secondary"><i class="bi bi-clipboard"></i> Copy CLO</button>
-                          <div id="busy" style="display:none;" class="align-self-center"><span class="loader"></span> Generating…</div>
-                        </div>
-
-                        <!-- CLO Preview -->
-                        <div id="previewArea" class="col-12 mt-3" style="display:none;">
-                          <div class="p-3 border rounded bg-light">
-                            <div class="d-flex justify-content-between">
-                              <div>
-                                <div class="small-muted">Generated CLO</div>
-                                <div id="cloText" class="fw-semibold fs-6"></div>
-                              </div>
-                              <div>
-                                <button id="toggleVariants" class="btn btn-sm btn-outline-primary">Show variants</button>
-                              </div>
-                            </div>
-
-                            <div id="variantsPanel" class="variants-panel mt-3" style="display:none;"></div>
-                          </div>
-                        </div>
-
-                      </div> <!-- row -->
-                    </div>
-                  </div>
-                </div>
-
-              </section>
-
-              <!-- TAB: Assessment -->
-              <section id="tab-assess" class="tab-pane" style="display:none;">
-                <div class="row g-3">
-                  <div class="col-lg-6">
-                    <div class="card-panel">
-                      <h5 class="mb-2">Suggested Assessments</h5>
-                      <div class="small-muted">Based on selected PLO, Bloom & Domain</div>
-                      <ul id="assessmentList" class="list-group list-group-flush mt-3"></ul>
-                    </div>
-                  </div>
-
-                  <div class="col-lg-6">
-                    <div class="card-panel">
-                      <h5 class="mb-2">Evidence for assessment</h5>
-                      <div class="small-muted">Suggested evidence items you can collect</div>
-                      <ul id="evidenceList" class="list-group list-group-flush mt-3"></ul>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <!-- TAB: Export -->
-              <section id="tab-export" class="tab-pane" style="display:none;">
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <div class="card-panel">
-                      <h5 class="mb-2">Export options</h5>
-                      <div class="d-grid">
-                        <button id="downloadClo" class="btn btn-success"><i class="bi bi-download"></i> Download CLO (Excel)</button>
-                        <button id="downloadRubric" class="btn btn-secondary mt-2"><i class="bi bi-file-earmark-text"></i> Download Rubric (Excel)</button>
-                      </div>
-                      <div class="mt-3 small-muted">Tip: generate a CLO first to populate export data.</div>
-                    </div>
-                  </div>
-
-                  <div class="col-md-6">
-                    <div class="card-panel">
-                      <h5 class="mb-2">Quick copy</h5>
-                      <button id="copyCloFull" class="btn btn-outline-primary"><i class="bi bi-clipboard"></i> Copy full CLO & meta</button>
-                      <button id="copyAssessment" class="btn btn-outline-secondary mt-2"><i class="bi bi-clipboard-check"></i> Copy assessments</button>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-            </div> <!-- tab-content -->
+          <div>
+            <small class="small-muted">Made for USM — Smart CLO generator</small>
           </div>
         </div>
-      </div>
-    </main>
+      </aside>
 
-  </div>
+      <!-- MAIN -->
+      <main class="col-lg-9 py-3">
+        <div class="card-panel mb-3">
+          <nav>
+            <div class="nav nav-tabs" id="nav-tab" role="tablist">
+              <button class="nav-link active" id="nav-builder-tab" data-bs-toggle="tab" data-bs-target="#nav-builder" type="button">Builder</button>
+              <button class="nav-link" id="nav-variants-tab" data-bs-toggle="tab" data-bs-target="#nav-variants" type="button">Variants</button>
+              <button class="nav-link" id="nav-assess-tab" data-bs-toggle="tab" data-bs-target="#nav-assess" type="button">Assessment</button>
+            </div>
+          </nav>
 
-  <!-- Floating actions -->
-  <div class="floating-actions">
-    <button id="fabCopy" class="btn btn-primary btn-lg rounded-circle" title="Copy CLO"><i class="bi bi-clipboard"></i></button>
-    <button id="fabDownload" class="btn btn-success btn-lg rounded-circle" title="Download CLO"><i class="bi bi-download"></i></button>
-  </div>
+          <div class="tab-content mt-3">
+            <!-- BUILDER TAB -->
+            <div class="tab-pane fade show active" id="nav-builder">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label small-muted">IEG</label>
+                  <select id="ieg" class="form-select form-select-sm"></select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small-muted">PEO</label>
+                  <select id="peo" class="form-select form-select-sm"></select>
+                </div>
 
-  <!-- Toast container -->
-  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:1080">
-    <div id="liveToast" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="d-flex">
-        <div class="toast-body" id="toastBody"></div>
-        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
+                <div class="col-md-6">
+                  <label class="form-label small-muted">PLO</label>
+                  <select id="plo" class="form-select form-select-sm"></select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small-muted">Bloom</label>
+                  <select id="bloom" class="form-select form-select-sm"></select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small-muted">Verb</label>
+                  <select id="verb" class="form-select form-select-sm"></select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label small-muted">Content (topic / object)</label>
+                  <input id="content" class="form-control form-control-sm" placeholder="e.g., interpret ECG waveforms" />
+                </div>
+
+                <div class="col-12">
+                  <div class="d-flex gap-2">
+                    <button id="generateBtn" class="btn btn-primary btn-sm">Generate CLO</button>
+                    <button id="clearBtn" class="btn btn-outline-secondary btn-sm">Clear</button>
+                    <div id="busy" style="display:none;" class="align-self-center">Generating…</div>
+                  </div>
+                </div>
+
+                <div class="col-12" id="previewCard" style="display:none;">
+                  <div class="border rounded p-3 bg-light">
+                    <div class="d-flex justify-content-between">
+                      <div>
+                        <h6 class="mb-1">Generated CLO</h6>
+                        <div id="cloPreview" class="fw-semibold"></div>
+                      </div>
+                      <div>
+                        <button id="copyClo" class="btn btn-sm btn-outline-secondary">Copy</button>
+                      </div>
+                    </div>
+
+                    <div class="mt-3 small-muted">PLO statement: <span id="ploStatement">—</span></div>
+                    <div class="small-muted">PEO statement: <span id="peoStatement">—</span></div>
+                    <div class="small-muted">PLO indicator: <span id="ploIndicator">—</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- VARIANTS TAB -->
+            <div class="tab-pane fade" id="nav-variants">
+              <div id="variantsPanelArea" class="row g-3"></div>
+            </div>
+
+            <!-- ASSESSMENT TAB -->
+            <div class="tab-pane fade" id="nav-assess">
+              <div id="assessArea"></div>
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   </div>
 
-  <!-- JS -->
+  <!-- JS libs -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-  // ============ UI / State ============
-  const state = {
-    map: null,
-    lastCLO: null,
-    profile: 'sc'
+  // Helper refs
+  const iegSel = document.getElementById('ieg');
+  const peoSel = document.getElementById('peo');
+  const ploSel = document.getElementById('plo');
+  const bloomSel = document.getElementById('bloom');
+  const verbSel = document.getElementById('verb');
+  const contentInput = document.getElementById('content');
+  const profileSel = document.getElementById('profile');
+  const fieldSel = document.getElementById('fieldSelect');
+  const levelSel = document.getElementById('level');
+
+  const suggestionsArea = document.getElementById('suggestionsArea');
+  const suggestionsMap = {
+    "Computer Science": ["debug algorithms","design software modules","analyze data structures","implement machine learning models","develop RESTful APIs"],
+    "Medical & Health": ["interpret ECG waveforms","assess patient vital signs","perform clinical screenings","analyze medical imaging","evaluate rehabilitation progress"],
+    "Engineering": ["apply thermodynamics principles","analyze structural loads","simulate mechanical systems","perform quality testing","design basic prototypes"],
+    "Social Sciences": ["evaluate community case studies","analyze social policy impact","interpret behavioral data","conduct needs assessments","design surveys"],
+    "Education": ["design learning activities","evaluate student performance","develop curriculum materials","apply instructional strategies","design assessment rubrics"],
+    "Business": ["analyze market trends","evaluate financial reports","develop business strategies","conduct SWOT analysis","build simple financial models"],
+    "Arts & Humanities": ["interpret visual artworks","analyze literary texts","evaluate cultural narratives","produce creative concepts","write reflective critiques"]
   };
 
-  // Content suggestions per field
-  const CONTENT_SUGGESTIONS = {
-    "Computer Science": [
-      "design software modules", "debug algorithms", "optimize data structures",
-      "implement machine learning models", "develop RESTful APIs"
-    ],
-    "Medical & Health": [
-      "interpret ECG waveforms", "assess patient vital signs", "perform clinical screenings",
-      "analyze medical imaging", "evaluate rehabilitation progress"
-    ],
-    "Engineering": [
-      "apply thermodynamics principles", "analyze structural loads",
-      "simulate mechanical systems", "perform quality testing"
-    ],
-    "Social Sciences": [
-      "evaluate community case studies", "analyze social policy impact",
-      "interpret behavioral data", "conduct needs assessments"
-    ],
-    "Education": [
-      "design learning activities", "evaluate student performance",
-      "develop curriculum materials", "apply instructional strategies"
-    ],
-    "Business": [
-      "analyze market trends", "evaluate financial reports",
-      "develop business strategies", "conduct SWOT analysis"
-    ],
-    "Arts & Humanities": [
-      "interpret visual artworks", "analyze literary texts",
-      "evaluate cultural narratives", "produce creative concepts"
-    ]
-  };
+  // Global store for last generated data
+  let LAST = null;
 
-  // Utils
-  const $ = id => document.getElementById(id);
-  const toast = new bootstrap.Toast($('liveToast'));
-  function showToast(msg){
-    $('toastBody').innerText = msg;
-    toast.show();
-  }
-
-  // Theme: system + user toggle
-  function applyTheme(isDark){
-    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
-    $('darkToggle').checked = isDark;
-  }
-  // detect system prefer
-  const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  applyTheme(prefersDark);
-
-  $('darkToggle').addEventListener('change', (e)=>{
-    applyTheme(e.target.checked);
+  // Dark mode toggle
+  const darkBtn = document.getElementById('darkToggle');
+  darkBtn.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+    darkBtn.innerText = document.documentElement.classList.contains('dark') ? 'Light' : 'Dark';
   });
 
-  // Tab navigation
-  document.querySelectorAll('.nav-pill').forEach(el=>{
-    el.addEventListener('click', () => {
-      // highlight
-      document.querySelectorAll('.nav-pill').forEach(x=>x.classList.remove('active'));
-      el.classList.add('active');
-      const target = el.getAttribute('data-target');
-      document.querySelectorAll('.tab-pane').forEach(p=>{
-        p.style.display = (('#'+p.id) === target) ? '' : 'none';
-      });
-    });
-  });
-
-  // Load mapping JSON from API
-  async function loadMapping(){
+  // Load mapping JSON and populate IEG / PEO / PLO
+  async function loadMapping() {
     try {
-      const res = await fetch('/api/mapping');
-      const data = await res.json();
-      state.map = data || {};
-      populateIEGs();
-      populatePLOsMaster();
-      console.info('mapping loaded', data);
-    } catch (e){
-      console.error('mapping load failed', e);
-      showToast('Failed to load mapping JSON. Check backend.');
+      const map = await fetch('/api/mapping').then(r => r.json());
+      window.MAP = map;
+
+      // populate IEGs
+      iegSel.innerHTML = '<option value="">Select IEG</option>';
+      (map.IEGs || []).forEach(i => iegSel.add(new Option(i,i)));
+
+      // pre-populate PLO master (fallback)
+      ploSel.innerHTML = '<option value="">Select PLO</option>';
+      (map.PLOs || []).forEach(p => ploSel.add(new Option(p,p)));
+
+      renderSuggestions();
+    } catch (e) {
+      console.error('loadMapping error', e);
     }
   }
 
-  function populateIEGs(){
-    const sel = $('iegSel');
-    sel.innerHTML = '<option value="">— Select IEG —</option>';
-    (state.map.IEGs || []).forEach(i => sel.add(new Option(i, i)));
+  function renderSuggestions() {
+    suggestionsArea.innerHTML = '';
+    const f = fieldSel.value || 'Computer Science';
+    const list = suggestionsMap[f] || [];
+    list.forEach(s => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'btn btn-sm btn-outline-primary suggest-btn';
+      btn.innerText = s;
+      btn.onclick = () => contentInput.value = s;
+      suggestionsArea.appendChild(btn);
+    });
   }
 
-  function populatePEOsForIEG(ieg){
-    const sel = $('peoSel');
-    sel.innerHTML = '<option value="">— Select PEO —</option>';
-    const list = (state.map.IEGtoPEO && state.map.IEGtoPEO[ieg]) || [];
-    list.forEach(p => sel.add(new Option(p, p)));
-    // if only one PEO, select it
-    if(list.length === 1){
-      sel.value = list[0];
-      sel.dispatchEvent(new Event('change'));
+  fieldSel.addEventListener('change', renderSuggestions);
+  profileSel.addEventListener('change', () => {
+    // update profile queries used later; we keep client-side selection
+  });
+
+  // IEG -> PEO (API then fallback)
+  iegSel.addEventListener('change', async () => {
+    const ieg = iegSel.value;
+    peoSel.innerHTML = '<option>Loading…</option>';
+    try {
+      const list = await fetch(`/api/get_peos/${encodeURIComponent(ieg)}`).then(r => r.json());
+      peoSel.innerHTML = '<option value="">Select PEO</option>';
+      (list || []).forEach(p => peoSel.add(new Option(p,p)));
+    } catch(e){
+      peoSel.innerHTML = '<option value="">—</option>';
     }
-  }
+  });
 
-  function populatePLOsForPEO(peo){
-    const sel = $('ploSel');
-    sel.innerHTML = '<option value="">— Select PLO —</option>';
-    const list = (state.map.PEOtoPLO && state.map.PEOtoPLO[peo]) || [];
-    list.forEach(p => sel.add(new Option(p, p)));
-    // if only one, select
-    if(list.length === 1){
-      sel.value = list[0];
-      sel.dispatchEvent(new Event('change'));
+  // PEO -> PLO
+  peoSel.addEventListener('change', async () => {
+    const peo = peoSel.value;
+    ploSel.innerHTML = '<option>Loading…</option>';
+    try {
+      const list = await fetch(`/api/get_plos/${encodeURIComponent(peo)}`).then(r => r.json());
+      ploSel.innerHTML = '<option value="">Select PLO</option>';
+      (list || []).forEach(p => ploSel.add(new Option(p,p)));
+    } catch(e){
+      ploSel.innerHTML = '<option value="">—</option>';
     }
-  }
+  });
 
-  function populatePLOsMaster(){
-    // also populate if needed (not shown)
-  }
-
-  // PLO change -> load blooms & PLO statements & indicators
-  $('ploSel').addEventListener('change', async () => {
-    const plo = $('ploSel').value;
-    if(!plo) return;
-    // load blooms
-    const blooms = await safeFetchJSON(`/api/get_blooms/${encodeURIComponent(plo)}?profile=${state.profile}`);
-    $('bloomSel').innerHTML = '<option value="">— Select Bloom —</option>';
-    if(Array.isArray(blooms)) blooms.forEach(b => $('bloomSel').add(new Option(b,b)));
-    // load PLO statement (level Degree by default)
-    const level = 'Degree';
-    const ploStmt = await safeFetchJSON(`/api/get_statement/${encodeURIComponent(level)}/PLO/${encodeURIComponent(plo)}`);
-    $('ploStatement').innerText = ploStmt || '—';
-    // indicator
-    const ind = (state.map.PLOIndicators && state.map.PLOIndicators[plo]) || '—';
-    $('ploIndicator').innerText = ind;
-    // auto-select PEO/IEG if mapping says so
-    for(const [p, arr] of Object.entries(state.map.PEOtoPLO || {})){
-      if(Array.isArray(arr) && arr.includes(plo)){
-        $('peoSel').value = p;
-        // make sure PEO -> populate PLOs correctly (but we already set PLO)
-        for(const [i, par] of Object.entries(state.map.IEGtoPEO || {})){
-          if(Array.isArray(par) && par.includes(p)){
-            $('iegSel').value = i;
+  // PLO -> Blooms
+  ploSel.addEventListener('change', async () => {
+    const plo = ploSel.value;
+    bloomSel.innerHTML = '<option>Loading…</option>';
+    try {
+      const list = await fetch(`/api/get_blooms/${encodeURIComponent(plo)}?profile=${encodeURIComponent(profileSel.value)}`).then(r => r.json());
+      bloomSel.innerHTML = '<option value="">Select Bloom</option>';
+      (list || []).forEach(b => bloomSel.add(new Option(b,b)));
+      // also try to auto-select PEO/IEG (client-side mapping)
+      if (window.MAP && MAP.PEOtoPLO) {
+        for (const [p, arr] of Object.entries(MAP.PEOtoPLO)) {
+          if (Array.isArray(arr) && arr.includes(plo)) {
+            peoSel.value = p;
+            // attempt to set ieg
+            for (const [i, peos] of Object.entries(MAP.IEGtoPEO)) {
+              if (peos.includes(p)) { iegSel.value = i; break; }
+            }
             break;
           }
         }
-        break;
       }
+      // load plo statement & indicator
+      const lvl = levelSel.value;
+      try {
+        const stmt = await fetch(`/api/get_statement/${encodeURIComponent(lvl)}/PLO/${encodeURIComponent(plo)}`).then(r => r.json());
+        document.getElementById('ploStatement').innerText = stmt || '—';
+      } catch(e){
+        document.getElementById('ploStatement').innerText = '—';
+      }
+    } catch(e){
+      bloomSel.innerHTML = '<option value="">—</option>';
+      console.error('blooms error', e);
     }
   });
 
-  // Bloom change -> verbs + meta + assessments
-  $('bloomSel').addEventListener('change', async () => {
-    const bloom = $('bloomSel').value;
-    const plo = $('ploSel').value;
-    if(!bloom || !plo) return;
-    const verbs = await safeFetchJSON(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${state.profile}`);
-    $('verbSel').innerHTML = '<option value="">— Select Verb —</option>';
-    if(Array.isArray(verbs)) verbs.forEach(v => $('verbSel').add(new Option(v,v)));
+  // Bloom -> verbs + meta
+  bloomSel.addEventListener('change', async () => {
+    const bloom = bloomSel.value;
+    const plo = ploSel.value;
+    verbSel.innerHTML = '<option>Loading…</option>';
+    try {
+      const verbs = await fetch(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${encodeURIComponent(profileSel.value)}`).then(r => r.json());
+      verbSel.innerHTML = '<option value="">Select Verb</option>';
+      (verbs || []).forEach(v => verbSel.add(new Option(v,v)));
+    } catch(e) {
+      verbSel.innerHTML = '<option value="">—</option>';
+    }
+
     // meta
-    const meta = await safeFetchJSON(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${state.profile}`);
-    $('sc_code').value = meta.sc_code || '';
-    $('sc_desc').value = meta.sc_desc || '';
-    $('vbe').value = meta.vbe || '';
-    $('conditionInput').value = meta.condition || '';
-    $('criterionInput').value = meta.criterion || '';
-    // assessment suggestions (simple local mapping)
-    computeAssessments(plo, bloom, meta.domain);
+    try {
+      const m = await fetch(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${encodeURIComponent(profileSel.value)}`).then(r => r.json());
+      document.getElementById('ploIndicator').innerText = (window.MAP && MAP.PLOIndicators && MAP.PLOIndicators[plo]) ? MAP.PLOIndicators[plo] : '—';
+      document.getElementById('peoStatement').innerText = '—';
+      document.getElementById('sc_desc')?.remove?.(); // just avoid errors if not present
+      // condition / criterion not shown directly here but used by generator
+    } catch(e){
+      console.error('meta error', e);
+    }
   });
-
-  // IEG change
-  $('iegSel').addEventListener('change', () => {
-    const ieg = $('iegSel').value;
-    $('iegStatement').innerText = ieg || '—';
-    if(!ieg) return;
-    populatePEOsForIEG(ieg);
-  });
-
-  // PEO change
-  $('peoSel').addEventListener('change', async () => {
-    const peo = $('peoSel').value;
-    $('peoStatement').innerText = '—';
-    populatePLOsForPEO(peo);
-    // attempt to get PEO statement for current level
-    const level = 'Degree';
-    const stmt = await safeFetchJSON(`/api/get_statement/${encodeURIComponent(level)}/PEO/${encodeURIComponent(peo)}`);
-    if(stmt) $('peoStatement').innerText = stmt;
-  });
-
-  // Field selection -> content suggestions
-  $('fieldSelect').addEventListener('change', (e)=>{
-    const f = e.target.value;
-    $('fieldLabel').innerText = f;
-    renderSuggestions();
-  });
-
-  // suggestions toggle
-  $('suggestToggle').addEventListener('click', ()=>{
-    const s = $('suggestions');
-    s.style.display = s.style.display === 'none' || !s.style.display ? 'block' : 'none';
-    if(s.style.display === 'block') renderSuggestions();
-  });
-
-  function renderSuggestions(){
-    const field = $('fieldSelect').value || 'Computer Science';
-    const list = CONTENT_SUGGESTIONS[field] || [];
-    const container = $('suggestions');
-    container.innerHTML = '';
-    list.forEach(item=>{
-      const btn = document.createElement('button');
-      btn.className = 'btn btn-sm btn-outline-secondary me-2 mb-2';
-      btn.innerText = item;
-      btn.addEventListener('click', ()=> { $('contentInput').value = item; $('contentInput').focus(); });
-      container.appendChild(btn);
-    });
-  }
 
   // Generate CLO
-  $('generateBtn').addEventListener('click', async ()=>{
-    const plo = $('ploSel').value;
-    const bloom = $('bloomSel').value;
-    const verb = $('verbSel').value;
-    const content = $('contentInput').value.trim();
-    if(!plo || !bloom || !verb || !content){
-      showToast('Please choose PLO, Bloom, Verb and fill Content.');
-      return;
-    }
-    $('busy').style.display = 'inline-block';
-    $('generateBtn').disabled = true;
+  document.getElementById('generateBtn').addEventListener('click', async () => {
+    const plo = ploSel.value;
+    const bloom = bloomSel.value;
+    const verb = verbSel.value;
+    const content = contentInput.value.trim();
+    const profile = profileSel.value;
+    const field = fieldSel.value;
+    const level = levelSel.value;
+
+    if (!plo || !bloom || !verb) { alert('Please choose PLO, Bloom and Verb'); return; }
+
+    document.getElementById('busy').style.display = 'inline-block';
     try {
       const fd = new FormData();
-      fd.append('profile', state.profile);
+      fd.append('profile', profile);
       fd.append('plo', plo);
       fd.append('bloom', bloom);
       fd.append('verb', verb);
       fd.append('content', content);
-      fd.append('level', 'Degree');
-      const res = await fetch('/generate', { method:'POST', body: fd });
+      fd.append('field', field);
+      fd.append('level', level);
+
+      const res = await fetch('/generate', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err || 'Generate failed');
+      }
       const data = await res.json();
-      if(!res.ok){
-        throw new Error(data.error || 'Generate failed');
+      LAST = data;
+
+      // preview panel
+      document.getElementById('cloPreview').innerText = data.clo || '';
+      document.getElementById('peoStatement').innerText = data.peo_statement || '—';
+      document.getElementById('ploStatement').innerText = data.plo_statement || '—';
+      document.getElementById('ploIndicator').innerText = (MAP.PLOIndicators && MAP.PLOIndicators[data.plo]) ? MAP.PLOIndicators[data.plo] : '—';
+      document.getElementById('previewCard').style.display = 'block';
+
+      // variants tab content
+      const variantsArea = document.getElementById('variantsPanelArea');
+      variantsArea.innerHTML = '';
+      for (const [label, text] of Object.entries(data.clo_options || {})) {
+        const div = document.createElement('div');
+        div.className = 'col-md-6';
+        div.innerHTML = `<div class="variant-item"><strong>${label}</strong><div class="mt-1">${text}</div></div>`;
+        div.onclick = () => { contentInput.value = text; document.getElementById('cloPreview').innerText = text; };
+        variantsArea.appendChild(div);
       }
-      state.lastCLO = data;
-      // show preview
-      $('cloText').innerText = data.clo || '';
-      $('previewArea').style.display = 'block';
-      // variants
-      const vp = $('variantsPanel');
-      vp.innerHTML = '';
-      if(data.clo_options){
-        for(const [label, text] of Object.entries(data.clo_options)){
-          const div = document.createElement('div');
-          div.className = 'variant';
-          div.innerHTML = `<strong>${label}</strong><div class="mt-1 small-muted">${text}</div>`;
-          div.addEventListener('click', ()=> { $('cloText').innerText = text; });
-          vp.appendChild(div);
-        }
+
+      // assessment tab
+      const assessArea = document.getElementById('assessArea');
+      assessArea.innerHTML = '';
+      const asses = data.assessments || [];
+      if (asses.length) {
+        asses.forEach(a => {
+          const card = document.createElement('div');
+          card.className = 'card mb-2';
+          card.innerHTML = `<div class="card-body p-2"><strong>${a.assessment}</strong><div class="muted small">${(a.evidence||[]).join(', ')}</div></div>`;
+          assessArea.appendChild(card);
+        });
+      } else {
+        assessArea.innerHTML = '<div class="small-muted">No assessment suggestions available.</div>';
       }
-      // show assessments in Assessment tab too
-      computeAssessments(plo, bloom, data.domain);
-      showToast('CLO generated.');
-    } catch (e){
-      console.error(e);
-      showToast('Generate error: ' + (e.message || e));
+
+    } catch (err) {
+      alert('Error: ' + err.message);
+      console.error(err);
     } finally {
-      $('busy').style.display = 'none';
-      $('generateBtn').disabled = false;
+      document.getElementById('busy').style.display = 'none';
     }
   });
 
-  // toggle variants
-  $('toggleVariants').addEventListener('click', ()=>{
-    const vp = $('variantsPanel');
-    const hidden = vp.style.display === 'none' || !vp.style.display;
-    vp.style.display = hidden ? 'block' : 'none';
-    $('toggleVariants').innerText = hidden ? 'Hide variants' : 'Show variants';
-  });
-
-  // copy CLO quick
-  $('copyBtn').addEventListener('click', async ()=>{
-    const txt = $('cloText').innerText;
-    if(!txt) return showToast('No CLO to copy.');
-    try { await navigator.clipboard.writeText(txt); showToast('CLO copied to clipboard'); } catch(e){ showToast('Copy failed'); }
-  });
-
-  $('copyMain').addEventListener('click', ()=> $('copyBtn').click());
-  $('fabCopy').addEventListener('click', ()=> $('copyBtn').click());
-
-  // download buttons
-  $('downloadClo').addEventListener('click', ()=> { window.location = '/download'; });
-  $('downloadRubric').addEventListener('click', ()=> { window.location = '/download_rubric'; });
-  $('downloadCloBtn').addEventListener('click', ()=> { window.location = '/download'; });
-  $('downloadRubricBtn').addEventListener('click', ()=> { window.location = '/download_rubric'; });
-  $('fabDownload').addEventListener('click', ()=> { window.location = '/download'; });
-
-  // copy full CLO + meta
-  $('copyCloFull').addEventListener('click', ()=>{
-    if(!state.lastCLO) return showToast('No CLO generated yet.');
-    const d = state.lastCLO;
-    const out = `CLO:\n${d.clo}\n\nPLO: ${d.plo}\nPLO statement: ${d.plo_statement}\nPEO: ${d.peo}\nPEO statement: ${d.peo_statement}\n\nSC: ${d.sc_code} — ${d.sc_desc}\nVBE: ${d.vbe}\nCondition: ${d.condition}\nCriterion: ${d.criterion}`;
-    navigator.clipboard.writeText(out).then(()=>showToast('Full CLO & meta copied.'));
-  });
-
-  // copy assessment
-  $('copyAssessment').addEventListener('click', ()=>{
-    const items = Array.from($('assessmentList').querySelectorAll('li')).map(li=>li.innerText);
-    if(!items.length) return showToast('No assessments to copy.');
-    navigator.clipboard.writeText(items.join('\n')).then(()=>showToast('Assessments copied.'));
-  });
-
-  // compute assessments + evidence (uses server-provided or local heuristics)
-  async function computeAssessments(plo, bloom, domain){
-    const aList = $('assessmentList');
-    const eList = $('evidenceList');
-    aList.innerHTML = ''; eList.innerHTML = '';
-    if(!plo || !bloom) return;
-    // try server-provided assessment via meta? (not available) — use local engine
-    const lower = bloom.toLowerCase();
-    // basic ruling: cognitive vs psychomotor vs affective
-    const domainKey = (domain||'').toLower();
-    let assessments = [];
-    if(domainKey === 'psychomotor'){
-      assessments = ['OSCE / Skills Test', 'Performance Checklist', 'Practical Exam'];
-    } else if(domainKey === 'affective'){
-      assessments = ['Reflection Journal', 'Peer Evaluation', 'Portfolio'];
-    } else {
-      // cognitive
-      if(lower.includes('remember')) assessments = ['MCQ', 'Recall Quiz'];
-      else if(lower.includes('understand')) assessments = ['Short Answer Test', 'Concept Explanation'];
-      else if(lower.includes('apply')) assessments = ['Case Study', 'Problem-Solving Task'];
-      else if(lower.includes('analyse') || lower.includes('analyze')) assessments = ['Data Analysis Task', 'Critique Assignment'];
-      else if(lower.includes('evaluate')) assessments = ['Evaluation Report', 'Evidence-Based Review'];
-      else if(lower.includes('create')) assessments = ['Design Project', 'Research Proposal'];
-      else assessments = ['MCQ', 'Short Answer', 'Assignment'];
-    }
-
-    // fill list
-    assessments.forEach(a=>{
-      const li = document.createElement('li');
-      li.className = 'list-group-item';
-      li.innerHTML = `<div class="d-flex justify-content-between"><div>${a}</div><button class="btn btn-sm btn-outline-primary">Use</button></div>`;
-      aList.appendChild(li);
-      // show evidence for each
-      const evs = suggestedEvidenceFor(a);
-      evs.forEach(ev => {
-        const el = document.createElement('li');
-        el.className = 'list-group-item small-muted';
-        el.innerText = `${a} → ${ev}`;
-        eList.appendChild(el);
-      });
-    });
-  }
-
-  function suggestedEvidenceFor(assessment){
-    // simple mapping
-    assessment = assessment.toLowerCase();
-    if(assessment.includes('mcq')) return ['Score report', 'Item analysis'];
-    if(assessment.includes('case')) return ['Case write-up', 'Rubric'];
-    if(assessment.includes('osce')) return ['OSCE checklist', 'Examiner score'];
-    if(assessment.includes('portfolio')) return ['Portfolio files', 'Reflection logs'];
-    if(assessment.includes('short answer')) return ['Written answers', 'Marker feedback'];
-    if(assessment.includes('design project')) return ['Project deliverable', 'Prototype', 'Report'];
-    return ['Assessment artefacts', 'Rubric / Score'];
-  }
-
-  // safe fetch wrapper
-  async function safeFetchJSON(url){
+  // Copy CLO
+  document.getElementById('copyClo').addEventListener('click', async () => {
+    const txt = document.getElementById('cloPreview').innerText;
+    if (!txt) return;
     try {
-      const r = await fetch(url);
-      if(!r.ok) return null;
-      return await r.json();
-    } catch(e){
-      console.error('fetch error', url, e);
-      return null;
-    }
-  }
+      await navigator.clipboard.writeText(txt);
+      document.getElementById('copyClo').innerText = 'Copied';
+      setTimeout(()=> document.getElementById('copyClo').innerText = 'Copy', 1200);
+    } catch(e) { alert('Copy failed'); }
+  });
+
+  // downloads
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    window.location = '/download';
+  });
+  document.getElementById('downloadRubricBtn').addEventListener('click', () => {
+    window.location = '/download_rubric';
+  });
+
+  // clear form
+  document.getElementById('clearBtn').addEventListener('click', () => {
+    ploSel.value = '';
+    bloomSel.value = '';
+    verbSel.innerHTML = '<option value="">Select Verb</option>';
+    contentInput.value = '';
+    document.getElementById('previewCard').style.display = 'none';
+  });
 
   // init
-  (function(){
+  (function init() {
     loadMapping();
     renderSuggestions();
-    // wire some initial UI defaults
-    $('fieldSelect').value = 'Computer Science';
-    // map profile label to 'sc' (you used sc earlier)
-    $('profileLabel').innerText = state.profile;
   })();
   </script>
 </body>
