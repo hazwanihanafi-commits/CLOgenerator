@@ -1,0 +1,152 @@
+{
+  "IEGs": ["IEG1", "IEG2", "IEG3", "IEG4", "IEG5"],
+  "PEOs": ["PEO1", "PEO2", "PEO3", "PEO4", "PEO5"],
+  "PLOs": [
+    "PLO1","PLO2","PLO3","PLO4","PLO5",
+    "PLO6","PLO7","PLO8","PLO9","PLO10","PLO11"
+  ],
+
+  "IEGtoPEO": {
+    "IEG1": ["PEO1"],
+    "IEG2": ["PEO2"],
+    "IEG3": ["PEO3"],
+    "IEG4": ["PEO4"],
+    "IEG5": ["PEO5"]
+  },
+
+  "PEOtoPLO": {
+    "PEO1": ["PLO1", "PLO2", "PLO3", "PLO6", "PLO7"],
+    "PEO2": ["PLO11"],
+    "PEO3": ["PLO10", "PLO9"],
+    "PEO4": ["PLO5"],
+    "PEO5": ["PLO8", "PLO4", "PLO9"]
+  },
+
+  "PLOstatements": {
+    "Diploma": {
+      "PLO1": "Demonstrate foundational knowledge of core concepts and principles in the discipline.",
+      "PLO2": "Apply basic cognitive skills to identify and explain simple problems.",
+      "PLO3": "Perform routine practical and technical tasks with supervision.",
+      "PLO4": "Demonstrate basic interpersonal skills in group-supported environments.",
+      "PLO5": "Communicate simple ideas clearly in oral or written form.",
+      "PLO6": "Use basic digital tools relevant to the field.",
+      "PLO7": "Apply simple numeracy skills to perform basic calculations.",
+      "PLO8": "Show emerging leadership behaviours in guided activities.",
+      "PLO9": "Demonstrate personal responsibility and self-management.",
+      "PLO10": "Apply basic entrepreneurial thinking in routine tasks.",
+      "PLO11": "Follow basic ethical guidelines and professional conduct."
+    },
+    "Degree": {
+      "PLO1": "Apply advanced discipline knowledge to solve theoretical and applied problems.",
+      "PLO2": "Analyse information critically and apply reasoning for decision-making.",
+      "PLO3": "Perform a wide range of practical and technical tasks independently.",
+      "PLO4": "Demonstrate effective interpersonal and collaborative teamwork skills.",
+      "PLO5": "Communicate effectively using discipline-appropriate formats.",
+      "PLO6": "Use digital tools competently for data management and communication.",
+      "PLO7": "Apply quantitative reasoning and numeracy in problem-solving.",
+      "PLO8": "Demonstrate leadership skills in team or project settings.",
+      "PLO9": "Demonstrate resilience, self-regulation, and professional responsibility.",
+      "PLO10": "Demonstrate entrepreneurial thinking and innovation.",
+      "PLO11": "Apply ethical principles and professional standards of practice."
+    },
+    "Master": {
+      "PLO1": "Integrate advanced and specialized knowledge to address complex issues.",
+      "PLO2": "Evaluate and synthesise information using higher-order reasoning.",
+      "PLO3": "Execute advanced practical, technical, or research procedures with autonomy.",
+      "PLO4": "Demonstrate high-level interpersonal competencies in multidisciplinary contexts.",
+      "PLO5": "Communicate complex ideas to specialist and non-specialist audiences.",
+      "PLO6": "Innovatively apply digital tools and emerging technologies.",
+      "PLO7": "Apply advanced quantitative or statistical techniques.",
+      "PLO8": "Demonstrate adaptive leadership in managing complex activities.",
+      "PLO9": "Demonstrate high levels of self-direction and professional integrity.",
+      "PLO10": "Generate innovative and entrepreneurial solutions.",
+      "PLO11": "Evaluate ethical dilemmas and make principled decisions."
+    },
+    "PhD": {
+      "PLO1": "Contribute new knowledge through original research.",
+      "PLO2": "Critically evaluate theories and develop new frameworks.",
+      "PLO3": "Execute advanced independent research with methodological rigour.",
+      "PLO4": "Lead collaborative research across diverse contexts.",
+      "PLO5": "Disseminate scholarly work effectively through high-impact communication.",
+      "PLO6": "Develop or apply advanced digital innovations for research.",
+      "PLO7": "Apply advanced statistical or quantitative models to generate insights.",
+      "PLO8": "Demonstrate strategic leadership in research or industry.",
+      "PLO9": "Exemplify the highest standards of autonomy and responsibility.",
+      "PLO10": "Lead the creation of innovative or translational outputs.",
+      "PLO11": "Uphold the highest standards of research ethics and integrity."
+    }
+  },
+
+  "PEOstatements": {
+    "Diploma": {
+      "PEO1": "Graduates demonstrate basic professional competencies.",
+      "PEO2": "Graduates uphold ethical and humane values.",
+      "PEO3": "Graduates contribute positively to society.",
+      "PEO4": "Graduates communicate effectively.",
+      "PEO5": "Graduates develop teamwork and personal skills."
+    },
+    "Degree": {
+      "PEO1": "Graduates apply knowledge and skills effectively.",
+      "PEO2": "Graduates uphold ethical and professional values.",
+      "PEO3": "Graduates contribute to sustainable societal development.",
+      "PEO4": "Graduates communicate effectively across contexts.",
+      "PEO5": "Graduates demonstrate leadership and lifelong learning."
+    },
+    "Master": {
+      "PEO1": "Graduates advance specialized professional knowledge.",
+      "PEO2": "Graduates demonstrate ethical judgment in complex situations.",
+      "PEO3": "Graduates lead sustainability-focused initiatives.",
+      "PEO4": "Graduates communicate as disciplinary experts.",
+      "PEO5": "Graduates lead teams and practice lifelong learning."
+    },
+    "PhD": {
+      "PEO1": "Graduates contribute frontier knowledge.",
+      "PEO2": "Graduates exemplify ethical and humanistic values.",
+      "PEO3": "Graduates lead societal transformation.",
+      "PEO4": "Graduates disseminate advanced scholarly work globally.",
+      "PEO5": "Graduates lead research teams."
+    }
+  },
+
+  "PLOtoVBE": {
+    "PLO1": "Professionalism",
+    "PLO2": "Critical Thinking",
+    "PLO3": "Responsibility",
+    "PLO4": "Respect",
+    "PLO5": "Communication Ethics",
+    "PLO6": "Digital Citizenship",
+    "PLO7": "Integrity in Quantitative Work",
+    "PLO8": "Leadership Values",
+    "PLO9": "Personal Well-being",
+    "PLO10": "Innovation & Entrepreneurship",
+    "PLO11": "Ethical Reasoning"
+  },
+
+  "PLOIndicators": {
+    "PLO1": "≥ 60% exam performance",
+    "PLO2": "≥ 60% case analysis",
+    "PLO3": "≥ 3/5 practical rubric",
+    "PLO4": "≥ 3/5 teamwork rubric",
+    "PLO5": "≥ 3/5 communication rubric",
+    "PLO6": "≥ 60% digital assessment",
+    "PLO7": "≥ 60% numeracy test",
+    "PLO8": "≥ 3/5 leadership rubric",
+    "PLO9": "≥ 3/5 personal development rubric",
+    "PLO10": "≥ 3/5 innovation rubric",
+    "PLO11": "≥ 3/5 ethics rubric; zero violations"
+  },
+
+  "SCmapping": {
+    "PLO1": "SC1",
+    "PLO2": "SC2",
+    "PLO3": "SC3",
+    "PLO4": "SC4",
+    "PLO5": "SC5",
+    "PLO6": "SC6",
+    "PLO7": "SC7",
+    "PLO8": "SC8",
+    "PLO9": "SC9",
+    "PLO10": "SC10",
+    "PLO11": "SC11"
+  }
+}
