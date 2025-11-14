@@ -339,8 +339,12 @@ def generate():
         "peo_statement": peo_statement,
     })
 
-# ----------------------------------------
+@app.route("/")
+def index():
+    return render_template("generator.html")
+
 # RUN
-# ----------------------------------------
 if __name__ == "__main__":
     app.run(debug=True)
+
+
