@@ -26,7 +26,7 @@
 <body class="bg-soft">
 
   <!-- Advanced CLO Auto-Linker -->
-<div id="advanced-clo-generator"></div>
+<div id="advanced_clo_generator_v2.js"></div>
 
 
   <!-- NAVBAR -->
@@ -94,7 +94,7 @@
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
     try {
-        const res = await fetch("/static/peo_plo_ieg_v2.json", { cache: "no-store" });
+        const res = await fetch("/static/peo_plo_ieg.json", { cache: "no-store" });
         if (!res.ok) throw new Error("Mapping file missing");
         
         const mapping = await res.json();
@@ -570,7 +570,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (ploSel.options.length <= 1) {
         try {
-            const res = await fetch("/static/peo_plo_ieg_v2.json", { cache: "no-store" });
+            const res = await fetch("/static/peo_plo_ieg.json", { cache: "no-store" });
             const map = await res.json();
 
             ploSel.innerHTML = '<option disabled selected>Select PLO</option>';
