@@ -360,14 +360,22 @@ def generate():
         "peo": peo,
         "plo_statement": plo_statement,
         "peo_statement": peo_statement
-    })
-    from openpyxl import Workbook
-from flask import send_file
+     })
 
+
+# ----------------------------------------------------
+# PAGE ROUTE
+# ----------------------------------------------------
 @app.route("/")
 def index():
     return render_template("generator.html")
-    
+
+# ----------------------------------------------------
+# DOWNLOAD ROUTES (must be OUTSIDE generate)
+# ----------------------------------------------------
+from openpyxl import Workbook
+from flask import send_file
+
 @app.route("/download")
 def download_clo():
     # Get last generated CLO stored in session-like global
@@ -447,6 +455,7 @@ def download_rubric():
 # RUN
 if __name__ == "__main__":
     app.run(debug=True)
+
 
 
 
