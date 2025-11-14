@@ -189,32 +189,31 @@ def get_assessment(plo, bloom, domain):
         return affective.get(b, [])
     return cognitive.get(b, [])
 
-def get_evidence_for(assessment_name):
-    """
-    Return recommended evidence items for a given assessment method.
-    """
-    a = (assessment_name or "").lower()
+def get_evidence_for(assessment):
+    a = assessment.lower()
     evidence_map = {
-        "mcq": ["Score report", "Item analysis"],
-        "recall": ["Quiz score"],
-        "short answer": ["Marked answers", "Rubric"],
-        "case study": ["Case report", "Rubric"],
-        "problem-solving": ["Solution sheet", "Reasoning notes"],
-        "data analysis": ["Analysis file", "Code/notebook", "Report"],
-        "critique": ["Critique essay", "Marker comments"],
-        "evaluation report": ["Evaluation document", "Evidence log"],
-        "design": ["Design files", "Prototype", "Documentation"],
-        "research": ["Proposal", "Feedback"],
-        "osce": ["OSCE checklist", "Examiner score"],
-        "skills test": ["Checklist", "Performance score"],
-        "portfolio": ["Portfolio files", "Reflective notes"],
-        "reflection": ["Reflection journal", "Instructor notes"],
-        "participation": ["Attendance/peer review"],
+        "mcq": ["Score report", "Automated grading output"],
+        "quiz": ["Quiz score", "Response pattern"],
+        "short answer": ["Written answers", "Marker rubric"],
+        "case study": ["Case analysis rubric", "Annotated report"],
+        "problem-solving": ["Solution sheet", "Reasoning steps"],
+        "critique": ["Critique essay", "Evaluator comments"],
+        "evaluation report": ["Evaluation sheet", "Analytical justification"],
+        "design project": ["Project files", "Prototype", "Design documentation"],
+        "research proposal": ["Proposal draft", "Panel feedback"],
+        "skill demonstration": ["Skills checklist", "Instructor feedback"],
+        "osce": ["OSCE checklist", "Examiner score sheet"],
+        "skills test": ["Performance score", "Competency checklist"],
+        "clinical task": ["Clinical logbook", "Supervisor evaluation"],
+        "reflection": ["Reflection journal", "Instructor comments"],
+        "group": ["Group participation record", "Peer evaluation"],
+        "portfolio": ["Portfolio files", "Growth documentation"],
     }
-    for key, val in evidence_map.items():
+    for key in evidence_map:
         if key in a:
-            return val
+            return evidence_map[key]
     return ["Performance evidence", "Rubric score"]
+
 
 # -----------------------
 # Content suggestions (Option 1 fields)
@@ -447,7 +446,7 @@ def generate():
 
     evidence_output = {}
     for a in assessments:
-        evidence_output[a] = get_evidence(a)
+        evidence_output[a] = get_evidence_for(a)
 
     # ------------------------------------------------------
     # Save for Excel download (now includes variants)
@@ -493,7 +492,9 @@ def generate():
         "peo_statement": peo_statement,
         "plo_indicator": plo_indicator,
         "assessments": assessments,
-        "evidence": evidence_output
+        "evidence": evidence_output,
+        "plo_indicator": MAP.get("PLOIndicators", {}).get(plo, "")
+
     })
 
 # -----------------------
@@ -581,4 +582,5 @@ def index():
 # -----------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
+
 
