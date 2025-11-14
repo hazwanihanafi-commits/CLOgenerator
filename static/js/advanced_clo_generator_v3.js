@@ -154,6 +154,61 @@
       document.getElementById("al_level").value
     );
   });
+document.addEventListener("DOMContentLoaded", async () => {
+
+    console.log("Advanced CLO Generator v3 Loaded");
+
+    /* ============================================================
+       LOAD MAPPING JSON (IEG → PEO → PLO)
+    ============================================================ */
+    let mapping = {};
+    try {
+        const res = await fetch("/static/data/peo_plo_ieg.json", { cache: "no-store" });
+        mapping = await res.json();
+        console.log("Mapping loaded:", mapping);
+    } catch (err) {
+        console.error("Error loading mapping JSON:", err);
+        return;
+    }
+
+    /* ============================================================
+       SELECT ELEMENTS
+    ============================================================ */
+    const iegSel   = document.getElementById("ieg");
+    const peoSel   = document.getElementById("peo");
+    const ploSel   = document.getElementById("plo");
+
+    const bloomSel = document.getElementById("bloom");
+    const verbSel  = document.getElementById("verb");
+
+    const scCode   = document.getElementById("sc_code");
+    const scDesc   = document.getElementById("sc_desc");
+    const vbe      = document.getElementById("vbe");
+    const domain   = document.getElementById("domain");
+    const condEl   = document.getElementById("condition");
+    const critEl   = document.getElementById("criterion");
+    const assessEl = document.getElementById("assessment");
+    const evidEl   = document.getElementById("evidence");
+
+    const profileSel = document.getElementById("profile");
+    const profileHidden = document.getElementById("profileHidden");
+
+    /* ============================================================
+       HELPER: Profile suffix
+    ============================================================ */
+    function suffix() {
+        const p = profileHidden.value || profileSel.value;
+        return p ? `?profile=${p}` : "";
+    }
+
+    async function fetchJSON(url) {
+        const r = await fetch(url);
+        return r.ok ? r.json() : null;
+    }
+
+    /* ============================================================
+       POPULATE IEG
+    ================
 
   loadMapping();
 })();
