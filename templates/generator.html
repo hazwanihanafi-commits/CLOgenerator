@@ -2,14 +2,17 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>SCLOG — Smart CLO Generator (Final)</title>
+  <title>SCLOG — Smart CLO Generator (V9)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Bootstrap + icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
 
-  <!-- ===== GOOGLE ANALYTICS (replace ID if needed) ===== -->
+  <!-- ======================
+       Google Analytics
+       Replace ID if needed
+       ====================== -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-HMBYNXRLBE"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -17,73 +20,129 @@
     gtag('js', new Date());
     gtag('config', 'G-HMBYNXRLBE', { 'send_page_view': true });
 
-    // small helper to avoid errors if GA not loaded
+    // Safe wrapper for custom events
     function logEvent(name, data = {}) {
       if (typeof gtag === 'function') {
-        gtag('event', name, data);
+        try { gtag('event', name, data); } catch(e){ console.debug('gtag error', e); }
       } else {
-        console.debug('GA missing - event:', name, data);
+        console.debug('GA not ready - event', name, data);
       }
     }
   </script>
 
-  <!-- ===== THEME STYLES (USM soft purple + mobile-first) ===== -->
+  <!-- ======================
+       THEME: Soft Purple Light + Soft Purple Dark
+       (mobile-first responsive)
+       ====================== -->
   <style>
     :root{
       --usm-purple: #6d28d9;
-      --usm-purple-light: #a78bfa;
-      --bg: #f5f3ff;
-      --card:#fff;
-      --muted:#6c6480;
-      --radius:14px;
+      --usm-purple-2: #8b5cf6;
+      --bg-light: #f5f3ff;
+      --card: #ffffff;
+      --muted: #6c6480;
+      --radius: 14px;
       --shadow: 0 10px 30px rgba(15,23,42,0.06);
     }
-    html,body{height:100%}
-    body { margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial; background:var(--bg); color:#2a2344; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
-    body[data-theme="dark"] { background: linear-gradient(180deg,#12041b,#1b0830); color:#efe6ff; }
 
-    .container-app { max-width:1200px; margin:16px auto 40px; padding:12px; }
-    .card-box { background: var(--card); border-radius: var(--radius); padding:16px; border:1px solid rgba(109,40,217,0.12); box-shadow: var(--shadow); transition: transform .12s ease, box-shadow .12s ease; }
-    body[data-theme="dark"] .card-box { background: rgba(34,16,48,0.72); border-color: rgba(255,255,255,0.04); box-shadow: 0 14px 36px rgba(0,0,0,0.6); }
+    html,body{height:100%;}
+    body {
+      margin:0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      background: var(--bg-light);
+      color: #2a2344;
+      line-height:1.45;
+    }
+    body[data-theme="dark"] {
+      background: linear-gradient(180deg,#11101a,#16081f);
+      color: #efe6ff;
+    }
+
+    .container-app {
+      max-width:1200px;
+      margin:18px auto 40px;
+      padding:12px;
+    }
+
+    .card-box {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding:16px;
+      border: 1px solid rgba(109,40,217,0.10);
+      box-shadow: var(--shadow);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    body[data-theme="dark"] .card-box {
+      background: rgba(24,14,33,0.64);
+      border-color: rgba(255,255,255,0.04);
+      box-shadow: 0 14px 36px rgba(0,0,0,0.5);
+    }
     .card-box:hover { transform: translateY(-2px); box-shadow: 0 20px 44px rgba(109,40,217,0.08); }
 
-    .brand { font-weight:900; font-size:1.25rem; background:linear-gradient(90deg,var(--usm-purple),var(--usm-purple-light)); -webkit-background-clip:text; color:transparent; display:flex; gap:10px; align-items:center; }
+    .brand { font-weight:900; font-size:1.22rem; background: linear-gradient(90deg,var(--usm-purple),var(--usm-purple-2)); -webkit-background-clip:text; color:transparent; display:flex; gap:10px; align-items:center; }
     .subtitle { color:var(--muted); font-size:.95rem; }
 
-    .profile-row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
-    .profile-item { min-width:180px; flex:1 1 180px; }
+    label.form-label { font-weight:600; font-size:.92rem; color:var(--muted); margin-bottom:6px; display:block; }
+    .form-control, .form-select {
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:.95rem;
+      background:#fbf8ff;
+      border:1px solid rgba(109,40,217,0.06);
+    }
+    body[data-theme="dark"] .form-control, body[data-theme="dark"] .form-select {
+      background: rgba(22,12,34,0.54);
+      color: #efe6ff;
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .form-control:focus, .form-select:focus { box-shadow: 0 0 0 6px rgba(167,139,250,0.14); outline:none; border-color:var(--usm-purple); }
 
-    label.form-label { font-weight:600; font-size:.9rem; color:var(--muted); margin-bottom:6px; display:block; }
-    .form-control, .form-select { border-radius:12px; padding:10px 12px; background:#fbf8ff; border:1px solid rgba(109,40,217,0.08); font-size:.95rem; }
-    body[data-theme="dark"] .form-control, body[data-theme="dark"] .form-select { background: rgba(24,14,33,0.58); color:#efe6ff; border:1px solid rgba(255,255,255,0.04); }
-    .form-control:focus, .form-select:focus { box-shadow: 0 0 0 6px rgba(167,139,250,0.16); border-color:var(--usm-purple); outline:none; }
-
-    .logic-box { background:#f7f2ff; padding:10px; border-radius:10px; min-height:58px; color:#3b2a63; }
+    .logic-box {
+      background:#f7f2ff;
+      padding:10px;
+      border-radius:10px;
+      color:#3b2a63;
+      min-height:56px;
+    }
     body[data-theme="dark"] .logic-box { background: rgba(34,16,48,0.4); color:#efe6ff; }
 
     .btn { border-radius:12px; font-weight:700; }
-    .btn-primary { background: linear-gradient(90deg,var(--usm-purple),var(--usm-purple-light)); border:none; color:#fff; }
+    .btn-primary { background: linear-gradient(90deg,var(--usm-purple),var(--usm-purple-2)); border:none; color:#fff; }
     .btn-outline-secondary { color:var(--usm-purple); border-color:var(--usm-purple); border-radius:12px; }
     .btn-outline-secondary:hover { background:var(--usm-purple); color:#fff; }
 
     .nav-tabs { border-bottom:none; overflow:auto; white-space:nowrap; padding-bottom:6px; }
     .nav-tabs .nav-link { border:0; margin-right:6px; background:#f3eefe; color:var(--usm-purple); border-radius:10px; padding:7px 12px; }
     .nav-tabs .nav-link.active { background:var(--usm-purple); color:#fff; font-weight:700; }
-    @media (max-width: 991px) { .profile-row { flex-direction:column; align-items:stretch; } }
-    @media (max-width: 576px) { .brand { font-size:1.05rem; } .card-box { padding:12px; } .form-control, .form-select { padding:8px 10px; } .btn { padding:7px 10px; font-size:.9rem; } }
 
-    .muted { color:var(--muted); font-size:.92rem; }
+    .muted { color:var(--muted); }
     .meta-item { margin-bottom:10px; }
+
     footer { margin-top:18px; text-align:center; color:var(--muted); font-size:.88rem; }
+
+    /* Responsive adjustments */
+    @media (max-width: 991px) {
+      .profile-row { flex-direction:column; gap:10px; }
+    }
+    @media (max-width: 575px) {
+      .card-box { padding:12px; border-radius:12px; }
+      .brand { font-size:1.05rem; }
+      .form-control, .form-select { padding:8px 10px; }
+      .btn { padding:7px 10px; font-size:.92rem; }
+    }
+
   </style>
 </head>
+
 <body data-theme="light">
   <div class="container-app">
 
     <!-- HEADER -->
     <div class="card-box mb-3 d-flex justify-content-between align-items-center">
       <div>
-        <div class="brand"><i class="bi bi-stars" style="font-size:1.15rem"></i> SCLOG</div>
+        <div class="brand"><i class="bi bi-stars" style="font-size:1.1rem"></i> SCLOG</div>
         <div class="subtitle">Smart Course Learning Outcome Generator — logic & mapping</div>
       </div>
       <div>
@@ -91,10 +150,10 @@
       </div>
     </div>
 
-    <!-- PROFILE (TOP) -->
+    <!-- 1) Academic profile + Level + IEG + PEO -->
     <div class="card-box mb-3">
-      <div class="profile-row">
-        <div class="profile-item">
+      <div class="row g-3 profile-row">
+        <div class="col-12 col-md-4">
           <label class="form-label">Academic profile</label>
           <select id="profile" class="form-select">
             <option value="health">Medical & Health</option>
@@ -107,7 +166,7 @@
           </select>
         </div>
 
-        <div class="profile-item">
+        <div class="col-12 col-md-2">
           <label class="form-label">Level</label>
           <select id="level" class="form-select">
             <option>Diploma</option>
@@ -117,26 +176,43 @@
           </select>
         </div>
 
-        <div class="profile-item">
+        <div class="col-12 col-md-3">
           <label class="form-label">IEG</label>
           <select id="ieg" class="form-select"><option value="">Select IEG</option></select>
         </div>
 
-        <div class="profile-item">
+        <div class="col-12 col-md-3">
           <label class="form-label">PEO (mapped)</label>
           <select id="peo" class="form-select"><option value="">Select PEO</option></select>
         </div>
       </div>
 
-      <div style="margin-top:12px">
+      <div style="margin-top:12px;">
         <div class="form-label">Why this IEG → PEO?</div>
         <div id="ieg_peo_logic" class="logic-box">—</div>
       </div>
     </div>
 
-    <!-- BUILDER (FULL WIDTH) -->
+    <!-- 2) PLO for selected PEO (placed BEFORE the builder per your request) -->
+    <div id="plo_block" class="card-box mb-3">
+      <label class="form-label">PLO for selected PEO</label>
+      <select id="plo" class="form-select mb-3"><option value="">Select PLO</option></select>
+
+      <div class="mb-3">
+        <div class="form-label">Why PEO → PLO?</div>
+        <div id="peo_plo_logic" class="logic-box">—</div>
+      </div>
+
+      <div>
+        <div><strong>PEO:</strong> <span id="peo_statement" class="muted">—</span></div>
+        <div><strong>PLO:</strong> <span id="plo_statement" class="muted">—</span></div>
+        <div><strong>Indicator:</strong> <span id="plo_indicator" class="muted">—</span></div>
+      </div>
+    </div>
+
+    <!-- 3) Smart CLO Builder (main) -->
     <div class="card-box mb-3">
-      <div class="row g-3">
+      <div class="row">
         <div class="col-12 col-xl-8">
           <h5 class="mb-1">Smart CLO Builder</h5>
           <div class="muted mb-2">Create measurable course learning outcomes quickly</div>
@@ -149,19 +225,20 @@
           </ul>
 
           <div class="tab-content">
-            <!-- BUILDER TAB -->
+            <!-- BUILDER -->
             <div class="tab-pane fade show active" id="builderTab">
               <div class="row g-3">
                 <div class="col-md-6">
                   <label class="form-label">Bloom</label>
                   <select id="bloom" class="form-select"><option value="">Select Bloom</option></select>
                 </div>
+
                 <div class="col-md-6">
                   <label class="form-label">Verb</label>
                   <select id="verb" class="form-select"><option value="">Select Verb</option></select>
                 </div>
 
-                <div class="col-12 col-md-6">
+                <div class="col-md-6">
                   <label class="form-label">Field (topic area)</label>
                   <select id="field" class="form-select">
                     <option value="">— Select Field —</option>
@@ -178,16 +255,16 @@
 
                 <div class="col-12">
                   <label class="form-label">Content (topic / object)</label>
-                  <input id="content" class="form-control" placeholder="e.g., interpret ECG waveforms" />
+                  <input id="content" class="form-control" placeholder="e.g., interpret ECG waveforms">
                 </div>
 
                 <div class="col-12 d-flex gap-2 align-items-center">
                   <button id="generateBtn" class="btn btn-primary"><i class="bi bi-magic me-1"></i> Generate CLO</button>
                   <button id="copyBtn" class="btn btn-outline-secondary"><i class="bi bi-clipboard me-1"></i> Copy</button>
-                  <div id="busy" class="muted" style="display:none;">Generating…</div>
+                  <div id="busy" class="muted" style="display:none">Generating…</div>
                 </div>
 
-                <!-- generated clo card -->
+                <!-- Generated CLO card (appears after generate) -->
                 <div id="cloCard" class="col-12 card-box" style="display:none; margin-top:12px;">
                   <h6 class="mb-2">Generated CLO</h6>
                   <div id="clo_text" style="line-height:1.4; font-weight:600;"></div>
@@ -197,21 +274,22 @@
                     <div id="variantsPanel" style="display:none; margin-top:10px;"></div>
                   </div>
 
-                  <!-- Downloads below generate (Option A) -->
+                  <!-- Downloads located directly after generated CLO -->
                   <div class="mt-3 d-flex gap-2">
                     <button id="downloadBtn" class="btn btn-success"><i class="bi bi-download me-1"></i> Download CLO</button>
                     <button id="downloadRubricBtn" class="btn btn-outline-secondary"><i class="bi bi-file-earmark-text me-1"></i> Download Rubric</button>
                   </div>
                 </div>
+
               </div>
             </div>
 
-            <!-- VARIANTS TAB -->
+            <!-- VARIANTS -->
             <div class="tab-pane fade" id="variantsTab">
               <div id="variants_list" class="muted">Variants will appear after generating a CLO.</div>
             </div>
 
-            <!-- ASSESSMENT TAB -->
+            <!-- ASSESSMENT -->
             <div class="tab-pane fade" id="assessmentTab">
               <div class="row g-3">
                 <div class="col-md-6">
@@ -229,17 +307,18 @@
               </div>
             </div>
 
-            <!-- HISTORY TAB -->
+            <!-- HISTORY -->
             <div class="tab-pane fade" id="historyTab">
               <div class="card-box">
                 <h6>Recent generation</h6>
                 <div id="history_list" class="muted">Server-side history not enabled.</div>
               </div>
             </div>
+
           </div>
         </div>
 
-        <!-- RIGHT COLUMN: Metadata + mapping details (narrow) -->
+        <!-- RIGHT SIDEBAR: Mapping metadata -->
         <div class="col-12 col-xl-4">
           <div class="card-box mb-3">
             <div class="form-label">Mapping metadata</div>
@@ -252,17 +331,8 @@
           </div>
 
           <div class="card-box">
-            <div class="form-label">PLO for selected PEO</div>
-            <select id="plo" class="form-select"><option value="">Select PLO</option></select>
-
-            <div class="form-label mt-3">Why PEO → PLO?</div>
-            <div id="peo_plo_logic" class="logic-box">—</div>
-
-            <div class="mt-3">
-              <div><strong>PEO:</strong> <span id="peo_statement" class="muted">—</span></div>
-              <div><strong>PLO:</strong> <span id="plo_statement" class="muted">—</span></div>
-              <div><strong>Indicator:</strong> <span id="plo_indicator" class="muted">—</span></div>
-            </div>
+            <div class="form-label">Quick content suggestions</div>
+            <div id="content_suggestions_right"></div>
           </div>
         </div>
 
@@ -275,21 +345,24 @@
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- ===== APP JS: DOM refs, event listeners, GA events, then init() ===== -->
+  <!-- ===========================
+       App JS: DOM refs, handlers, GA events
+       Place GA listeners AFTER refs and before init()
+       =========================== -->
   <script>
-    // quick getter
+    // Short helper
     const $ = id => document.getElementById(id);
 
-    // DOM refs (must match app.py)
+    // DOM refs (must match backend IDs)
     const profileSel = $('profile');
-    const levelSel   = $('level');
-    const iegSel     = $('ieg');
-    const peoSel     = $('peo');
-    const ploSel     = $('plo');
+    const levelSel = $('level');
+    const iegSel = $('ieg');
+    const peoSel = $('peo');
+    const ploSel = $('plo');
 
-    const bloomSel   = $('bloom');
-    const verbSel    = $('verb');
-    const fieldSel   = $('field');
+    const bloomSel = $('bloom');
+    const verbSel = $('verb');
+    const fieldSel = $('field');
     const contentInput = $('content');
 
     const iegLogicBox = $('ieg_peo_logic');
@@ -301,16 +374,16 @@
 
     const scCodeEl = $('sc_code');
     const scDescEl = $('sc_desc');
-    const vbeEl    = $('vbe');
+    const vbeEl = $('vbe');
     const domainEl = $('domain');
     const conditionEl = $('condition');
     const criterionEl = $('criterion');
 
-    const generateBtn = $('generateBtn') || $('generateBtn') ; // ensure defined
-    const copyBtn     = $('copyBtn');
-    const busyEl      = $('busy');
-    const cloCard     = $('cloCard');
-    const cloText     = $('clo_text');
+    const generateBtn = $('generateBtn');
+    const copyBtn = $('copyBtn');
+    const busyEl = $('busy');
+    const cloCard = $('cloCard');
+    const cloText = $('clo_text');
     const toggleVariantsBtn = $('toggleVariants');
     const variantsPanel = $('variantsPanel');
     const variants_list = $('variants_list');
@@ -321,95 +394,102 @@
     const downloadBtn = $('downloadBtn');
     const downloadRubricBtn = $('downloadRubricBtn');
     const darkToggle = $('darkToggle');
+
     const contentSuggestionsEl = $('content_suggestions');
+    const contentSuggestionsRight = $('content_suggestions_right');
 
     let MAP = {};
     let LAST_CLO = null;
 
-    // DARK toggle
+    // Theme toggle
     darkToggle.addEventListener('click', () => {
       const curr = document.body.getAttribute('data-theme') || 'light';
       const next = curr === 'light' ? 'dark' : 'light';
       document.body.setAttribute('data-theme', next);
       darkToggle.innerHTML = next === 'dark' ? '<i class="bi bi-sun"></i> Light' : '<i class="bi bi-moon"></i> Dark';
-      logEvent('toggle_theme', {theme: next});
+      logEvent('toggle_theme', { theme: next });
     });
 
-    // Load mapping from backend
-    async function loadMapping(){
+    // Load mapping (IEGs/PEOs/PLOs) from backend
+    async function loadMapping() {
       try {
         const res = await fetch('/api/mapping');
         MAP = await res.json();
+        // Populate IEGs
         iegSel.innerHTML = '<option value="">Select IEG</option>';
-        (MAP.IEGs || []).forEach(i => iegSel.add(new Option(i,i)));
+        (MAP.IEGs || []).forEach(i => iegSel.add(new Option(i, i)));
+        // Set PLO fallback list if present
         ploSel.innerHTML = '<option value="">Select PLO</option>';
-        (MAP.PLOs || []).forEach(p => ploSel.add(new Option(p,p)));
+        (MAP.PLOs || []).forEach(p => ploSel.add(new Option(p, p)));
       } catch (e) {
-        console.error('mapping load error', e);
+        console.error('loadMapping error', e);
       }
     }
 
     /* --------------------------
        IEG -> PEO mapping + logic
-       (logic box placement: Option 1)
+       (Option 1 placement of logic box)
     ---------------------------*/
     iegSel.addEventListener('change', async () => {
       const ieg = iegSel.value;
+      // reset downstream elements
       peoSel.innerHTML = '<option value="">Select PEO</option>';
       ploSel.innerHTML = '<option value="">Select PLO</option>';
       iegLogicBox.textContent = '—';
       peoStatementEl.textContent = '—';
       ploStatementEl.textContent = '—';
       ploIndicatorEl.textContent = '—';
-
-      logEvent('ieg_select', {ieg});
+      logEvent('ieg_select', { ieg });
 
       if (!ieg) return;
+      // load PEOs
       try {
-        const res = await fetch(`/api/get_peos/${encodeURIComponent(ieg)}`);
-        const peos = await res.json();
+        const r = await fetch(`/api/get_peos/${encodeURIComponent(ieg)}`);
+        const peos = await r.json();
         peoSel.innerHTML = '<option value="">Select PEO</option>';
-        (peos || []).forEach(p => peoSel.add(new Option(p,p)));
+        (peos || []).forEach(p => peoSel.add(new Option(p, p)));
       } catch (e) { console.error(e); }
 
+      // load logic explanation (text)
       try {
-        const r = await fetch(`/api/logic/ieg_peo/${encodeURIComponent(ieg)}`);
-        const txt = await r.text();
+        const r2 = await fetch(`/api/logic/ieg_peo/${encodeURIComponent(ieg)}`);
+        const txt = await r2.text();
         iegLogicBox.textContent = txt && txt.trim() ? txt : 'No logic explanation available.';
       } catch (e) { console.error(e); iegLogicBox.textContent = 'Logic unavailable.'; }
     });
 
     /* --------------------------
-       PEO -> PLO mapping + statement
+       PEO -> PLO mapping + statements
     ---------------------------*/
     peoSel.addEventListener('change', async () => {
       const peo = peoSel.value;
       ploSel.innerHTML = '<option value="">Select PLO</option>';
       peoPloLogicBox.textContent = '—';
+      peoStatementEl.textContent = '—';
       ploStatementEl.textContent = '—';
       ploIndicatorEl.textContent = '—';
-
-      logEvent('peo_select', {peo});
+      logEvent('peo_select', { peo });
 
       if (!peo) return;
+      // load PLOs
       try {
-        const res = await fetch(`/api/get_plos/${encodeURIComponent(peo)}`);
-        const plos = await res.json();
+        const r = await fetch(`/api/get_plos/${encodeURIComponent(peo)}`);
+        const plos = await r.json();
         ploSel.innerHTML = '<option value="">Select PLO</option>';
-        (plos || []).forEach(p => ploSel.add(new Option(p,p)));
+        (plos || []).forEach(p => ploSel.add(new Option(p, p)));
       } catch (e) { console.error(e); }
 
-      // PEO statement from backend
+      // load PEO statement
       try {
         const level = levelSel.value || 'Degree';
         const sres = await fetch(`/api/get_statement/${encodeURIComponent(level)}/PEO/${encodeURIComponent(peo)}`);
         const stmt = await sres.json();
         peoStatementEl.textContent = stmt || '—';
-      } catch (e) { console.error(e); }
+      } catch(e) { console.error(e); }
     });
 
     /* --------------------------
-       PLO -> PEO→PLO logic, blooms, plo stmt, indicator
+       PLO -> blooms + PEO→PLO logic + statements + indicator + meta
     ---------------------------*/
     ploSel.addEventListener('change', async () => {
       const plo = ploSel.value;
@@ -418,8 +498,13 @@
       peoPloLogicBox.textContent = '—';
       ploStatementEl.textContent = '—';
       ploIndicatorEl.textContent = '—';
-
-      logEvent('plo_select', {plo});
+      scCodeEl.textContent = '—';
+      scDescEl.textContent = '—';
+      vbeEl.textContent = '—';
+      domainEl.textContent = '—';
+      conditionEl.textContent = '—';
+      criterionEl.textContent = '—';
+      logEvent('plo_select', { plo, peo });
 
       if (!plo) return;
 
@@ -428,15 +513,15 @@
         const r = await fetch(`/api/logic/peo_plo/${encodeURIComponent(peo)}/${encodeURIComponent(plo)}`);
         const txt = await r.text();
         peoPloLogicBox.textContent = txt && txt.trim() ? txt : 'No logic explanation available.';
-      } catch (e) { console.error(e); peoPloLogicBox.textContent = 'Logic unavailable.'; }
+      } catch(e) { console.error(e); peoPloLogicBox.textContent = 'Logic unavailable.'; }
 
       // blooms
       try {
         const res = await fetch(`/api/get_blooms/${encodeURIComponent(plo)}?profile=${encodeURIComponent(profileSel.value)}`);
         const blooms = await res.json();
         bloomSel.innerHTML = '<option value="">Select Bloom</option>';
-        (blooms || []).forEach(b => bloomSel.add(new Option(b,b)));
-      } catch (e) { console.error(e); bloomSel.innerHTML = '<option value="">Error</option>'; }
+        (blooms || []).forEach(b => bloomSel.add(new Option(b, b)));
+      } catch(e) { console.error(e); bloomSel.innerHTML = '<option value="">Error</option>'; }
 
       // plo statement
       try {
@@ -444,31 +529,43 @@
         const sres = await fetch(`/api/get_statement/${encodeURIComponent(level)}/PLO/${encodeURIComponent(plo)}`);
         const stmt = await sres.json();
         ploStatementEl.textContent = stmt || '—';
-      } catch (e) { console.error(e); }
+      } catch(e){ console.error(e); }
 
-      // indicator
-      try { ploIndicatorEl.textContent = (MAP.PLOIndicators && MAP.PLOIndicators[plo]) || '—'; } catch (e) { ploIndicatorEl.textContent = '—'; }
+      // plo indicator
+      try {
+        ploIndicatorEl.textContent = (MAP.PLOIndicators && MAP.PLOIndicators[plo]) || '—';
+      } catch(e){ ploIndicatorEl.textContent = '—'; }
+
+      // meta (SC code, desc, vbe, domain, criterion, condition)
+      try {
+        const mres = await fetch(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloomSel.value || '')}`);
+        const meta = await mres.json();
+        scCodeEl.textContent = meta.sc_code || '—';
+        scDescEl.textContent = meta.sc_desc || '—';
+        vbeEl.textContent = meta.vbe || '—';
+        domainEl.textContent = meta.domain || '—';
+        conditionEl.textContent = meta.condition || '—';
+        criterionEl.textContent = meta.criterion || '—';
+      } catch(e){ console.error(e); }
     });
 
     /* --------------------------
-       Bloom -> verbs + meta
+       Bloom -> verbs + meta when bloom chosen
     ---------------------------*/
     bloomSel.addEventListener('change', async () => {
-      const bloom = bloomSel.value;
-      const plo = ploSel.value;
+      const bloom = bloomSel.value; const plo = ploSel.value;
       if (!bloom || !plo) return;
-
-      logEvent('bloom_select', {bloom});
+      logEvent('bloom_select', { bloom, plo });
 
       // verbs
       try {
         const vres = await fetch(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${encodeURIComponent(profileSel.value)}`);
         const verbs = await vres.json();
         verbSel.innerHTML = '<option value="">Select Verb</option>';
-        (verbs || []).forEach(v => verbSel.add(new Option(v,v)));
-      } catch (e) { console.error(e); verbSel.innerHTML = '<option value="">Error</option>'; }
+        (verbs || []).forEach(v => verbSel.add(new Option(v, v)));
+      } catch(e){ console.error(e); verbSel.innerHTML = '<option value="">Error</option>'; }
 
-      // meta
+      // meta update (in case bloom changed after plo)
       try {
         const mres = await fetch(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${encodeURIComponent(profileSel.value)}`);
         const meta = await mres.json();
@@ -478,7 +575,7 @@
         domainEl.textContent = meta.domain || '—';
         conditionEl.textContent = meta.condition || '—';
         criterionEl.textContent = meta.criterion || '—';
-      } catch (e) { console.error(e); }
+      } catch(e){ console.error(e); }
     });
 
     /* --------------------------
@@ -487,30 +584,36 @@
     fieldSel.addEventListener('change', async () => {
       const field = fieldSel.value;
       contentSuggestionsEl.innerHTML = '';
-      logEvent('field_select', {field});
+      contentSuggestionsRight.innerHTML = '';
+      logEvent('field_select', { field });
       if (!field) return;
       try {
         const res = await fetch(`/api/content/${encodeURIComponent(field)}`);
         const list = await res.json();
         (list || []).forEach(s => {
           const btn = document.createElement('button');
-          btn.className = 'btn btn-sm';
-          btn.style.margin = '4px 6px 0 0';
+          btn.className = 'btn btn-sm btn-light me-1 mb-1';
           btn.textContent = s;
-          btn.onclick = () => contentInput.value = s;
+          btn.onclick = () => { contentInput.value = s; };
           contentSuggestionsEl.appendChild(btn);
+
+          // duplicate small suggestion on right
+          const small = document.createElement('div');
+          small.className = 'muted mb-1';
+          small.textContent = s;
+          contentSuggestionsRight.appendChild(small);
         });
-      } catch (e) { console.error(e); }
+      } catch(e){ console.error(e); }
     });
 
     /* --------------------------
-       LEVEL / PROFILE tracking
+       profile/level events
     ---------------------------*/
-    profileSel.addEventListener('change', () => logEvent('profile_select', {profile: profileSel.value}));
-    levelSel.addEventListener('change', () => logEvent('level_select', {level: levelSel.value}));
+    profileSel.addEventListener('change', () => logEvent('profile_select', { profile: profileSel.value }));
+    levelSel.addEventListener('change', () => logEvent('level_select', { level: levelSel.value }));
 
     /* --------------------------
-       Generate CLO + UI updates + GA
+       Generate CLO (main)
     ---------------------------*/
     generateBtn.addEventListener('click', async () => {
       if (!ploSel.value || !bloomSel.value || !verbSel.value || !contentInput.value.trim()) {
@@ -528,18 +631,19 @@
       fd.append('verb', verbSel.value);
       fd.append('content', contentInput.value);
 
-      logEvent('generate_clo_attempt', { plo: ploSel.value, bloom: bloomSel.value, verb: verbSel.value, profile: profileSel.value });
+      logEvent('generate_clo_attempt', { plo: ploSel.value, bloom: bloomSel.value, verb: verbSel.value });
 
       try {
         const res = await fetch('/generate', { method:'POST', body: fd });
-        if (!res.ok) throw new Error('Server error');
+        if (!res.ok) { const err = await res.text().catch(()=> 'server error'); throw new Error(err); }
         const data = await res.json();
         LAST_CLO = data;
 
+        // show generated clo
         cloText.innerText = data.clo || '';
         cloCard.style.display = 'block';
 
-        // variants under CLO
+        // variants under clo
         variantsPanel.innerHTML = '';
         const opts = data.variants || data.clo_options || {};
         Object.entries(opts).forEach(([label, text]) => {
@@ -547,11 +651,11 @@
           div.className = 'logic-box mb-2';
           div.style.cursor = 'pointer';
           div.innerHTML = `<strong>${label}</strong><div class="mt-1">${text}</div>`;
-          div.onclick = () => { cloText.innerText = text; };
+          div.onclick = () => cloText.innerText = text;
           variantsPanel.appendChild(div);
         });
 
-        // variants tab
+        // populate variants tab
         variants_list.innerHTML = '';
         Object.entries(opts).forEach(([label, text]) => {
           const p = document.createElement('p');
@@ -559,30 +663,32 @@
           variants_list.appendChild(p);
         });
 
-        // assessment & evidence
+        // assessment + evidence
         const assessments = data.assessments || [];
         assessList.innerHTML = assessments.length ? ('<ul>' + assessments.map(a => `<li>${a}</li>`).join('') + '</ul>') : '—';
         const evidence = data.evidence || {};
         evidenceList.innerHTML = Object.keys(evidence).length ? Object.entries(evidence).map(([k,v]) => `<div><strong>${k}</strong>: ${v.join('; ')}</div>`).join('') : '—';
 
-        // set sidebar statements
+        // update side statements & indicator
         peoStatementEl.textContent = data.peo_statement || '—';
         ploStatementEl.textContent = data.plo_statement || '—';
         ploIndicatorEl.textContent = data.plo_indicator || '—';
 
-        logEvent('generate_clo', { plo: ploSel.value, bloom: bloomSel.value, verb: verbSel.value, profile: profileSel.value });
+        logEvent('generate_clo', { plo: ploSel.value, bloom: bloomSel.value, verb: verbSel.value });
 
       } catch (e) {
         console.error(e);
-        alert('Error generating CLO');
-        logEvent('generate_clo_error', { error: e.message || String(e) });
+        alert('Error generating CLO. See console for details.');
+        logEvent('generate_clo_error', { error: (e.message || String(e)) });
       } finally {
         busyEl.style.display = 'none';
         generateBtn.disabled = false;
       }
     });
 
-    // copy
+    /* --------------------------
+       Copy generated CLO
+    ---------------------------*/
     copyBtn.addEventListener('click', async () => {
       if (!cloText.innerText) return;
       try {
@@ -590,14 +696,24 @@
         copyBtn.innerText = 'Copied';
         setTimeout(()=> copyBtn.innerHTML = '<i class="bi bi-clipboard me-1"></i> Copy', 1200);
         logEvent('copy_clo', { plo: ploSel.value || null });
-      } catch (e) { alert('Copy failed'); }
+      } catch(e) { alert('Copy failed'); }
     });
 
-    // downloads
-    downloadBtn.addEventListener('click', () => { logEvent('download_clo'); window.location = '/download'; });
-    downloadRubricBtn.addEventListener('click', () => { logEvent('download_rubric'); window.location = '/download_rubric'; });
+    /* --------------------------
+       Download handlers (safe)
+    ---------------------------*/
+    downloadBtn.addEventListener('click', () => {
+      logEvent('download_clo', { plo: ploSel.value || null });
+      window.location = '/download';
+    });
+    downloadRubricBtn.addEventListener('click', () => {
+      logEvent('download_rubric', { plo: ploSel.value || null });
+      window.location = '/download_rubric';
+    });
 
-    // toggle variants panel
+    /* --------------------------
+       Toggle variants panel
+    ---------------------------*/
     toggleVariantsBtn.addEventListener('click', () => {
       const hidden = variantsPanel.style.display === 'none' || variantsPanel.style.display === '';
       variantsPanel.style.display = hidden ? 'block' : 'none';
@@ -605,23 +721,23 @@
       logEvent('variants_toggle', { visible: hidden });
     });
 
-    // tab clicks
+    // tab click events
     document.querySelectorAll('#tabNav .nav-link').forEach(tab => {
-      tab.addEventListener('click', () => {
-        logEvent('tab_click', { tab: tab.textContent.trim() });
-      });
+      tab.addEventListener('click', () => logEvent('tab_click', { tab: tab.textContent.trim() }));
     });
 
-    // PLO selection also logs peo->plo logic requests
-    ploSel.addEventListener('change', () => {
-      logEvent('peo_plo_check', { peo: peoSel.value, plo: ploSel.value });
-    });
+    // extra PLO select logging
+    ploSel.addEventListener('change', () => logEvent('peo_plo_check', { peo: peoSel.value, plo: ploSel.value }));
 
-    // init
+    /* --------------------------
+       init()
+       Call last, after listeners defined
+    ---------------------------*/
     (function init(){
       loadMapping();
       logEvent('page_init', { page: 'generator' });
     })();
+
   </script>
 </body>
 </html>
