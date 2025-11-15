@@ -2,17 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>SCLOG — Smart CLO Generator (V9)</title>
+  <title>SCLOG — Smart CLO Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <!-- Bootstrap + icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
 
-  <!-- ======================
-       Google Analytics
-       Replace ID if needed
-       ====================== -->
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-HMBYNXRLBE"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -20,7 +17,6 @@
     gtag('js', new Date());
     gtag('config', 'G-HMBYNXRLBE', { 'send_page_view': true });
 
-    // Safe wrapper for custom events
     function logEvent(name, data = {}) {
       if (typeof gtag === 'function') {
         try { gtag('event', name, data); } catch(e){ console.debug('gtag error', e); }
@@ -30,10 +26,7 @@
     }
   </script>
 
-  <!-- ======================
-       THEME: Soft Purple Light + Soft Purple Dark
-       (mobile-first responsive)
-       ====================== -->
+  <!-- Theme CSS -->
   <style>
     :root{
       --usm-purple: #6d28d9;
@@ -122,17 +115,13 @@
 
     footer { margin-top:18px; text-align:center; color:var(--muted); font-size:.88rem; }
 
-    /* Responsive adjustments */
-    @media (max-width: 991px) {
-      .profile-row { flex-direction:column; gap:10px; }
-    }
+    @media (max-width: 991px) { .profile-row { flex-direction:column; gap:10px; } }
     @media (max-width: 575px) {
       .card-box { padding:12px; border-radius:12px; }
       .brand { font-size:1.05rem; }
       .form-control, .form-select { padding:8px 10px; }
       .btn { padding:7px 10px; font-size:.92rem; }
     }
-
   </style>
 </head>
 
@@ -169,6 +158,7 @@
         <div class="col-12 col-md-2">
           <label class="form-label">Level</label>
           <select id="level" class="form-select">
+            <option value="" selected>— Select Level —</option>
             <option>Diploma</option>
             <option selected>Degree</option>
             <option>Master</option>
@@ -193,7 +183,7 @@
       </div>
     </div>
 
-    <!-- 2) PLO for selected PEO (placed BEFORE the builder per your request) -->
+    <!-- 2) PLO for selected PEO -->
     <div id="plo_block" class="card-box mb-3">
       <label class="form-label">PLO for selected PEO</label>
       <select id="plo" class="form-select mb-3"><option value="">Select PLO</option></select>
@@ -238,26 +228,25 @@
                   <select id="verb" class="form-select"><option value="">Select Verb</option></select>
                 </div> 
                 
-<div class="col-md-6">
-  <label class="form-label">Field (topic area)</label>
-  <select id="field" class="form-select">
-    <option value="" selected>— Select Field —</option>
-    <option>Computer Science</option>
-    <option>Medical & Health</option>
-    <option>Engineering</option>
-    <option>Social Sciences</option>
-    <option>Education</option>
-    <option>Business</option>
-    <option>Arts & Humanities</option>
-  </select>
+                <div class="col-md-6">
+                  <label class="form-label">Field (topic area)</label>
+                  <select id="field" class="form-select">
+                    <option value="" selected>— Select Field —</option>
+                    <option>Computer Science</option>
+                    <option>Medical & Health</option>
+                    <option>Engineering</option>
+                    <option>Social Sciences</option>
+                    <option>Education</option>
+                    <option>Business</option>
+                    <option>Arts & Humanities</option>
+                  </select>
+                  <div id="content_suggestions" class="mt-2"></div>
+                </div>
 
-  <div id="content_suggestions" class="mt-2"></div>
-</div>
-
-<div class="col-12">
-  <label class="form-label">Content (topic / object)</label>
-  <input id="content" class="form-control" placeholder="e.g., interpret ECG waveforms">
-</div>
+                <div class="col-12">
+                  <label class="form-label">Content (topic / object)</label>
+                  <input id="content" class="form-control" placeholder="e.g., interpret ECG waveforms">
+                </div>
 
                 <div class="col-12 d-flex gap-2 align-items-center">
                   <button id="generateBtn" class="btn btn-primary"><i class="bi bi-magic me-1"></i> Generate CLO</button>
@@ -265,7 +254,6 @@
                   <div id="busy" class="muted" style="display:none">Generating…</div>
                 </div>
 
-                <!-- Generated CLO card (appears after generate) -->
                 <div id="cloCard" class="col-12 card-box" style="display:none; margin-top:12px;">
                   <h6 class="mb-2">Generated CLO</h6>
                   <div id="clo_text" style="line-height:1.4; font-weight:600;"></div>
@@ -275,7 +263,6 @@
                     <div id="variantsPanel" style="display:none; margin-top:10px;"></div>
                   </div>
 
-                  <!-- Downloads located directly after generated CLO -->
                   <div class="mt-3 d-flex gap-2">
                     <button id="downloadBtn" class="btn btn-success"><i class="bi bi-download me-1"></i> Download CLO</button>
                     <button id="downloadRubricBtn" class="btn btn-outline-secondary"><i class="bi bi-file-earmark-text me-1"></i> Download Rubric</button>
@@ -346,10 +333,7 @@
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- ===========================
-       App JS: DOM refs, handlers, GA events
-       Place GA listeners AFTER refs and before init()
-       =========================== -->
+  <!-- App JS -->
   <script>
     // Short helper
     const $ = id => document.getElementById(id);
@@ -427,13 +411,9 @@
       }
     }
 
-    /* --------------------------
-       IEG -> PEO mapping + logic
-       (Option 1 placement of logic box)
-    ---------------------------*/
+    /* IEG -> PEO mapping + logic */
     iegSel.addEventListener('change', async () => {
       const ieg = iegSel.value;
-      // reset downstream elements
       peoSel.innerHTML = '<option value="">Select PEO</option>';
       ploSel.innerHTML = '<option value="">Select PLO</option>';
       iegLogicBox.textContent = '—';
@@ -443,7 +423,6 @@
       logEvent('ieg_select', { ieg });
 
       if (!ieg) return;
-      // load PEOs
       try {
         const r = await fetch(`/api/get_peos/${encodeURIComponent(ieg)}`);
         const peos = await r.json();
@@ -451,7 +430,6 @@
         (peos || []).forEach(p => peoSel.add(new Option(p, p)));
       } catch (e) { console.error(e); }
 
-      // load logic explanation (text)
       try {
         const r2 = await fetch(`/api/logic/ieg_peo/${encodeURIComponent(ieg)}`);
         const txt = await r2.text();
@@ -459,9 +437,7 @@
       } catch (e) { console.error(e); iegLogicBox.textContent = 'Logic unavailable.'; }
     });
 
-    /* --------------------------
-       PEO -> PLO mapping + statements
-    ---------------------------*/
+    /* PEO -> PLO mapping + statements */
     peoSel.addEventListener('change', async () => {
       const peo = peoSel.value;
       ploSel.innerHTML = '<option value="">Select PLO</option>';
@@ -472,7 +448,6 @@
       logEvent('peo_select', { peo });
 
       if (!peo) return;
-      // load PLOs
       try {
         const r = await fetch(`/api/get_plos/${encodeURIComponent(peo)}`);
         const plos = await r.json();
@@ -480,7 +455,6 @@
         (plos || []).forEach(p => ploSel.add(new Option(p, p)));
       } catch (e) { console.error(e); }
 
-      // load PEO statement
       try {
         const level = levelSel.value || 'Degree';
         const sres = await fetch(`/api/get_statement/${encodeURIComponent(level)}/PEO/${encodeURIComponent(peo)}`);
@@ -489,9 +463,7 @@
       } catch(e) { console.error(e); }
     });
 
-    /* --------------------------
-       PLO -> blooms + PEO→PLO logic + statements + indicator + meta
-    ---------------------------*/
+    /* PLO -> blooms + PEO→PLO logic + statements + indicator + meta */
     ploSel.addEventListener('change', async () => {
       const plo = ploSel.value;
       const peo = peoSel.value;
@@ -509,14 +481,12 @@
 
       if (!plo) return;
 
-      // PEO -> PLO logic explanation
       try {
         const r = await fetch(`/api/logic/peo_plo/${encodeURIComponent(peo)}/${encodeURIComponent(plo)}`);
         const txt = await r.text();
         peoPloLogicBox.textContent = txt && txt.trim() ? txt : 'No logic explanation available.';
       } catch(e) { console.error(e); peoPloLogicBox.textContent = 'Logic unavailable.'; }
 
-      // blooms
       try {
         const res = await fetch(`/api/get_blooms/${encodeURIComponent(plo)}?profile=${encodeURIComponent(profileSel.value)}`);
         const blooms = await res.json();
@@ -524,7 +494,6 @@
         (blooms || []).forEach(b => bloomSel.add(new Option(b, b)));
       } catch(e) { console.error(e); bloomSel.innerHTML = '<option value="">Error</option>'; }
 
-      // plo statement
       try {
         const level = levelSel.value || 'Degree';
         const sres = await fetch(`/api/get_statement/${encodeURIComponent(level)}/PLO/${encodeURIComponent(plo)}`);
@@ -532,12 +501,10 @@
         ploStatementEl.textContent = stmt || '—';
       } catch(e){ console.error(e); }
 
-      // plo indicator
       try {
         ploIndicatorEl.textContent = (MAP.PLOIndicators && MAP.PLOIndicators[plo]) || '—';
       } catch(e){ ploIndicatorEl.textContent = '—'; }
 
-      // meta (SC code, desc, vbe, domain, criterion, condition)
       try {
         const mres = await fetch(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloomSel.value || '')}`);
         const meta = await mres.json();
@@ -550,15 +517,12 @@
       } catch(e){ console.error(e); }
     });
 
-    /* --------------------------
-       Bloom -> verbs + meta when bloom chosen
-    ---------------------------*/
+    /* Bloom -> verbs + meta when bloom chosen */
     bloomSel.addEventListener('change', async () => {
       const bloom = bloomSel.value; const plo = ploSel.value;
       if (!bloom || !plo) return;
       logEvent('bloom_select', { bloom, plo });
 
-      // verbs
       try {
         const vres = await fetch(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${encodeURIComponent(profileSel.value)}`);
         const verbs = await vres.json();
@@ -566,7 +530,6 @@
         (verbs || []).forEach(v => verbSel.add(new Option(v, v)));
       } catch(e){ console.error(e); verbSel.innerHTML = '<option value="">Error</option>'; }
 
-      // meta update (in case bloom changed after plo)
       try {
         const mres = await fetch(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${encodeURIComponent(profileSel.value)}`);
         const meta = await mres.json();
@@ -579,9 +542,7 @@
       } catch(e){ console.error(e); }
     });
 
-    /* --------------------------
-       Field -> content suggestions
-    ---------------------------*/
+    /* Field -> content suggestions */
     fieldSel.addEventListener('change', async () => {
       const field = fieldSel.value;
       contentSuggestionsEl.innerHTML = '';
@@ -598,7 +559,6 @@
           btn.onclick = () => { contentInput.value = s; };
           contentSuggestionsEl.appendChild(btn);
 
-          // duplicate small suggestion on right
           const small = document.createElement('div');
           small.className = 'muted mb-1';
           small.textContent = s;
@@ -607,15 +567,10 @@
       } catch(e){ console.error(e); }
     });
 
-    /* --------------------------
-       profile/level events
-    ---------------------------*/
     profileSel.addEventListener('change', () => logEvent('profile_select', { profile: profileSel.value }));
     levelSel.addEventListener('change', () => logEvent('level_select', { level: levelSel.value }));
 
-    /* --------------------------
-       Generate CLO (main)
-    ---------------------------*/
+    /* Generate CLO */
     generateBtn.addEventListener('click', async () => {
       if (!ploSel.value || !bloomSel.value || !verbSel.value || !contentInput.value.trim()) {
         alert('Please fill PLO, Bloom, Verb and Content.');
@@ -640,11 +595,9 @@
         const data = await res.json();
         LAST_CLO = data;
 
-        // show generated clo
         cloText.innerText = data.clo || '';
         cloCard.style.display = 'block';
 
-        // variants under clo
         variantsPanel.innerHTML = '';
         const opts = data.variants || data.clo_options || {};
         Object.entries(opts).forEach(([label, text]) => {
@@ -656,7 +609,6 @@
           variantsPanel.appendChild(div);
         });
 
-        // populate variants tab
         variants_list.innerHTML = '';
         Object.entries(opts).forEach(([label, text]) => {
           const p = document.createElement('p');
@@ -664,13 +616,11 @@
           variants_list.appendChild(p);
         });
 
-        // assessment + evidence
         const assessments = data.assessments || [];
         assessList.innerHTML = assessments.length ? ('<ul>' + assessments.map(a => `<li>${a}</li>`).join('') + '</ul>') : '—';
         const evidence = data.evidence || {};
         evidenceList.innerHTML = Object.keys(evidence).length ? Object.entries(evidence).map(([k,v]) => `<div><strong>${k}</strong>: ${v.join('; ')}</div>`).join('') : '—';
 
-        // update side statements & indicator
         peoStatementEl.textContent = data.peo_statement || '—';
         ploStatementEl.textContent = data.plo_statement || '—';
         ploIndicatorEl.textContent = data.plo_indicator || '—';
@@ -687,9 +637,7 @@
       }
     });
 
-    /* --------------------------
-       Copy generated CLO
-    ---------------------------*/
+    /* Copy CLO */
     copyBtn.addEventListener('click', async () => {
       if (!cloText.innerText) return;
       try {
@@ -700,9 +648,7 @@
       } catch(e) { alert('Copy failed'); }
     });
 
-    /* --------------------------
-       Download handlers (safe)
-    ---------------------------*/
+    /* Downloads */
     downloadBtn.addEventListener('click', () => {
       logEvent('download_clo', { plo: ploSel.value || null });
       window.location = '/download';
@@ -712,9 +658,7 @@
       window.location = '/download_rubric';
     });
 
-    /* --------------------------
-       Toggle variants panel
-    ---------------------------*/
+    /* Toggle variants */
     toggleVariantsBtn.addEventListener('click', () => {
       const hidden = variantsPanel.style.display === 'none' || variantsPanel.style.display === '';
       variantsPanel.style.display = hidden ? 'block' : 'none';
@@ -727,33 +671,30 @@
       tab.addEventListener('click', () => logEvent('tab_click', { tab: tab.textContent.trim() }));
     });
 
-    // extra PLO select logging
     ploSel.addEventListener('change', () => logEvent('peo_plo_check', { peo: peoSel.value, plo: ploSel.value }));
 
-    /* --------------------------
-       init()
-       Call last, after listeners defined
-    ---------------------------*/
+    /* init() - call last, after listeners defined */
     (function init(){
       loadMapping();
 
-    // Make field default to "— Select Field —"
-    const fieldSel = document.getElementById("field");
-    if (fieldSel) {
+      // Make field default to "— Select Field —"
+      if (fieldSel) {
         fieldSel.value = "";
         fieldSel.selectedIndex = 0;
-    }
+      }
 
-    // Clear suggestions on page load
-    const contentSuggestionsEl = document.getElementById("content_suggestions");
-    if (contentSuggestionsEl) {
+      // Clear suggestions on page load
+      if (contentSuggestionsEl) {
         contentSuggestionsEl.innerHTML = "";
-    }
-})();
+      }
+      if (contentSuggestionsRight) {
+        contentSuggestionsRight.innerHTML = "";
+      }
 
+      // track page init
       logEvent('page_init', { page: 'generator' });
-    })();
 
+    })();
   </script>
 </body>
 </html>
