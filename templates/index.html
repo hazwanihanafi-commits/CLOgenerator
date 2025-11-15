@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>SCLOG — Smart Course Learning Outcome Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+/* =============== SOFT USM PURPLE THEME (Light + Dark) =============== */
+:root{ --usm-purple:#6d28d9; --usm-purple-light:#a78bfa; --usm-bg:#f6f3ff; --card-bg:#fff; --muted:#6c6480; --text-dark:#2d244f; --radius:14px; --shadow:0 10px 30px rgba(16,24,40,0.06); --border:rgba(109,40,217,0.18); }
+body[data-theme="light"]{ background:var(--usm-bg); color:var(--text-dark); }
+body[data-theme="dark"]{ background:linear-gradient(180deg,#0f0b18,#1b1430); color:#eee6ff; }
+*{box-sizing:border-box}
+.container-app{ max-width:1400px; margin:10px auto; padding:12px; }
+.card-box{ background:var(--card-bg); border-radius:var(--radius); padding:16px; border:1px solid var(--border); box-shadow:var(--shadow); transition:.16s ease; }
+body[data-theme="dark"] .card-box{ background:#241a3d; border:1px solid rgba(255,255,255,0.06); box-shadow:0 8px 30px rgba(0,0,0,0.45); }
+.header{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
+.brand{ font-weight:900; font-size:1.25rem; background: linear-gradient(90deg,var(--usm-purple),var(--usm-purple-light)); -webkit-background-clip:text; color:transparent !important; }
+.small-muted{ color:var(--muted); font-size:.95rem; }
+.mapping-row{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:16px; align-items:flex-start; }
+.map-card{ flex:1 1 280px; min-width:250px; }
+.builder-row{ display:block; }
+.form-select,.form-control{ border-radius:12px !important; padding:10px 12px !important; border:1px solid rgba(16,24,40,0.06) !important; background:#faf7ff; }
+body[data-theme="dark"] .form-control, body[data-theme="dark"] .form-select{ background:#32254e; color:#efe6ff; border:1px solid rgba(255,255,255,0.06) !important; }
+.form-control:focus, .form-select:focus{ box-shadow:0 0 0 6px rgba(167,139,250,0.12); border-color:var(--usm-purple) !important; outline:none; }
+.btn{ border-radius:12px; font-weight:700; }
+.btn-primary{ background: linear-gradient(90deg,var(--usm-purple),var(--usm-purple-light)); color:#fff; border:none; }
+.btn-outline-secondary{ color:var(--usm-purple); border:1px solid var(--usm-purple); }
+.nav-tabs{ border-bottom:none; overflow-x:auto; white-space:nowrap; }
+.nav-tabs .nav-link{ border-radius:10px; background:#f3eefe; color:var(--usm-purple); margin-right:6px; padding:8px 12px; }
+.nav-tabs .nav-link.active{ background:var(--usm-purple); color:#fff; font-weight:700; }
+body[data-theme="dark"] .nav-tabs .nav-link{ background:#39264f; color:#d9cfff; }
+body[data-theme="dark"] .nav-tabs .nav-link.active{ background:#7c3aed; }
+#content_suggestions button{ margin-right:8px; margin-bottom:8px; border-radius:10px; background:#f3eefe !important; color:var(--usm-purple); border:1px solid rgba(109,40,217,0.12) !important; }
+body[data-theme="dark"] #content_suggestions button{ background:#3b2e5e !important; color:#e7ddff; border:1px solid rgba(255,255,255,0.04) !important; }
+#cloCard{ margin-top:12px; } .download-row{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
+@media (max-width: 991px){ .mapping-row{ flex-direction:column; } }
+@media (max-width:575px){ .card-box{ padding:12px; border-radius:12px; } .brand{ font-size:1.05rem; } .nav-tabs .nav-link{ padding:6px 10px; font-size:.92rem; } .btn{ font-size:.88rem; padding:7px 10px; } }
+  </style>
+</head>
+<body data-theme="light">
+  <div class="container-app">
+
+    <!-- HEADER -->
+    <div class="header card-box mb-3">
+      <div>
+        <div class="brand">SCLOG — Smart Course Learning Outcome Generator</div>
+        <div class="small-muted">Professional CLO builder with mapping logic</div>
+      </div>
+      <div>
+        <button id="darkToggle" class="btn btn-outline-secondary btn-sm"><i class="bi bi-moon"></i></button>
+      </div>
+    </div>
+
+    <!-- MAPPING ROW -->
+    <div class="mapping-row">
+      <!-- PROFILE + LEVEL -->
+      <div class="map-card card-box">
+        <label class="form-label small-muted">Academic Profile (affects mapping)</label>
+        <select id="profile" class="form-select mb-3">
+          <option value="health">Medical & Health</option>
+          <option value="sc" selected>Computer Science & IT</option>
+          <option value="eng">Engineering & Technology</option>
+          <option value="socs">Social Sciences</option>
+          <option value="edu">Education</option>
+          <option value="bus">Business & Management</option>
+          <option value="arts">Arts & Humanities</option>
+        </select>
+
+        <label class="form-label small-muted">Level</label>
+        <select id="level" class="form-select">
+          <option>Diploma</option>
+          <option selected>Degree</option>
+          <option>Master</option>
+          <option>PhD</option>
+        </select>
+      </div>
+
+      <!-- IEG / PEO / WHY / PLO / PEO→PLO WHY -->
+      <div class="map-card card-box">
+        <label class="form-label small-muted">IEG</label>
+        <select id="ieg" class="form-select mb-2"><option value="">Select IEG</option></select>
+
+        <label class="form-label small-muted mt-2">PEO</label>
+        <select id="peo" class="form-select mb-2"><option value="">Select PEO</option></select>
+
+        <div class="mt-2 small-muted fw-bold">Why this IEG → PEO?</div>
+        <div id="iep_logic" class="rounded p-2 mt-1" style="background:#f8f5ff; min-height:48px; font-size:.92rem;">—</div>
+
+        <label class="form-label small-muted mt-3">PLO</label>
+        <select id="plo" class="form-select mb-2"><option value="">Select PLO</option></select>
+
+        <div class="mt-3 small-muted">Why this PEO → PLO?</div>
+        <div id="peo_plo_logic" class="rounded p-2 mt-1" style="background:#f8f5ff; min-height:60px; font-size:.88rem;">—</div>
+
+        <div class="mt-2 small-muted">
+          <div><strong>PEO:</strong> <span id="peo_statement">—</span></div>
+          <div><strong>PLO:</strong> <span id="plo_statement">—</span></div>
+          <div><strong>Indicator:</strong> <span id="plo_indicator">—</span></div>
+        </div>
+      </div>
+
+      <!-- QUICK ACTIONS -->
+      <div class="map-card card-box">
+        <div class="small-muted mb-2">Quick actions</div>
+        <div class="d-grid gap-2">
+          <button id="downloadBtn_top" class="btn btn-outline-secondary btn-sm">Download last CLO</button>
+          <button id="downloadRubricBtn_top" class="btn btn-outline-secondary btn-sm">Download Rubric</button>
+        </div>
+        <div class="helper mt-2">Note: Primary download buttons are under Generated CLO in the builder.</div>
+      </div>
+    </div>
+
+    <!-- BUILDER -->
+    <div class="builder-row mt-3">
+      <div class="card-box builder-card">
+        <ul class="nav nav-tabs" id="tabNav" role="tablist">
+          <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#builder">Builder</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#variants">Variants</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#assessment">Assessment</button></li>
+          <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#history">History</button></li>
+        </ul>
+
+        <div class="tab-content mt-3">
+          <div class="tab-pane fade show active" id="builder">
+            <div class="row g-3">
+              <div class="col-lg-8">
+                <label class="form-label small-muted">Bloom</label>
+                <select id="bloom" class="form-select mb-2"><option value="">Select Bloom</option></select>
+
+                <label class="form-label small-muted">Verb</label>
+                <select id="verb" class="form-select mb-2"><option value="">Select Verb</option></select>
+
+                <label class="form-label small-muted">Field (topic area)</label>
+                <select id="field" class="form-select mb-2">
+                  <option value="">— Select Field —</option>
+                  <option>Computer Science</option>
+                  <option>Medical & Health</option>
+                  <option>Engineering</option>
+                  <option>Social Sciences</option>
+                  <option>Education</option>
+                  <option>Business</option>
+                  <option>Arts & Humanities</option>
+                </select>
+                <div class="helper">Selecting a field loads content suggestions below.</div>
+
+                <label class="form-label small-muted mt-2">Content (topic / object)</label>
+                <input id="content" class="form-control" placeholder="e.g., interpret ECG waveforms">
+
+                <div id="content_suggestions" class="mt-2"></div>
+
+                <div class="mt-3 d-flex gap-2 align-items-center">
+                  <button id="generateBtn" class="btn btn-primary"><i class="bi bi-magic me-1"></i> Generate CLO</button>
+                  <button id="copyBtn" class="btn btn-outline-secondary"><i class="bi bi-clipboard"></i> Copy</button>
+                  <div id="busy" class="small-muted" style="display:none;">Generating…</div>
+                </div>
+
+                <div id="cloCard" class="card-box mt-3" style="display:none;">
+                  <h6 class="mb-2">Generated CLO</h6>
+                  <div id="clo_text" class="fw-semibold" style="line-height:1.4;"></div>
+
+                  <button id="toggleVariants" class="btn btn-sm btn-outline-secondary mt-3">Show variants</button>
+                  <div id="variantsPanel" style="display:none;" class="mt-2"></div>
+
+                  <div class="download-row mt-3">
+                    <button id="downloadBtn" class="btn btn-success"><i class="bi bi-download me-1"></i> Download CLO</button>
+                    <button id="downloadRubricBtn" class="btn btn-outline-secondary"><i class="bi bi-file-earmark-text me-1"></i> Download Rubric</button>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="col-lg-4">
+                <div class="card-box">
+                  <div class="small-muted mb-2">Mapping metadata</div>
+                  <p><strong>SC Code:</strong><br><span id="sc_code" class="small-muted">—</span></p>
+                  <p><strong>SC Description:</strong><br><span id="sc_desc" class="small-muted">—</span></p>
+                  <p><strong>VBE:</strong><br><span id="vbe" class="small-muted">—</span></p>
+                  <p><strong>Domain:</strong><br><span id="domain" class="small-muted">—</span></p>
+                  <p><strong>Condition:</strong><br><span id="condition" class="small-muted">—</span></p>
+                  <p><strong>Criterion:</strong><br><span id="criterion" class="small-muted">—</span></p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="variants"><div id="variants_list" class="mt-2"></div></div>
+
+          <div class="tab-pane fade" id="assessment">
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="card-box"><h6>Assessment methods</h6><div id="assess_list" class="small-muted">—</div></div>
+              </div>
+              <div class="col-lg-6">
+                <div class="card-box"><h6>Suggested evidence</h6><div id="evidence_list" class="small-muted">—</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-pane fade" id="history">
+            <div class="card-box"><h6>Recent generation</h6><div id="history_list" class="small-muted">No history (demo)</div></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <footer class="card-box mt-4">© 2025 • Assoc Prof Dr Hazwani Ahmad Yusof @ Hanafi • Universiti Sains Malaysia</footer>
+  </div>
+
+  <!-- Bootstrap and script -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+/* Helper */
+const $ = id => document.getElementById(id);
+
+/* Refs */
+const profileSel = $('profile'), levelSel = $('level');
+const iegSel = $('ieg'), peoSel = $('peo'), ploSel = $('plo');
+const bloomSel = $('bloom'), verbSel = $('verb');
+const fieldSel = $('field'), contentInput = $('content'), contentSuggestionsEl = $('content_suggestions');
+
+const logicBox = $('iep_logic'), peoPloLogicBox = $('peo_plo_logic');
+const peoStatementEl = $('peo_statement'), ploStatementEl = $('plo_statement'), ploIndicatorEl = $('plo_indicator');
+
+const scCodeEl = $('sc_code'), scDescEl = $('sc_desc'), vbeEl = $('vbe'), domainEl = $('domain'), conditionEl = $('condition'), criterionEl = $('criterion');
+
+const cloCard = $('cloCard'), cloText = $('clo_text'), variantsPanel = $('variantsPanel');
+
+const generateBtn = $('generateBtn'), copyBtn = $('copyBtn'), toggleVariantsBtn = $('toggleVariants');
+const downloadBtn = $('downloadBtn'), downloadRubricBtn = $('downloadRubricBtn');
+const downloadBtnTop = $('downloadBtn_top'), downloadRubricBtnTop = $('downloadRubricBtn_top');
+const busyEl = $('busy'), darkToggle = $('darkToggle');
+
+let MAP = {}, LAST_CLO = null;
+
+/* Dark toggle */
+darkToggle.addEventListener('click', () => {
+  const curr = document.body.getAttribute('data-theme') || 'light';
+  const next = curr === 'light' ? 'dark' : 'light';
+  document.body.setAttribute('data-theme', next);
+  darkToggle.innerHTML = next === 'dark' ? '<i class="bi bi-sun"></i>' : '<i class="bi bi-moon"></i>';
+});
+
+/* Load mapping */
+async function loadMapping(){
+  try{
+    const res = await fetch('/api/mapping');
+    MAP = await res.json();
+    iegSel.innerHTML = '<option value="">Select IEG</option>';
+    (MAP.IEGs||[]).forEach(i => iegSel.add(new Option(i,i)));
+    ploSel.innerHTML = '<option value="">Select PLO</option>';
+    (MAP.PLOs||[]).forEach(p => ploSel.add(new Option(p,p)));
+  }catch(e){ console.error(e); }
+}
+loadMapping();
+
+/* IEG -> PEO + why */
+iegSel.addEventListener('change', async () => {
+  const ieg = iegSel.value;
+  peoSel.innerHTML = '<option value="">Select PEO</option>';
+  logicBox.innerText = '—';
+  peoPloLogicBox.innerText = '—';
+  if(!ieg) return;
+  try{
+    const res = await fetch(`/api/get_peos/${encodeURIComponent(ieg)}`);
+    const peos = await res.json();
+    peoSel.innerHTML = '<option value="">Select PEO</option>';
+    (peos||[]).forEach(p => peoSel.add(new Option(p,p)));
+    const logicRes = await fetch(`/api/logic/ieg_peo/${encodeURIComponent(ieg)}`);
+    const txt = await logicRes.text();
+    logicBox.innerText = txt && txt.trim()? txt : 'No logic explanation available.';
+  }catch(e){ console.error(e); logicBox.innerText = 'Logic unavailable.'; }
+});
+
+/* PEO -> PLO + PEO statement */
+peoSel.addEventListener('change', async () => {
+  const peo = peoSel.value;
+  ploSel.innerHTML = '<option value="">Select PLO</option>';
+  peoStatementEl.textContent = '—';
+  peoPloLogicBox.innerText = '—';
+  if(!peo) return;
+  try{
+    const res = await fetch(`/api/get_plos/${encodeURIComponent(peo)}`);
+    const plos = await res.json();
+    ploSel.innerHTML = '<option value="">Select PLO</option>';
+    (plos||[]).forEach(p => ploSel.add(new Option(p,p)));
+    const stmtRes = await fetch(`/api/get_statement/${encodeURIComponent(levelSel.value || 'Degree')}/PEO/${encodeURIComponent(peo)}`);
+    const stmt = await stmtRes.json();
+    peoStatementEl.textContent = stmt || '—';
+  }catch(e){ console.error(e); }
+});
+
+/* PLO -> PEO->PLO logic + bloom + statement + indicator */
+ploSel.addEventListener('change', async () => {
+  const plo = ploSel.value, peo = peoSel.value;
+  peoPloLogicBox.innerText = '—';
+  bloomSel.innerHTML = '<option>Loading…</option>';
+  ploStatementEl.textContent = '—';
+  ploIndicatorEl.textContent = '—';
+  if(!plo || !peo) { bloomSel.innerHTML = '<option value="">Select Bloom</option>'; return; }
+  try{
+    // logic text (plain)
+    const logicRes = await fetch(`/api/logic/peo_plo/${encodeURIComponent(peo)}/${encodeURIComponent(plo)}`);
+    const txt = await logicRes.text();
+    peoPloLogicBox.innerText = txt && txt.trim() ? txt : 'No logic explanation available.';
+  }catch(e){ console.error('peo_plo logic', e); peoPloLogicBox.innerText = 'Logic unavailable.'; }
+
+  try{
+    const res = await fetch(`/api/get_blooms/${encodeURIComponent(plo)}?profile=${encodeURIComponent(profileSel.value)}`);
+    const blooms = await res.json();
+    bloomSel.innerHTML = '<option value="">Select Bloom</option>';
+    (blooms||[]).forEach(b => bloomSel.add(new Option(b,b)));
+  }catch(e){ bloomSel.innerHTML = '<option value="">Error</option>'; }
+
+  try{
+    const stmtRes = await fetch(`/api/get_statement/${encodeURIComponent(levelSel.value || 'Degree')}/PLO/${encodeURIComponent(plo)}`);
+    const stmt = await stmtRes.json();
+    ploStatementEl.textContent = stmt || '—';
+  }catch(e){ ploStatementEl.textContent = '—'; }
+
+  try{ ploIndicatorEl.textContent = (MAP.PLOIndicators && MAP.PLOIndicators[plo]) || '—'; }catch(e){ ploIndicatorEl.textContent = '—'; }
+});
+
+/* Bloom -> Verb + meta */
+bloomSel.addEventListener('change', async () => {
+  const bloom = bloomSel.value, plo = ploSel.value;
+  if(!bloom || !plo) return;
+  try{
+    const vres = await fetch(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${encodeURIComponent(profileSel.value)}`);
+    const verbs = await vres.json();
+    verbSel.innerHTML = '<option value="">Select Verb</option>';
+    (verbs||[]).forEach(v => verbSel.add(new Option(v,v)));
+  }catch(e){ verbSel.innerHTML = '<option value="">Error</option>'; }
+
+  try{
+    const mres = await fetch(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}?profile=${encodeURIComponent(profileSel.value)}`);
+    const meta = await mres.json();
+    scCodeEl.textContent = meta.sc_code || '—';
+    scDescEl.textContent = meta.sc_desc || '—';
+    vbeEl.textContent = meta.vbe || '—';
+    domainEl.textContent = meta.domain || '—';
+    conditionEl.textContent = meta.condition || '—';
+    criterionEl.textContent = meta.criterion || '—';
+  }catch(e){ console.error(e); }
+});
+
+/* Field -> content suggestions */
+fieldSel.addEventListener('change', async () => {
+  const field = fieldSel.value;
+  contentSuggestionsEl.innerHTML = '';
+  if(!field) return;
+  try{
+    const res = await fetch(`/api/content/${encodeURIComponent(field)}`);
+    const list = await res.json();
+    contentSuggestionsEl.innerHTML = '';
+    (list||[]).forEach(item => {
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-sm';
+      btn.textContent = item;
+      btn.onclick = () => contentInput.value = item;
+      contentSuggestionsEl.appendChild(btn);
+    });
+  }catch(e){ console.error(e); }
+});
+
+/* Generate CLO */
+generateBtn.addEventListener('click', async () => {
+  if(!ploSel.value || !bloomSel.value || !verbSel.value || !contentInput.value.trim()){
+    alert('Please complete PLO, Bloom, Verb and Content.');
+    return;
+  }
+  busyEl.style.display = 'inline-block';
+  generateBtn.disabled = true;
+  const fd = new FormData();
+  fd.append('profile', profileSel.value);
+  fd.append('level', levelSel.value);
+  fd.append('plo', ploSel.value);
+  fd.append('bloom', bloomSel.value);
+  fd.append('verb', verbSel.value);
+  fd.append('content', contentInput.value);
+  try{
+    const res = await fetch('/generate', { method:'POST', body: fd });
+    if(!res.ok) throw new Error('Server error');
+    const data = await res.json();
+    LAST_CLO = data;
+    cloText.innerText = data.clo || '';
+    cloCard.style.display = 'block';
+    variantsPanel.innerHTML = '';
+    const opts = data.clo_options || {};
+    Object.entries(opts).forEach(([label,text])=>{
+      const v = document.createElement('div');
+      v.className = 'variant-item mt-2';
+      v.innerHTML = `<strong>${label}</strong><div class="mt-1">${text}</div>`;
+      v.onclick = ()=> cloText.innerText = text;
+      variantsPanel.appendChild(v);
+    });
+    $('assess_list').innerHTML = (data.assessments||[]).length?'<ul>'+data.assessments.map(a=>`<li>${a}</li>`).join('')+'</ul>':'—';
+    $('evidence_list').innerHTML = Object.keys(data.evidence||{}).length?Object.entries(data.evidence).map(([k,v])=>`<div><strong>${k}</strong>: ${v.join('; ')}</div>`).join(''):'—';
+  }catch(e){ console.error(e); alert('Error generating CLO'); }finally{ busyEl.style.display='none'; generateBtn.disabled=false; }
+});
+
+/* Variants toggle */
+toggleVariantsBtn.addEventListener('click', () => {
+  const hidden = variantsPanel.style.display === 'none' || variantsPanel.style.display === '';
+  variantsPanel.style.display = hidden ? 'block' : 'none';
+  toggleVariantsBtn.innerText = hidden ? 'Hide variants' : 'Show variants';
+});
+
+/* Copy */
+copyBtn.addEventListener('click', async () => {
+  if(!cloText.innerText) return;
+  try { await navigator.clipboard.writeText(cloText.innerText); copyBtn.innerText='Copied!'; setTimeout(()=> copyBtn.innerHTML='<i class="bi bi-clipboard"></i> Copy',1200); } catch(e){ alert('Copy failed'); }
+});
+
+/* Download */
+downloadBtn.addEventListener('click', ()=> window.location = '/download');
+downloadRubricBtn.addEventListener('click', ()=> window.location = '/download_rubric');
+if(downloadBtnTop) downloadBtnTop.addEventListener('click', ()=> window.location='/download');
+if(downloadRubricBtnTop) downloadRubricBtnTop.addEventListener('click', ()=> window.location='/download_rubric');
+
+  </script>
+</body>
+</html>
