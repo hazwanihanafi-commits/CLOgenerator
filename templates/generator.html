@@ -236,27 +236,35 @@
                 <div class="col-md-6">
                   <label class="form-label">Verb</label>
                   <select id="verb" class="form-select"><option value="">Select Verb</option></select>
-                </div>
+                </div> 
+                
+<div class="col-md-6">
+  <label class="form-label">Verb</label>
+  <select id="verb" class="form-select">
+    <option value="">Select Verb</option>
+  </select>
+</div>
 
-                <div class="col-md-6">
-                  <label class="form-label">Field (topic area)</label>
-                  <select id="field" class="form-select">
-                    <option value="">— Select Field —</option>
-                    <option>Computer Science</option>
-                    <option>Medical & Health</option>
-                    <option>Engineering</option>
-                    <option>Social Sciences</option>
-                    <option>Education</option>
-                    <option>Business</option>
-                    <option>Arts & Humanities</option>
-                  </select>
-                  <div id="content_suggestions" class="mt-2"></div>
-                </div>
+<div class="col-md-6">
+  <label class="form-label">Field (topic area)</label>
+  <select id="field" class="form-select">
+    <option value="" selected>— Select Field —</option>
+    <option>Computer Science</option>
+    <option>Medical & Health</option>
+    <option>Engineering</option>
+    <option>Social Sciences</option>
+    <option>Education</option>
+    <option>Business</option>
+    <option>Arts & Humanities</option>
+  </select>
 
-                <div class="col-12">
-                  <label class="form-label">Content (topic / object)</label>
-                  <input id="content" class="form-control" placeholder="e.g., interpret ECG waveforms">
-                </div>
+  <div id="content_suggestions" class="mt-2"></div>
+</div>
+
+<div class="col-12">
+  <label class="form-label">Content (topic / object)</label>
+  <input id="content" class="form-control" placeholder="e.g., interpret ECG waveforms">
+</div>
 
                 <div class="col-12 d-flex gap-2 align-items-center">
                   <button id="generateBtn" class="btn btn-primary"><i class="bi bi-magic me-1"></i> Generate CLO</button>
@@ -735,6 +743,21 @@
     ---------------------------*/
     (function init(){
       loadMapping();
+
+    // Make field default to "— Select Field —"
+    const fieldSel = document.getElementById("field");
+    if (fieldSel) {
+        fieldSel.value = "";
+        fieldSel.selectedIndex = 0;
+    }
+
+    // Clear suggestions on page load
+    const contentSuggestionsEl = document.getElementById("content_suggestions");
+    if (contentSuggestionsEl) {
+        contentSuggestionsEl.innerHTML = "";
+    }
+})();
+
       logEvent('page_init', { page: 'generator' });
     })();
 
