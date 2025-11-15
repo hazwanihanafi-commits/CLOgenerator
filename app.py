@@ -576,11 +576,80 @@ def download_rubric():
 def index():
     # generator.html uses the mapping loaded via /api/mapping
     return render_template("generator.html")
+# ================================================
+# IEG → PEO LOGIC EXPLANATIONS
+# ================================================
+@app.route("/api/logic/ieg_peo/<ieg>", methods=["GET"])
+def logic_ieg_peo(ieg):
+    logic_map = {
+        "IEG1": (
+            "IEG1 focuses on knowledge, critical thinking, and problem-solving. "
+            "PEO1 is mapped because it operationalizes analytical and intellectual competencies "
+            "into graduate outcomes aligned with the discipline."
+        ),
+        "IEG2": (
+            "IEG2 emphasises altruistic values, ethics, professionalism, and scientific thinking. "
+            "PEO2 supports this by shaping graduates with integrity, responsibility and citizenship."
+        ),
+        "IEG3": (
+            "IEG3 promotes socio-entrepreneurial mindset and societal wellbeing. "
+            "PEO3 is mapped because it directs graduates toward contributing to sustainability and equity."
+        ),
+        "IEG4": (
+            "IEG4 strengthens communication competence across disciplines, society and technology. "
+            "PEO4 aligns because it emphasises effective communication and interaction in academic and industry settings."
+        ),
+        "IEG5": (
+            "IEG5 emphasises leadership, teamwork and lifelong learning. "
+            "PEO5 is mapped because it equips graduates with collaboration and continuous development skills."
+        ),
+    }
+
+    return logic_map.get(ieg, "No logic explanation available."), 200
+
+
+# ================================================
+# PEO → PLO LOGIC EXPLANATIONS
+# (Nice to have, more complete experience)
+# ================================================
+@app.route("/api/logic/peo_plo/<peo>/<plo>", methods=["GET"])
+def logic_peo_plo(peo, plo):
+    logic_map = {
+        "PEO1": {
+            "PLO1": "PLO1 supports PEO1 by ensuring students acquire fundamental disciplinary knowledge.",
+            "PLO2": "PLO2 supports PEO1 by reinforcing critical thinking and problem-solving skills.",
+            "PLO3": "PLO3 strengthens analytical and practical abilities required by PEO1.",
+            "PLO6": "PLO6 ensures students can apply knowledge in real-world contexts, supporting PEO1.",
+            "PLO7": "PLO7 aligns with PEO1 through exposure to complex challenges requiring critical reasoning."
+        },
+        "PEO2": {
+            "PLO11": "PLO11 emphasises ethics, professionalism and responsibility, directly supporting PEO2."
+        },
+        "PEO3": {
+            "PLO10": "PLO10 supports PEO3 by preparing students to address societal and sustainable development issues.",
+            "PLO9": "PLO9 contributes to PEO3 by fostering awareness of global, societal and sustainability challenges."
+        },
+        "PEO4": {
+            "PLO5": "PLO5 aligns strongly with PEO4 by focusing on effective communication skills."
+        },
+        "PEO5": {
+            "PLO4": "PLO4 supports PEO5 through teamwork and collaborative competencies.",
+            "PLO8": "PLO8 reinforces leadership, adaptability and lifelong learning required for PEO5.",
+            "PLO9": "PLO9 also supports PEO5 by encouraging engagement with complex real-world problems."
+        }
+    }
+
+    # Return explanation if both exist
+    if peo in logic_map and plo in logic_map[peo]:
+        return logic_map[peo][plo], 200
+
+    return "No PEO → PLO logic available.", 200
 
 # -----------------------
 # Run
 # -----------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
+
 
 
