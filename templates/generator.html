@@ -2,372 +2,246 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>SCLOG Smart Course Learning Outcome Generator (Futuristic + Logic)</title>
+  <title>SCLOG — Smart Course Learning Outcome Generator</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Bootstrap -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
+
   <style>
-    /* ---------------------------------------------------
-   USM PURPLE THEME (Light Mode) + CYBERPUNK NEON (Dark Mode)
-   COMPLETE STYLE BLOCK FOR SCLOG
-----------------------------------------------------*/
-
-/* -------------------------------
-   1. ROOT VARIABLES
---------------------------------*/
+/* =======================================================
+   SOFT USM PURPLE — Light + Dark + Mobile Optimized
+==========================================================*/
 :root {
-  /* USM Purple Palette */
-  --usm-purple-soft: #bca6ff; 
-  --usm-purple: #6a0dad;
-  --usm-purple-dark: #4b0082;
-  --usm-purple-light: #e8ddff;
+  --usm-purple: #6d28d9;
+  --usm-purple-light: #a78bfa;
+  --usm-purple-soft: #ede9fe;
+  --usm-purple-bg: #f5f3ff;
 
-  /* Cyberpunk Purple Neon */
-  --neon-purple: #7b2fff;
-  --neon-pink: #e44bff;
-  --neon-blue: #4ea2ff;
+  --dark-bg: #1b1530;
+  --dark-card: #241a3d;
+  --dark-soft: #302452;
+  --dark-border: rgba(255,255,255,0.12);
 
-  /* UI Components */
+  --text-dark: #2a2344;
+  --text-muted: #6c6480;
+  --text-light: #ece6ff;
+
   --radius: 16px;
-  --shadow-soft: 0 6px 16px rgba(0,0,0,0.06);
-  --shadow-deep: 0 12px 24px rgba(0,0,0,0.12);
+  --shadow: 0 8px 24px rgba(0,0,0,0.06);
+  --shadow-purple: 0 8px 24px rgba(109,40,217,0.20);
 }
 
-/* -------------------------------
-   2. LIGHT MODE (A — USM PURPLE)
---------------------------------*/
+/* LIGHT MODE */
 body[data-theme="light"] {
-  background: linear-gradient(
-    135deg,
-    #f7f4ff 0%,
-    #f1e9ff 40%,
-    #ffffff 100%
-  );
-  color: #2a2340;
-  transition: all 0.25s ease;
+  background: var(--usm-purple-bg);
+  color: var(--text-dark);
 }
 
-/* Light Mode Sidebar */
-body[data-theme="light"] .sidebar {
-  background: #ffffff;
-  border-radius: var(--radius);
-  padding: 18px;
-  border: 1px solid #eddfff;
-  box-shadow: var(--shadow-soft);
+/* DARK MODE */
+body[data-theme="dark"] {
+  background: var(--dark-bg);
+  color: var(--text-light);
 }
 
-/* Light Mode Cards */
-body[data-theme="light"] .card-box {
+/* CARDS + SIDEBAR */
+.card-box, .sidebar {
   background: #ffffff;
   border-radius: var(--radius);
   padding: 20px;
-  border: 1px solid #e9d8ff;
-  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--usm-purple-light);
+  box-shadow: var(--shadow);
+}
+body[data-theme="dark"] .card-box,
+body[data-theme="dark"] .sidebar {
+  background: var(--dark-card);
+  border: 1px solid var(--dark-border);
+  box-shadow: var(--shadow-purple);
 }
 
-/* Light Mode Form Fields */
-body[data-theme="light"] .form-control,
-body[data-theme="light"] .form-select {
+/* BRAND */
+.brand {
+  font-weight: 800;
+  font-size: 1.35rem;
+  background: linear-gradient(90deg, var(--usm-purple), var(--usm-purple-light));
+  -webkit-background-clip: text;
+  color: transparent !important;
+}
+body[data-theme="dark"] .brand {
+  background: linear-gradient(90deg, #c5b3ff, #a78bfa);
+  -webkit-background-clip: text;
+}
+
+/* FORM INPUTS */
+.form-select, .form-control {
+  border-radius: 12px !important;
+  background: #faf7ff;
+  border: 1px solid rgba(109,40,217,0.25) !important;
+  padding: 10px 12px;
+}
+body[data-theme="dark"] .form-select,
+body[data-theme="dark"] .form-control {
+  background: var(--dark-soft);
+  border-color: var(--dark-border) !important;
+  color: white;
+}
+.form-select:focus, .form-control:focus {
+  border-color: var(--usm-purple) !important;
+  box-shadow: 0 0 0 4px rgba(109,40,217,0.2);
+}
+
+/* BUTTONS */
+.btn-primary {
+  background: linear-gradient(90deg, var(--usm-purple), var(--usm-purple-light));
   border-radius: 12px;
-  background: #faf6ff;
-  border: 1px solid #d8caff;
-  color: #2a2340;
-}
-
-body[data-theme="light"] .form-control:focus,
-body[data-theme="light"] .form-select:focus {
-  border-color: var(--usm-purple);
-  box-shadow: 0 0 0 4px rgba(186,160,255,0.35);
-}
-
-/* Light Mode Buttons */
-body[data-theme="light"] .btn-primary {
-  background: linear-gradient(90deg, var(--usm-purple), #9b60ff);
   border: none;
   color: white;
+  font-weight: 600;
 }
-
-body[data-theme="light"] .btn-primary:hover {
-  filter: brightness(1.1);
+body[data-theme="dark"] .btn-primary {
+  background: linear-gradient(90deg, #a78bfa, #7c3aed);
 }
-
-body[data-theme="light"] .btn-outline-secondary {
-  color: var(--usm-purple-dark);
-  border: 1px solid var(--usm-purple);
-}
-
-body[data-theme="light"] .btn-outline-secondary:hover {
-  background: var(--usm-purple);
-  color: white;
-}
-
-/* Light Mode Tabs */
-body[data-theme="light"] .nav-tabs .nav-link {
-  background: #faf6ff;
-  color: #4b0082;
-  border-radius: 10px;
-  border: 1px solid #eadbff;
-}
-
-body[data-theme="light"] .nav-tabs .nav-link.active {
-  background: var(--usm-purple);
-  color: #fff;
-}
-
-/* Light Mode Brand */
-body[data-theme="light"] .brand {
-  font-weight: 900;
-  font-size: 1.2rem;
+.btn-outline-secondary {
+  border-radius: 12px;
+  border-color: var(--usm-purple);
   color: var(--usm-purple);
 }
+body[data-theme="dark"] .btn-outline-secondary {
+  border-color: #c5b3ff;
+  color: #c5b3ff;
+}
 
-/* Light Mode Logic Box */
-body[data-theme="light"] .logic-box {
-  background: #f4edff;
-  border: 1px solid #dac6ff;
-  padding: 10px;
+/* TABS */
+.nav-tabs {
+  border-bottom: none;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.nav-tabs .nav-link {
+  border: none !important;
+  background: #f3eefe;
+  color: var(--usm-purple);
+  border-radius: 12px;
+  margin-right: 6px;
+}
+.nav-tabs .nav-link.active {
+  background: var(--usm-purple);
+  color: white !important;
+  font-weight: 600;
+}
+body[data-theme="dark"] .nav-tabs .nav-link {
+  background: #2f2450;
+  color: #cbbaf8;
+}
+body[data-theme="dark"] .nav-tabs .nav-link.active {
+  background: #7c3aed;
+}
+
+/* VARIANTS */
+.variant-item {
+  background: #faf6ff;
+  border: 1px solid rgba(109,40,217,0.1);
+  padding: 12px;
   border-radius: 12px;
 }
-
-/* Light Mode Footer */
-body[data-theme="light"] footer {
-  background: linear-gradient(90deg, var(--usm-purple-dark), var(--usm-purple));
-  color: #f4edff;
-  border-radius: 16px;
-  padding: 16px;
-  margin-top: 40px;
+body[data-theme="dark"] .variant-item {
+  background: #2d2348;
+  border-color: #463870;
 }
 
-
-/* ---------------------------------------------------
-   3. DARK MODE — CYBERPUNK NEON PURPLE
-----------------------------------------------------*/
-
-body[data-theme="dark"] {
-  background: radial-gradient(circle at center,
-    #1a002b 0%,
-    #10001d 40%,
-    #060010 100%
-  );
-  color: #e8dbff;
-  text-shadow: 0 0 4px rgba(255,255,255,0.15);
+/* CONTENT SUGGESTIONS */
+#content_suggestions button {
+  background: #f3eefe !important;
+  border: 1px solid rgba(109,40,217,0.2) !important;
+  color: var(--usm-purple);
+  border-radius: 10px;
+}
+body[data-theme="dark"] #content_suggestions button {
+  background: #362a5a !important;
+  color: #e5ddff;
 }
 
-/* Sidebar */
-body[data-theme="dark"] .sidebar {
-  background: rgba(25, 0, 45, 0.72);
-  border: 1px solid rgba(123, 47, 255, 0.55);
-  box-shadow:
-    0 0 18px rgba(123,47,255,0.4),
-    0 0 38px rgba(78,0,255,0.2);
+/* FOOTER */
+footer {
+  background: #ede9fe;
+  padding: 14px;
+  border-radius: 12px;
+  text-align: center;
+  color: #4b3b69;
 }
-
-/* Cards */
-body[data-theme="dark"] .card-box {
-  background: rgba(15, 0, 30, 0.78);
-  border: 1px solid rgba(123,47,255,0.50);
-  box-shadow:
-    inset 0 0 20px rgba(123,47,255,0.15),
-    0 0 30px rgba(78,0,255,0.25);
-}
-
-/* Hover glow */
-body[data-theme="dark"] .card-box:hover {
-  transform: translateY(-3px);
-  box-shadow:
-    0 0 30px rgba(123,47,255,0.6),
-    inset 0 0 18px rgba(255,0,255,0.15);
-}
-
-/* Input fields */
-body[data-theme="dark"] .form-control,
-body[data-theme="dark"] .form-select {
-  background: rgba(60,0,110,0.45);
-  color: #f3e6ff;
-  border: 1px solid rgba(123,47,255,0.45);
-}
-
-/* Focus glow */
-body[data-theme="dark"] .form-control:focus,
-body[data-theme="dark"] .form-select:focus {
-  box-shadow: 0 0 12px var(--neon-purple),
-              inset 0 0 12px var(--neon-purple);
-  border-color: var(--neon-pink) !important;
-}
-
-/* Tabs */
-body[data-theme="dark"] .nav-tabs .nav-link {
-  color: #c7baff;
-  background: rgba(255,255,255,0.02);
-}
-
-body[data-theme="dark"] .nav-tabs .nav-link.active {
-  background: linear-gradient(90deg, var(--neon-pink), var(--neon-purple));
-  color: #ffffff;
-  box-shadow:
-    0 0 12px rgba(123,47,255,0.75),
-    0 0 24px rgba(228,75,255,0.45);
-}
-
-/* Buttons */
-body[data-theme="dark"] .btn-primary {
-  background: linear-gradient(135deg, var(--neon-purple), var(--neon-pink));
-  border: none;
-  color: white;
-  box-shadow: 0 0 16px rgba(123,47,255,0.55);
-}
-
-body[data-theme="dark"] .btn-primary:hover {
-  filter: brightness(1.25);
-  box-shadow: 0 0 28px rgba(228,75,255,0.8);
-}
-
-body[data-theme="dark"] .btn-outline-secondary {
-  color: #c7baff;
-  border: 1px solid var(--neon-purple);
-}
-
-/* Logic box neon */
-body[data-theme="dark"] .logic-box {
-  background: rgba(80,0,140,0.35);
-  border: 1px solid rgba(123,47,255,0.45);
-  box-shadow: inset 0 0 12px rgba(123,47,255,0.35);
-}
-
-/* Brand */
-body[data-theme="dark"] .brand {
-  color: var(--neon-purple) !important;
-  text-shadow:
-    0 0 12px var(--neon-purple),
-    0 0 20px var(--neon-pink);
-}
-
-/* Footer */
 body[data-theme="dark"] footer {
-  background: linear-gradient(90deg, #25003f, #120026);
-  border: 1px solid rgba(123,47,255,0.55);
-  box-shadow: 0 0 22px rgba(123,47,255,0.45);
-  color: #d9c3ff;
-  border-radius: 16px;
-  padding: 16px;
+  background: #241a3d;
+  color: #e7ddff;
+  border: 1px solid #4c3a7e;
 }
 
-
-/* --------------------------------------------
-   4. LAYOUT (SHARED BETWEEN BOTH MODES)
----------------------------------------------*/
-.app-shell {
-  display:flex;
-  gap:24px;
-  padding:20px;
-  max-width:1500px;
-  margin:auto;
-}
-
-.sidebar {
-  width:320px;
-  flex-shrink:0;
-  border-radius: var(--radius);
-}
-
-.app-main {
-  flex:1;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 991px) {
-  .app-shell { flex-direction:column; }
-  .sidebar { width:100%; order:1; }
-  .app-main { order:2; }
-}
-
+/* MOBILE */
 @media (max-width: 575px) {
-  .card-box { padding:14px !important; }
-  h4 { font-size:1.2rem; }
-  .form-control, .form-select { font-size:0.9rem; }
+  .app-shell {
+    flex-direction: column;
+    padding: 12px !important;
+    gap: 16px;
+  }
+  .sidebar { order: 1; padding: 16px; width: 100%; }
+  .app-main { order: 2; }
+  .card-box { padding: 16px !important; }
+  h4 { font-size: 1.3rem; }
+  .btn { padding: 8px 12px; font-size: .85rem; }
+  .nav-tabs::-webkit-scrollbar { display: none; }
 }
-
-
-/* --------------------------------------------
-   5. EXTRA COMPONENTS
----------------------------------------------*/
-.variant-item {
-  padding:10px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,0.1);
-  cursor:pointer;
-  margin-bottom:8px;
-}
-
-.loader {
-  width:16px;
-  height:16px;
-  border:2px solid rgba(255,255,255,0.2);
-  border-top-color: var(--neon-purple);
-  border-radius:50%;
-  animation:spin .9s linear infinite;
-}
-
-@keyframes spin { to { transform:rotate(360deg);} }
-
-    
   </style>
 </head>
+
 <body data-theme="light">
   <div class="app-shell container-fluid">
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-      <div class="d-flex justify-content-between align-items-start mb-2">
-        <div>
-          <div class="brand mb-1"><i class="bi bi-stars" style="font-size:1.2rem"></i> SCLOG</div>
-          <div class="small-note">Smart CLO Generator — logic & mapping</div>
-        </div>
-      </div>
+
+      <div class="brand mb-2"><i class="bi bi-stars"></i> SCLOG</div>
+      <div class="small-muted mb-3">Smart CLO Generator — logic & mapping</div>
 
       <div class="card-box mb-3">
         <label class="form-label small-muted">Select IEG</label>
-        <select id="ieg" class="form-select mb-2"></select>
+        <select id="ieg" class="form-select mb-2"><option value="">Select IEG</option></select>
 
         <label class="form-label small-muted">Mapped PEO</label>
-        <select id="peo" class="form-select mb-2"></select>
+        <select id="peo" class="form-select mb-2"><option value="">Select PEO</option></select>
 
-        <div class="mt-2">
-          <strong class="small-note">Why this IEG → PEO?</strong>
-          <div id="logic_ieg_peo" class="logic-box small-muted">—</div>
+        <div class="mt-2 small-muted fw-bold">Why this IEG → PEO?</div>
+        <div id="iep_logic" class="p-2 mt-1 rounded" style="background:#f8f5ff; font-size:.9rem; line-height:1.4;">
+          —
         </div>
       </div>
 
-      <div class="card-box">
+      <div class="card-box mt-3">
         <label class="form-label small-muted">PLOs for selected PEO</label>
-        <select id="plo" class="form-select mb-2"></select>
+        <select id="plo" class="form-select mb-2"><option value="">Select PLO</option></select>
 
-        <div class="mt-2">
-          <strong class="small-note">Why this PEO → PLO?</strong>
-          <div id="logic_peo_plo" class="logic-box small-muted">—</div>
+        <div class="mt-3 small-muted">Statements</div>
+        <div class="mt-2 small-muted">
+          <div><strong>PEO:</strong> <span id="peo_statement">—</span></div>
+          <div><strong>PLO:</strong> <span id="plo_statement">—</span></div>
+          <div><strong>Indicator:</strong> <span id="plo_indicator">—</span></div>
         </div>
-
-        <hr>
-
-        <div class="small-note">Quick level / field</div>
-        <select id="level" class="form-select mt-2 mb-2">
-          <option>Degree</option><option>Diploma</option><option>Master</option><option>PhD</option>
-        </select>
       </div>
+
     </aside>
 
-    <!-- MAIN -->
+    <!-- MAIN PANEL -->
     <main class="app-main">
+
       <div class="card-box mb-3 d-flex justify-content-between align-items-center">
         <div>
-          <h4 class="mb-1">Smart CLO Builder</h4>
-          <div class="small-note">Create measurable course learning outcomes quickly</div>
+          <h4>Smart CLO Builder</h4>
+          <div class="small-muted">Create measurable course learning outcomes quickly</div>
         </div>
-        <div class="text-muted small-note d-none d-md-block">Made for 2025 • Responsive • Logic-mapped</div>
+        <button id="darkToggle" class="btn btn-outline-secondary"><i class="bi bi-moon"></i> Dark</button>
       </div>
 
       <div class="card-box mb-3">
-        <ul class="nav nav-tabs" id="tabNav" role="tablist">
+        <ul class="nav nav-tabs" id="tabNav">
           <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#builder">Builder</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#variants">Variants</button></li>
           <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#assessment">Assessment</button></li>
@@ -375,327 +249,412 @@ body[data-theme="dark"] footer {
         </ul>
 
         <div class="tab-content mt-3">
+          <!-- BUILDER -->
           <div class="tab-pane fade show active" id="builder">
             <div class="row g-3">
               <div class="col-lg-8">
-                <div class="mb-2">
-                  <label class="form-label small-muted">Bloom</label>
-                  <select id="bloom" class="form-select"><option value="">Select Bloom</option></select>
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small-muted">Verb</label>
-                  <select id="verb" class="form-select"><option value="">Select Verb</option></select>
-                </div>
-                <div class="mb-2">
-                  <label class="form-label small-muted">Content (topic / object)</label>
-                  <input id="content" class="form-control" placeholder="e.g., interpret ECG waveforms">
-                </div>
 
-                <div class="mt-2 d-flex gap-2">
-                  <button id="generateBtn" class="btn btn-primary"><i class="bi bi-magic me-1"></i> Generate CLO</button>
+                <label class="form-label">Bloom</label>
+                <select id="bloom" class="form-select mb-2"><option value="">Select Bloom</option></select>
+
+                <label class="form-label">Verb</label>
+                <select id="verb" class="form-select mb-2"><option value="">Select Verb</option></select>
+
+                <label class="form-label">Content (topic / object)</label>
+                <input id="content" class="form-control mb-2" placeholder="e.g., interpret ECG waveforms">
+
+                <div class="d-flex gap-2">
+                  <button id="generateBtn" class="btn btn-primary"><i class="bi bi-magic"></i> Generate CLO</button>
                   <button id="copyBtn" class="btn btn-outline-secondary"><i class="bi bi-clipboard"></i> Copy</button>
-                  <div id="busy" style="display:none;" class="align-self-center text-muted small-note"><span class="loader"></span> Generating...</div>
                 </div>
 
-                <div id="cloCard" class="mt-3 card-box" style="display:none;">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                      <h6 class="mb-1">Generated CLO</h6>
-                      <div id="clo_text" class="fw-semibold" style="line-height:1.35;"></div>
-                    </div>
-                    <div class="text-end small-muted">
-                      <div id="meta_small">—</div>
-                    </div>
-                  </div>
-
-                  <div class="mt-3">
-                    <button id="toggleVariants" class="btn btn-sm btn-outline-primary">Show variants</button>
-                    <div id="variantsPanel" style="display:none; margin-top:10px;"></div>
-                  </div>
+                <div id="busy" class="mt-2 small-muted" style="display:none;">
+                  <span class="spinner-border spinner-border-sm"></span> Generating...
                 </div>
+
+                <div id="cloCard" class="card-box mt-3" style="display:none;">
+                  <h6>Generated CLO</h6>
+                  <div id="clo_text" class="fw-semibold mt-2"></div>
+
+                  <button id="toggleVariants" class="btn btn-sm btn-outline-secondary mt-3">Show variants</button>
+                  <div id="variantsPanel" style="display:none;" class="mt-2"></div>
+                </div>
+
               </div>
 
               <div class="col-lg-4">
                 <div class="card-box">
-                  <div class="small-note mb-2">Mapping metadata</div>
-                  <div class="mb-2"><strong>SC Code</strong><div id="sc_code" class="small-muted">—</div></div>
-                  <div class="mb-2"><strong>SC Description</strong><div id="sc_desc" class="small-muted">—</div></div>
+                  <div class="small-muted mb-2">Mapping metadata</div>
+                  <div class="mb-1"><strong>SC Code:</strong> <div id="sc_code" class="small-muted">—</div></div>
+                  <div class="mb-1"><strong>SC Description:</strong> <div id="sc_desc" class="small-muted">—</div></div>
+                  <div class="mb-1"><strong>VBE:</strong> <div id="vbe" class="small-muted">—</div></div>
+                  <div class="mb-1"><strong>Domain:</strong> <div id="domain" class="small-muted">—</div></div>
+                  <div class="mb-1"><strong>Condition:</strong> <div id="condition" class="small-muted">—</div></div>
+                  <div class="mb-1"><strong>Criterion:</strong> <div id="criterion" class="small-muted">—</div></div>
                 </div>
 
                 <div class="card-box mt-3">
-                  <div class="small-note mb-1">Quick content suggestions</div>
-                  <div id="content_suggestions"></div>
+                  <div class="small-muted">Quick content suggestions</div>
+                  <div id="content_suggestions" class="mt-2"></div>
                 </div>
-
               </div>
+
             </div>
           </div>
 
+          <!-- OTHER TABS -->
           <div class="tab-pane fade" id="variants"><div id="variants_list"></div></div>
+          <div class="tab-pane fade" id="assessment"><div id="assess_list"></div></div>
+          <div class="tab-pane fade" id="history"><div id="history_list"></div></div>
 
-          <div class="tab-pane fade" id="assessment">
-            <div class="row">
-              <div class="col-lg-6"><div class="card-box"><h6>Assessment methods</h6><div id="assess_list" class="small-muted">—</div></div></div>
-              <div class="col-lg-6"><div class="card-box"><h6>Suggested evidence</h6><div id="evidence_list" class="small-muted">—</div></div></div>
-            </div>
-          </div>
-
-          <div class="tab-pane fade" id="history"><div class="card-box"><h6>Recent generation</h6><div id="history_list" class="small-muted">No history in this demo.</div></div></div>
         </div>
       </div>
     </main>
   </div>
 
-  <footer>© 2025 • Developed by <strong>Assoc Prof Dr Hazwani Ahmad Yusof @ Hanafi</strong>, Universiti Sains Malaysia (USM)</footer>
+  <footer>© 2025 • Developed by Assoc Prof Dr Hazwani Ahmad Yusof @ Hanafi, Universiti Sains Malaysia</footer>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+/* -------------------------------------------------------
+   Helper shortcut
+---------------------------------------------------------*/
+const $ = id => document.getElementById(id);
 
-  <script>
-    // ---------------------------
-    // Embedded mapping + logic
-    // ---------------------------
-    const MAP = {
-      IEGs: [
-        { code: "IEG1", text: "Demonstrate knowledge and skills, especially in their professional discipline with global mindset using critical thinking and problem-solving approaches" },
-        { code: "IEG2", text: "Exhibit balanced attributes of altruistic values and attitudes, ethics and professionalism, scientific thinking, arts and humanity toward good citizenry and nation building" },
-        { code: "IEG3", text: "Demonstrate socio-entrepreneurial skills and mindset, capable of contributing to the wellbeing of society in bridging inequality and enhancing sustainability" },
-        { code: "IEG4", text: "Communicate effectively and with confidence, encompassing intra-and inter-disciplines, society and technology" },
-        { code: "IEG5", text: "Demonstrate leadership, teamwork skills and practice lifelong learning, especially in their professional discipline" }
-      ],
-      // PEO list and simple statements (you can adjust)
-      PEOs: [
-        { code: "PEO1", statement: "Produce graduates with strong analytical and problem-solving abilities in their discipline." },
-        { code: "PEO2", statement: "Develop graduates who demonstrate ethical conduct and civic responsibility." },
-        { code: "PEO3", statement: "Foster socio-entrepreneurial and sustainability-minded graduates." },
-        { code: "PEO4", statement: "Ensure graduates communicate effectively across disciplines." },
-        { code: "PEO5", statement: "Cultivate leadership, teamwork and lifelong learning habits." }
-      ],
-      // mapping IEG -> PEO (one-to-one)
-      IEG_to_PEO: {
-        "IEG1": "PEO1",
-        "IEG2": "PEO2",
-        "IEG3": "PEO3",
-        "IEG4": "PEO4",
-        "IEG5": "PEO5"
-      },
-      // PEO -> PLO list
-      PEO_to_PLOs: {
-        "PEO1": ["PLO1","PLO2","PLO3","PLO6","PLO7"],
-        "PEO2": ["PLO11"],
-        "PEO3": ["PLO10","PLO9"],
-        "PEO4": ["PLO5"],
-        "PEO5": ["PLO8","PLO4","PLO9"]
-      },
-      // Explanations: why IEG -> PEO (text) and why PEO -> PLO (per PLO)
-      Logic: {
-        IEG_to_PEO: {
-          "IEG1": "IEG1 emphasizes discipline-specific knowledge plus a global mindset and critical thinking. PEO1 is chosen because it operationalizes these aims by focusing the program on analytical and problem-solving competence.",
-          "IEG2": "IEG2 emphasises altruistic values, ethics and professionalism. PEO2 is used to ensure the program explicitly nurtures ethical practice and civic-mindedness.",
-          "IEG3": "IEG3 focuses on socio-entrepreneurial skills and sustainability. PEO3 is the program objective that drives entrepreneurship, social impact and sustainable practice.",
-          "IEG4": "IEG4 stresses confident and effective communication across disciplines. PEO4 is mapped to develop communication capabilities across contexts.",
-          "IEG5": "IEG5 emphasises leadership, teamwork and lifelong learning. PEO5 targets the development of collaborative leadership and continuous professional growth."
-        },
-        PEO_to_PLO: {
-          "PEO1": {
-            "PLO1": "PLO1 captures foundational knowledge — essential to support PEO1's expectation that graduates possess domain expertise.",
-            "PLO2": "PLO2 assesses the ability to apply knowledge — aligning to PEO1's emphasis on practical problem solving.",
-            "PLO3": "PLO3 evaluates analytical and evaluative skills necessary for critical thinking in PEO1.",
-            "PLO6": "PLO6 measures the ability to design and implement solutions — directly supporting PEO1's problem-solving focus.",
-            "PLO7": "PLO7 checks integration of knowledge across contexts — complementing PEO1's global mindset objective."
-          },
-          "PEO2": {
-            "PLO11": "PLO11 assesses ethical reasoning and civic responsibility, which operationalizes PEO2's focus on professionalism and good citizenship."
-          },
-          "PEO3": {
-            "PLO10": "PLO10 evaluates entrepreneurial skill application and social impact, reflecting PEO3's socio-entrepreneurial aims.",
-            "PLO9": "PLO9 measures sustainability-minded practice and community contribution, supporting PEO3."
-          },
-          "PEO4": {
-            "PLO5": "PLO5 measures effective communication skills across media and audiences — this is PEO4's core capability."
-          },
-          "PEO5": {
-            "PLO8": "PLO8 checks leadership and team-based project performance, aligning with PEO5.",
-            "PLO4": "PLO4 assesses self-directed learning and lifelong learning behaviours, supporting PEO5.",
-            "PLO9": "PLO9 (also used under PEO3) here captures teamwork in service of professional practice, reinforcing PEO5."
-          }
-        }
-      }
-    };
+/* Inputs */
+const iegSel = $('ieg');
+const peoSel = $('peo');
+const ploSel = $('plo');
+const bloomSel = $('bloom');
+const verbSel = $('verb');
+const contentInput = $('content');
 
-    // ---------------------------
-    // Element refs
-    // ---------------------------
-    const $ = id => document.getElementById(id);
-    const iegSel = $('ieg'), peoSel = $('peo'), ploSel = $('plo');
-    const logicIEGPEO = $('logic_ieg_peo'), logicPEOPLO = $('logic_peo_plo');
-    const bloomSel = $('bloom'), verbSel = $('verb'), contentInput = $('content');
-    const generateBtn = $('generateBtn'), copyBtn = $('copyBtn'), cloCard = $('cloCard'), cloText = $('clo_text');
-    const variantsPanel = $('variantsPanel'), toggleVariantsBtn = $('toggleVariants'), busyEl = $('busy');
+/* Logic display */
+const logicBox = $('iep_logic');
 
-    // ---------------------------
-    // Populate selects from MAP
-    // ---------------------------
-    function populateInitial() {
-      // IEGs
-      iegSel.innerHTML = '';
-      MAP.IEGs.forEach(i => {
-        const opt = new Option(i.code + ' — ' + (i.text.length>60? i.text.slice(0,60)+'…': i.text), i.code);
-        iegSel.add(opt);
-      });
+/* Mapping metadata */
+const scCodeEl = $('sc_code');
+const scDescEl = $('sc_desc');
+const vbeEl = $('vbe');
+const domainEl = $('domain');
+const conditionEl = $('condition');
+const criterionEl = $('criterion');
 
-      // PEOs
-      peoSel.innerHTML = '';
-      MAP.PEOs.forEach(p => { peoSel.add(new Option(p.code + ' — ' + (p.statement.length>60?p.statement.slice(0,60)+'…':p.statement), p.code)); });
+/* CLO area */
+const cloCard = $('cloCard');
+const cloText = $('clo_text');
+const variantsPanel = $('variantsPanel');
+const variantsList = $('variants_list');
+const assessList = $('assess_list');
+const evidenceList = $('evidence_list');
+const historyList = $('history_list');
 
-      // Blooms/verbs minimal placeholders (can be server-provided)
-      bloomSel.innerHTML = '<option value="">Select Bloom</option><option>Remember</option><option>Understand</option><option>Apply</option><option>Analyze</option><option>Create</option>';
-      verbSel.innerHTML = '<option value="">Select Verb</option><option>identify</option><option>explain</option><option>apply</option><option>analyze</option><option>design</option>';
+const contentSuggestions = $('content_suggestions');
+
+/* Controls */
+const busyEl = $('busy');
+const copyBtn = $('copyBtn');
+const generateBtn = $('generateBtn');
+const darkToggle = $('darkToggle');
+const toggleVariantsBtn = $('toggleVariants');
+
+let LAST_CLO = null;
+let MAP = {};
+
+/* -------------------------------------------------------
+   DARK MODE TOGGLE
+---------------------------------------------------------*/
+darkToggle.addEventListener('click', () => {
+  const current = document.body.getAttribute('data-theme') || 'light';
+  const next = current === 'light' ? 'dark' : 'light';
+
+  document.body.setAttribute('data-theme', next);
+  darkToggle.innerHTML =
+    next === 'dark'
+      ? '<i class="bi bi-sun"></i> Light'
+      : '<i class="bi bi-moon"></i> Dark';
+});
+
+/* -------------------------------------------------------
+   LOAD MAPPING (IEG, PEO, PLO, Indicators)
+---------------------------------------------------------*/
+async function loadMapping() {
+  try {
+    const res = await fetch('/api/mapping');
+    MAP = await res.json();
+
+    // Fill IEG list
+    iegSel.innerHTML = '<option value="">Select IEG</option>';
+    (MAP.IEGs || []).forEach(i => iegSel.add(new Option(i, i)));
+
+    // Fill PLO fallback list
+    ploSel.innerHTML = '<option value="">Select PLO</option>';
+    (MAP.PLOs || []).forEach(p => ploSel.add(new Option(p, p)));
+
+  } catch (err) {
+    console.error('Mapping load error', err);
+  }
+}
+
+/* -------------------------------------------------------
+   IEG → PEO
+---------------------------------------------------------*/
+iegSel.addEventListener('change', async () => {
+  const ieg = iegSel.value;
+
+  peoSel.innerHTML = '<option value="">Loading…</option>';
+  ploSel.innerHTML = '<option value="">Select PLO</option>';
+  logicBox.innerHTML = '—';
+
+  if (!ieg) {
+    peoSel.innerHTML = '<option value="">Select PEO</option>';
+    return;
+  }
+
+  // Load PEO list for this IEG
+  try {
+    const res = await fetch(`/api/get_peos/${encodeURIComponent(ieg)}`);
+    const peos = await res.json();
+
+    peoSel.innerHTML = '<option value="">Select PEO</option>';
+    (peos || []).forEach(p => peoSel.add(new Option(p, p)));
+
+    // Also fetch “WHY this IEG → PEO”
+    try {
+      const logicRes = await fetch(`/api/logic/ieg_peo/${encodeURIComponent(ieg)}`);
+      const logicText = await logicRes.json();
+      logicBox.innerText = logicText || "—";
+    } catch {
+      logicBox.innerText = "—";
     }
 
-    // ---------------------------
-    // Helpers: set PEO from IEG and populate PLOs
-    // ---------------------------
-    function setPEOFromIEG(iegCode) {
-      const mappedPEO = MAP.IEG_to_PEO[iegCode];
-      if (mappedPEO) {
-        peoSel.value = mappedPEO;
-        // show logic text
-        logicIEGPEO.textContent = MAP.Logic.IEG_to_PEO[iegCode] || '—';
-        // populate PLOs for this PEO
-        populatePLOs(mappedPEO);
-      } else {
-        logicIEGPEO.textContent = '—';
-        ploSel.innerHTML = '<option value="">Select PLO</option>';
-      }
+  } catch (err) {
+    console.error(err);
+    peoSel.innerHTML = '<option value="">Error</option>';
+  }
+});
+
+/* -------------------------------------------------------
+   PEO → PLO
+---------------------------------------------------------*/
+peoSel.addEventListener('change', async () => {
+  const peo = peoSel.value;
+  ploSel.innerHTML = '<option value="">Loading…</option>';
+
+  if (!peo) {
+    ploSel.innerHTML = '<option value="">Select PLO</option>';
+    $('peo_statement').innerText = '—';
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/get_plos/${encodeURIComponent(peo)}`);
+    const plos = await res.json();
+
+    ploSel.innerHTML = '<option value="">Select PLO</option>';
+    (plos || []).forEach(p => ploSel.add(new Option(p, p)));
+
+    // Load PEO statement
+    const stmtRes = await fetch(`/api/get_statement/Degree/PEO/${encodeURIComponent(peo)}`);
+    const stmt = await stmtRes.json();
+    $('peo_statement').innerText = stmt || '—';
+
+  } catch (err) {
+    console.error(err);
+    ploSel.innerHTML = '<option value="">Error</option>';
+  }
+});
+
+/* -------------------------------------------------------
+   PLO SELECTED → Load Bloom list + PLO Statement + Indicator
+---------------------------------------------------------*/
+ploSel.addEventListener('change', async () => {
+  const plo = ploSel.value;
+  bloomSel.innerHTML = '<option>Loading…</option>';
+
+  if (!plo) {
+    bloomSel.innerHTML = '<option value="">Select Bloom</option>';
+    return;
+  }
+
+  /* --- BLOOMS --- */
+  try {
+    const res = await fetch(`/api/get_blooms/${encodeURIComponent(plo)}`);
+    const blooms = await res.json();
+    bloomSel.innerHTML = '<option value="">Select Bloom</option>';
+    (blooms || []).forEach(b => bloomSel.add(new Option(b, b)));
+  } catch {
+    bloomSel.innerHTML = '<option value="">Error</option>';
+  }
+
+  /* --- PLO STATEMENT --- */
+  try {
+    const stmtRes = await fetch(`/api/get_statement/Degree/PLO/${encodeURIComponent(plo)}`);
+    const stmt = await stmtRes.json();
+    $('plo_statement').innerText = stmt || '—';
+  } catch {
+    $('plo_statement').innerText = '—';
+  }
+
+  /* --- PLO INDICATOR --- */
+  $('plo_indicator').innerText =
+    MAP.PLOIndicators && MAP.PLOIndicators[plo]
+      ? MAP.PLOIndicators[plo]
+      : '—';
+});
+
+/* -------------------------------------------------------
+   BLOOM → VERBS + METADATA
+---------------------------------------------------------*/
+bloomSel.addEventListener('change', async () => {
+  const bloom = bloomSel.value;
+  const plo = ploSel.value;
+
+  if (!bloom || !plo) return;
+
+  /* --- VERBS --- */
+  try {
+    const res = await fetch(`/api/get_verbs/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}`);
+    const verbs = await res.json();
+
+    verbSel.innerHTML = '<option value="">Select Verb</option>';
+    (verbs || []).forEach(v => verbSel.add(new Option(v, v)));
+  } catch {
+    verbSel.innerHTML = '<option>Error</option>';
+  }
+
+  /* --- METADATA --- */
+  try {
+    const metaRes = await fetch(`/api/get_meta/${encodeURIComponent(plo)}/${encodeURIComponent(bloom)}`);
+    const meta = await metaRes.json();
+
+    scCodeEl.innerText = meta.sc_code || '—';
+    scDescEl.innerText = meta.sc_desc || '—';
+    vbeEl.innerText = meta.vbe || '—';
+    domainEl.innerText = meta.domain || '—';
+    conditionEl.innerText = meta.condition || '—';
+    criterionEl.innerText = meta.criterion || '—';
+
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+/* -------------------------------------------------------
+   FIELD SUGGESTIONS
+---------------------------------------------------------*/
+field.addEventListener('change', async () => {
+  const fieldVal = field.value;
+
+  contentSuggestions.innerHTML = '';
+  if (!fieldVal) return;
+
+  try {
+    const res = await fetch(`/api/content/${encodeURIComponent(fieldVal)}`);
+    const suggestions = await res.json();
+
+    suggestions.forEach(text => {
+      let btn = document.createElement('button');
+      btn.className = "btn btn-sm me-1 mb-1";
+      btn.textContent = text;
+      btn.onclick = () => (contentInput.value = text);
+      contentSuggestions.appendChild(btn);
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
+
+/* -------------------------------------------------------
+   GENERATE CLO
+---------------------------------------------------------*/
+generateBtn.addEventListener('click', async () => {
+  if (!ploSel.value || !bloomSel.value || !verbSel.value || !contentInput.value.trim()) {
+    alert("Please select PLO, Bloom, Verb and provide content.");
+    return;
+  }
+
+  busyEl.style.display = 'block';
+  generateBtn.disabled = true;
+
+  const fd = new FormData();
+  fd.append('plo', ploSel.value);
+  fd.append('bloom', bloomSel.value);
+  fd.append('verb', verbSel.value);
+  fd.append('content', contentInput.value);
+
+  try {
+    const res = await fetch('/generate', { method: 'POST', body: fd });
+    const data = await res.json();
+
+    LAST_CLO = data;
+
+    cloText.innerText = data.clo || '—';
+    cloCard.style.display = 'block';
+
+    /* VARIANTS */
+    variantsPanel.innerHTML = '';
+    const opts = data.clo_options || {};
+
+    for (const [label, text] of Object.entries(opts)) {
+      const item = document.createElement('div');
+      item.className = 'variant-item mt-2';
+      item.innerHTML = `<strong>${label}</strong><br>${text}`;
+      item.onclick = () => (cloText.innerText = text);
+      variantsPanel.appendChild(item);
     }
 
-    function populatePLOs(peoCode) {
-      const plos = MAP.PEO_to_PLOs[peoCode] || [];
-      ploSel.innerHTML = '';
-      if (!plos.length) { ploSel.add(new Option('— No PLOs mapped —','')); return; }
-      ploSel.add(new Option('Select PLO',''));
-      plos.forEach(p => {
-        const label = p; // you can replace with descriptions if you have them
-        ploSel.add(new Option(label, p));
-      });
-      // clear previous PEO->PLO explanation
-      logicPEOPLO.textContent = '—';
-    }
+    /* Assessment */
+    assessList.innerHTML =
+      (data.assessments || []).length
+        ? '<ul>' + data.assessments.map(a => `<li>${a}</li>`).join('') + '</ul>'
+        : '—';
 
-    // ---------------------------
-    // Event listeners to show logic
-    // ---------------------------
-    iegSel.addEventListener('change', () => {
-      const ieg = iegSel.value;
-      setPEOFromIEG(ieg);
-    });
+    /* Evidence */
+    evidenceList.innerHTML =
+      Object.keys(data.evidence || {}).length
+        ? Object.entries(data.evidence)
+            .map(([k, v]) => `<div><strong>${k}:</strong> ${v.join(', ')}</div>`)
+            .join('')
+        : '—';
 
-    peoSel.addEventListener('change', () => {
-      const peo = peoSel.value;
-      // show PEO statement if available
-      const peoObj = MAP.PEOs.find(p => p.code === peo);
-      if (peoObj) {
-        // make sure PLO select updated
-        populatePLOs(peo);
-        // Also show explanation why IEG->PEO if IEG selected, otherwise show generic
-        const ieg = iegSel.value;
-        logicIEGPEO.textContent = MAP.Logic.IEG_to_PEO[ieg] || (peoObj.statement || '—');
-      } else {
-        ploSel.innerHTML = '<option value="">Select PLO</option>';
-      }
-    });
+  } catch (err) {
+    console.error(err);
+    alert("Error generating CLO.");
+  } finally {
+    busyEl.style.display = 'none';
+    generateBtn.disabled = false;
+  }
+});
 
-    ploSel.addEventListener('change', () => {
-      const plo = ploSel.value;
-      const peo = peoSel.value;
-      const explanation = (MAP.Logic.PEO_to_PLO[peo] && MAP.Logic.PEO_to_PLO[peo][plo]) || '—';
-      logicPEOPLO.textContent = explanation;
-    });
+/* -------------------------------------------------------
+   COPY CLO
+---------------------------------------------------------*/
+copyBtn.addEventListener('click', async () => {
+  try {
+    await navigator.clipboard.writeText(cloText.innerText);
+    copyBtn.innerHTML = "Copied!";
+    setTimeout(() => (copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copy'), 1500);
+  } catch {
+    alert("Copy failed.");
+  }
+});
 
-    // ---------------------------
-    // Demo: when page loads, set defaults
-    // ---------------------------
-    (function init(){
-      populateInitial();
-      // select first IEG by default to demonstrate mapping
-      if (MAP.IEGs.length) {
-        iegSel.value = MAP.IEGs[0].code;
-        setPEOFromIEG(MAP.IEGs[0].code);
-      }
-    })();
+/* -------------------------------------------------------
+   SHOW / HIDE VARIANTS
+---------------------------------------------------------*/
+toggleVariantsBtn.addEventListener('click', () => {
+  const isHidden =
+    variantsPanel.style.display === 'none' ||
+    variantsPanel.style.display === '';
+  variantsPanel.style.display = isHidden ? 'block' : 'none';
+  toggleVariantsBtn.textContent = isHidden ? 'Hide variants' : 'Show variants';
+});
 
-    // ---------------------------
-    // Existing generate/copy functionality (keeps server calls if you have them)
-    // ---------------------------
-    generateBtn.addEventListener('click', async () => {
-      if (!peoSel.value || !ploSel.value || !bloomSel.value || !verbSel.value || !contentInput.value.trim()){
-        alert('Please select PEO, PLO, Bloom, Verb and fill Content.');
-        return;
-      }
-
-      busyEl.style.display = 'inline-block';
-      generateBtn.disabled = true;
-
-      const fd = new FormData();
-      fd.append('ieg', iegSel.value);
-      fd.append('peo', peoSel.value);
-      fd.append('plo', ploSel.value);
-      fd.append('bloom', bloomSel.value);
-      fd.append('verb', verbSel.value);
-      fd.append('content', contentInput.value);
-
-      try {
-        // try server endpoint; if not available, build a simple CLO locally
-        let cloText = '';
-        try {
-          const res = await fetch('/generate', { method:'POST', body: fd });
-          if (res.ok) {
-            const data = await res.json();
-            cloText = data.clo || '';
-          } else {
-            throw new Error('server');
-          }
-        } catch (e) {
-          // fallback: simple generated text locally (helpful for demo or offline)
-          cloText = `${verbSel.value} ${contentInput.value} to demonstrate ${ploSel.value} (${peoSel.value}) using ${bloomSel.value} level.`;
-        }
-
-        cloText = cloText || '(no output)';
-        cloText = cloText.replace(/\n/g,'\n');
-        cloText = cloText.trim();
-        cloText && (cloText = cloText.charAt(0).toUpperCase() + cloText.slice(1));
-        cloText && (cloText = cloText.endsWith('.') ? cloText : cloText + '.');
-
-        cloText && (cloText = cloText.replace(/\s+/g,' '));
-        cloText && (cloText = cloText);
-
-        $('clo_text').innerText = cloText;
-        cloCard.style.display = 'block';
-      } catch (err) {
-        console.error(err);
-        alert('Failed to generate CLO.');
-      } finally {
-        busyEl.style.display = 'none';
-        generateBtn.disabled = false;
-      }
-    });
-
-    copyBtn.addEventListener('click', async () => {
-      const txt = $('clo_text').innerText;
-      if (!txt) return;
-      try {
-        await navigator.clipboard.writeText(txt);
-        copyBtn.innerText = 'Copied';
-        setTimeout(()=> copyBtn.innerHTML = '<i class="bi bi-clipboard"></i> Copy', 1200);
-      } catch(e){ alert('Copy failed'); }
-    });
-
-    toggleVariantsBtn.addEventListener('click', () => {
-      const vis = variantsPanel.style.display === 'block';
-      variantsPanel.style.display = vis ? 'none' : 'block';
-      toggleVariantsBtn.innerText = vis ? 'Show variants' : 'Hide variants';
-    });
-
-  </script>
-</body>
-</html>
+/* -------------------------------------------------------
+   INIT
+---------------------------------------------------------*/
+(function init() {
+  loadMapping();
+})();
+</script>
