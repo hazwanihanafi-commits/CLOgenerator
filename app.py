@@ -363,54 +363,58 @@ LAST_CLO = {}
 
 @app.route("/generate", methods=["POST"])
 def generate():
-    profile = request.form.get("profile","sc")
-    plo = request.form.get("plo","")
-    bloom = request.form.get("bloom","")
-    verb = request.form.get("verb","")
-    content = request.form.get("content","")
-    level = request.form.get("level","Degree")
+    global LAST_CLO
+
+    profile = request.form.get("profile", "sc")
+    plo = request.form.get("plo", "")
+    bloom = request.form.get("bloom", "")
+    verb = request.form.get("verb", "")
+    content = request.form.get("content", "")
+    level = request.form.get("level", "Degree")
 
     details = get_plo_details(plo, profile)
     if not details:
-        return jsonify({"error":"Invalid PLO"}), 400
+        return jsonify({"error": "Invalid PLO"}), 400
 
     domain = details["Domain"].lower()
     sc_desc = details["SC_Desc"]
     vbe = details["VBE"]
 
+    # META
     meta = get_meta_data(plo, bloom, profile)
-    condition_clean = meta["condition"].replace("when ","").replace("by ","")
+    condition_clean = meta["condition"].replace("when ", "").replace("by ", "")
 
-    # ------------------------------------------------------------
-# SMART VERB CLEANER (auto remove duplicated / leading verbs)
-# ------------------------------------------------------------
-words = content.strip().split()
-if words:
-    first_word = words[0].lower()
-    selected = verb.lower()
+    # ------------------------------------------------------
+    # SMART VERB CLEANER (correct indentation)
+    # ------------------------------------------------------
+    words = content.strip().split()
+    if words:
+        first_word = words[0].lower()
+        selected = verb.lower()
 
-    # 1) Remove if content starts with same verb as selected bloom verb
-    if first_word == selected:
-        content = " ".join(words[1:])
-
-    else:
-        # 2) Heuristic to detect verb-like words
-        common_verbs = {
-            "interpret","advocate","assess","examine","explain",
-            "analyze","analyse","evaluate","apply","perform","design",
-            "investigate","critique","discuss","use","demonstrate",
-            "measure","review"
-        }
-
-        # Verb-like endings (safe version)
-        looks_like_verb = (
-            first_word in common_verbs or
-            first_word.endswith(("ed","ing"))   # safe endings
-        )
-
-        if looks_like_verb:
+        # Case 1: content starts with same verb
+        if first_word == selected:
             content = " ".join(words[1:])
+        else:
+            # Case 2: verb-like detection
+            common_verbs = {
+                "interpret","advocate","assess","examine","explain",
+                "analyze","analyse","evaluate","apply","perform","design",
+                "investigate","critique","discuss","use","demonstrate",
+                "measure","review"
+            }
 
+            looks_like_verb = (
+                first_word in common_verbs or
+                first_word.endswith(("ed", "ing"))
+            )
+
+            if looks_like_verb:
+                content = " ".join(words[1:])
+
+    # ------------------------------------------------------
+    # Build CLO
+    # ------------------------------------------------------
     connector = "when" if domain != "psychomotor" else "by"
 
     clo = (
@@ -418,26 +422,31 @@ if words:
         f"{connector} {condition_clean} guided by {vbe.lower()}."
     ).capitalize()
 
+    # ------------------------------------------------------
+    # Variants
+    # ------------------------------------------------------
     variants = {
         "Standard": clo,
-        "Critical Thinking": clo.replace("using","critically using"),
+        "Critical Thinking": clo.replace("using", "critically using"),
         "Short": f"{verb.capitalize()} {content}."
     }
 
-    # find PEO + IEG
-    peo = None
-    for p,plos in MAP["PEOtoPLO"].items():
-        if plo in plos:
-            peo = p
-            break
+    # ------------------------------------------------------
+    # Map PEO + IEG
+    # ------------------------------------------------------
+    peo = next((p for p, plos in MAP["PEOtoPLO"].items() if plo in plos), None)
+    ieg = next((i for i, peos in MAP["IEGtoPEO"].items() if peo in peos), None)
 
-    ieg = None
-    for i,peos in MAP["IEGtoPEO"].items():
-        if peo in peos:
-            ieg = i
-            break
+    # ------------------------------------------------------
+    # Assessments + Evidence
+    # ------------------------------------------------------
+    assessments = get_assessment(plo, bloom, domain)
+    evidence = {a: get_evidence_for(a) for a in assessments}
 
-    last = {
+    # ------------------------------------------------------
+    # Save for download
+    # ------------------------------------------------------
+    LAST_CLO = {
         "clo": clo,
         "variants": variants,
         "plo": plo,
@@ -449,22 +458,14 @@ if words:
         "domain": domain,
         "criterion": meta["criterion"],
         "condition": condition_clean,
-        "plo_indicator": MAP["PLOIndicators"].get(plo,""),
-        "plo_statement": MAP["PLOstatements"].get(level,{}).get(plo,""),
-        "peo_statement": MAP["PEOstatements"].get(level,{}).get(peo,""),
-        "assessments": get_assessment(plo, bloom, domain),
-        "evidence": {},
+        "plo_indicator": MAP["PLOIndicators"].get(plo, ""),
+        "plo_statement": MAP["PLOstatements"].get(level, {}).get(plo, ""),
+        "peo_statement": MAP["PEOstatements"].get(level, {}).get(peo, ""),
+        "assessments": assessments,
+        "evidence": evidence,
     }
 
-    # fill evidence
-    for a in last["assessments"]:
-        last["evidence"][a] = get_evidence_for(a)
-
-    global LAST_CLO
-    LAST_CLO = last
-
-    return jsonify(last)
-
+    return jsonify(LAST_CLO)
 
 # ------------------------------------------------------
 # DOWNLOADS
@@ -540,5 +541,6 @@ def index():
 # ------------------------------------------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
+
 
 
