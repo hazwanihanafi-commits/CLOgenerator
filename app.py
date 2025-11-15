@@ -381,11 +381,35 @@ def generate():
     meta = get_meta_data(plo, bloom, profile)
     condition_clean = meta["condition"].replace("when ","").replace("by ","")
 
-    # Remove duplicated verb in content
-    ACTIONS = {"explain","evaluate","analyze","analyse","apply","perform","design"}
-    words = content.strip().lower().split()
-    if words and words[0] in ACTIONS:
+    # ------------------------------------------------------------
+# SMART VERB CLEANER (auto remove duplicated / leading verbs)
+# ------------------------------------------------------------
+words = content.strip().split()
+if words:
+    first_word = words[0].lower()
+    selected = verb.lower()
+
+    # 1) Remove if content starts with same verb as selected bloom verb
+    if first_word == selected:
         content = " ".join(words[1:])
+
+    else:
+        # 2) Heuristic to detect verb-like words
+        common_verbs = {
+            "interpret","advocate","assess","examine","explain",
+            "analyze","analyse","evaluate","apply","perform","design",
+            "investigate","critique","discuss","use","demonstrate",
+            "measure","review"
+        }
+
+        # Verb-like endings (safe version)
+        looks_like_verb = (
+            first_word in common_verbs or
+            first_word.endswith(("ed","ing"))   # safe endings
+        )
+
+        if looks_like_verb:
+            content = " ".join(words[1:])
 
     connector = "when" if domain != "psychomotor" else "by"
 
@@ -516,4 +540,5 @@ def index():
 # ------------------------------------------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
+
 
