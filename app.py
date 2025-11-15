@@ -645,11 +645,221 @@ def logic_peo_plo(peo, plo):
 
     return "No PEO → PLO logic available.", 200
 
+from flask import Flask, jsonify, request, send_file, make_response
+from io import BytesIO
+import json
+
+app = Flask(__name__)
+
+# ---------------------------
+# Demo mapping data (example)
+# ---------------------------
+MAP = {
+    "IEGs": ["IEG1", "IEG2", "IEG3", "IEG4", "IEG5"],
+    "PEOs": ["PEO1","PEO2","PEO3","PEO4","PEO5"],
+    "PLOs": ["PLO1","PLO2","PLO3","PLO4","PLO5","PLO6","PLO7","PLO8","PLO9","PLO10","PLO11"],
+    "PLOIndicators": {
+        "PLO1":"Indicator A","PLO2":"Indicator B","PLO3":"Indicator C",
+        "PLO4":"Indicator D","PLO5":"Indicator E","PLO6":"Indicator F",
+        "PLO7":"Indicator G","PLO8":"Indicator H","PLO9":"Indicator I",
+        "PLO10":"Indicator J","PLO11":"Indicator K"
+    }
+}
+
+PEO_TO_PLO = {
+    "PEO1": ["PLO1","PLO2","PLO3","PLO6","PLO7"],
+    "PEO2": ["PLO11"],
+    "PEO3": ["PLO10","PLO9"],
+    "PEO4": ["PLO5"],
+    "PEO5": ["PLO8","PLO4","PLO9"]
+}
+
+IEG_TO_PEO = {
+    "IEG1": ["PEO1"],
+    "IEG2": ["PEO2"],
+    "IEG3": ["PEO3"],
+    "IEG4": ["PEO4"],
+    "IEG5": ["PEO5"]
+}
+
+# ---------------------------
+# Simple verbs/blooms metadata (demo)
+# ---------------------------
+PLO_BLOOMS = {
+    "PLO1": ["Remember","Understand","Apply"],
+    "PLO2": ["Understand","Analyze"],
+    "PLO3": ["Apply","Analyze","Evaluate"],
+    "PLO4": ["Apply","Create"],
+    "PLO5": ["Remember","Understand","Apply"],
+    "PLO6": ["Apply"],
+    "PLO7": ["Analyze"],
+    "PLO8": ["Create","Evaluate"],
+    "PLO9": ["Analyze","Evaluate"],
+    "PLO10": ["Create"],
+    "PLO11": ["Evaluate"]
+}
+
+VERBS = {
+    ("PLO1","Remember"): ["list","define","recall"],
+    ("PLO2","Analyze"): ["differentiate","compare","contrast"],
+    ("PLO3","Apply"): ["demonstrate","use","implement"],
+    ("PLO4","Create"): ["design","construct","formulate"],
+    ("PLO5","Apply"): ["perform","execute"]
+}
+
+META_SAMPLE = {
+    "sc_code": "SC-101",
+    "sc_desc": "Sample Skill/Competency description",
+    "vbe": "Verbs/Behaviors/Examples",
+    "domain": "Cognitive",
+    "condition": "Given a dataset",
+    "criterion": "80% accuracy"
+}
+
+# ---------------------------
+# Logic explanation routes
+# ---------------------------
+@app.route("/api/logic/ieg_peo/<ieg>", methods=["GET"])
+def logic_ieg_peo(ieg):
+    logic_map = {
+        "IEG1": "IEG1 focuses on knowledge, critical thinking and problem-solving. PEO1 is mapped because it operationalizes these competencies into program-level outcomes.",
+        "IEG2": "IEG2 emphasises altruistic values, ethics and professionalism. PEO2 supports building graduates with strong character and civic responsibility.",
+        "IEG3": "IEG3 promotes socio-entrepreneurial skills and sustainability; PEO3 encourages application of skills to societal wellbeing.",
+        "IEG4": "IEG4 stresses effective communication; PEO4 aligns by developing communication and confidence.",
+        "IEG5": "IEG5 highlights leadership, teamwork and lifelong learning; PEO5 focuses on fostering these transferable skills."
+    }
+    return logic_map.get(ieg, "No logic explanation available."), 200, {'Content-Type':'text/plain; charset=utf-8'}
+
+
+@app.route("/api/logic/peo_plo/<peo>/<plo>", methods=["GET"])
+def logic_peo_plo(peo, plo):
+    logic_map = {
+        "PEO1": {
+            "PLO1": "PLO1 supports PEO1 by ensuring students acquire fundamental disciplinary knowledge.",
+            "PLO2": "PLO2 supports PEO1 by reinforcing critical thinking and problem solving.",
+            "PLO3": "PLO3 strengthens analytical and practical abilities.",
+            "PLO6": "PLO6 ensures students apply knowledge in practical contexts.",
+            "PLO7": "PLO7 exposes students to complex problems requiring higher-order thought."
+        },
+        "PEO2": {"PLO11": "PLO11 emphasizes ethics and professionalism, thus supporting PEO2."},
+        "PEO3": {"PLO10": "PLO10 prepares students to design solutions for societal problems.", "PLO9":"PLO9 focuses on sustainability and social impact."},
+        "PEO4": {"PLO5":"PLO5 aims to improve communication skills, aligned with PEO4."},
+        "PEO5": {"PLO4":"PLO4 builds teamwork and leadership skills.","PLO8":"PLO8 develops leadership & lifelong learning competencies.","PLO9":"PLO9 encourages engagement with complex issues."}
+    }
+    if peo in logic_map and plo in logic_map[peo]:
+        return logic_map[peo][plo], 200, {'Content-Type':'text/plain; charset=utf-8'}
+    return "No PEO → PLO logic available.", 200, {'Content-Type':'text/plain; charset=utf-8'}
+
+# ---------------------------
+# Mapping endpoints used by frontend
+# ---------------------------
+@app.route("/api/mapping")
+def api_mapping():
+    return jsonify(MAP)
+
+@app.route("/api/get_peos/<ieg>")
+def api_get_peos(ieg):
+    # Return PEOs mapped to IEG (demo)
+    return jsonify(IEG_TO_PEO.get(ieg, []))
+
+@app.route("/api/get_plos/<peo>")
+def api_get_plos(peo):
+    return jsonify(PEO_TO_PLO.get(peo, []))
+
+@app.route("/api/get_blooms/<plo>")
+def api_get_blooms(plo):
+    return jsonify(PLO_BLOOMS.get(plo, ["Remember","Understand","Apply"]))
+
+@app.route("/api/get_verbs/<plo>/<bloom>")
+def api_get_verbs(plo, bloom):
+    key = (plo, bloom)
+    return jsonify(VERBS.get(key, ["identify","explain"]))
+
+@app.route("/api/get_meta/<plo>/<bloom>")
+def api_get_meta(plo, bloom):
+    # Return sample metadata; replace with your real lookup
+    return jsonify(META_SAMPLE)
+
+@app.route("/api/get_statement/<level>/<typ>/<code>")
+def api_get_statement(level, typ, code):
+    # typ can be PEO or PLO - demo return
+    if typ == "PEO":
+        return jsonify(f"PEO statement for {code} at level {level}.")
+    return jsonify(f"PLO statement for {code} at level {level}.")
+
+@app.route("/api/content/<field>")
+def api_content(field):
+    examples = {
+        "Computer Science": ["implement sort algorithms","design REST APIs","write unit tests"],
+        "Medical & Health": ["interpret ECG waveforms","perform basic life support","measure blood pressure"],
+        "Engineering": ["analyze stress-strain curves","design a cantilever beam","model thermodynamic cycles"],
+        "Education": ["design lesson plans","apply formative assessment","classroom management strategies"],
+        "Business": ["analyze financial statements","design marketing strategies","evaluate business models"],
+        "Social Sciences": ["conduct a survey","apply qualitative coding","interpret statistical output"],
+        "Arts & Humanities": ["critique a painting","analyze a poem","contextualize a historical event"]
+    }
+    return jsonify(examples.get(field, []))
+
+# ---------------------------
+# Generate API - demo logic
+# ---------------------------
+@app.route("/generate", methods=["POST"])
+def generate_clo():
+    profile = request.form.get('profile', 'sc')
+    level = request.form.get('level', 'Degree')
+    plo = request.form.get('plo', '')
+    bloom = request.form.get('bloom', '')
+    verb = request.form.get('verb', '')
+    content = request.form.get('content', '')
+    # Simple templated CLO as demo
+    clo_text = f"Students will be able to {verb} {content} ({bloom}) — mapped to {plo}."
+    data = {
+        "clo": clo_text,
+        "clo_options": {
+            "Formal": clo_text,
+            "Simplified": f"{verb.capitalize()} {content}."
+        },
+        "assessments": ["Written exam","Practical test"],
+        "evidence": {"Assignment": ["report", "presentation"]},
+        "peo_statement": f"PEO statement demo for mapping {plo}.",
+        "plo_statement": f"PLO statement demo for {plo}.",
+        "plo_indicator": MAP["PLOIndicators"].get(plo, "")
+    }
+    return jsonify(data)
+
+# ---------------------------
+# Download demo endpoints
+# ---------------------------
+@app.route("/download")
+def download_clo():
+    # demo text file
+    content = "Generated CLO (demo)\n\nThis is a demo download. Replace with your generated file implementation."
+    return make_text_download(content, "generated_clo.txt")
+
+@app.route("/download_rubric")
+def download_rubric():
+    content = "Generated Rubric (demo)\n\nThis is a demo rubric file."
+    return make_text_download(content, "rubric.txt")
+
+def make_text_download(text, filename):
+    buffer = BytesIO()
+    buffer.write(text.encode('utf-8'))
+    buffer.seek(0)
+    return send_file(buffer, as_attachment=True, download_name=filename, mimetype='text/plain')
+
+# ---------------------------
+# Run server (for local testing)
+# ---------------------------
+if __name__ == "__main__":
+    app.run(debug=True, port=5000)
+
+
 # -----------------------
 # Run
 # -----------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
+
 
 
 
