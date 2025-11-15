@@ -192,74 +192,96 @@ body[data-theme="dark"] footer {
     ====================================================== -->
     <aside class="sidebar">
 
-      <div class="brand mb-2"><i class="bi bi-stars"></i> SCLOG</div>
-      <div class="small-muted mb-3">Smart CLO Generator — logic & mapping</div>
+  <div class="brand mb-3"><i class="bi bi-stars"></i> SCLOG</div>
 
-      <!-- PROFILE + LEVEL + FIELD -->
-      <div class="card-box mb-3">
-        <label class="form-label small-muted">Profile</label>
-        <select id="profile" class="form-select mb-2">
-          <option value="health">Medical & Health</option>
-          <option value="sc" selected>Computer Science & IT</option>
-          <option value="eng">Engineering & Technology</option>
-          <option value="socs">Social Sciences</option>
-          <option value="edu">Education</option>
-          <option value="bus">Business & Management</option>
-          <option value="arts">Arts & Humanities</option>
-        </select>
+  <!-- Profile + Level + Field (Group 1) -->
+  <div class="card-box mb-3">
 
-        <label class="form-label small-muted">Level</label>
-        <select id="level" class="form-select mb-2">
-          <option>Diploma</option>
-          <option selected>Degree</option>
-          <option>Master</option>
-          <option>PhD</option>
-        </select>
+    <label class="form-label small-muted">Profile</label>
+    <select id="profile" class="form-select mb-3">
+      <option value="health">Medical & Health</option>
+      <option value="sc" selected>Computer Science & IT</option>
+      <option value="eng">Engineering & Technology</option>
+      <option value="socs">Social Sciences</option>
+      <option value="edu">Education</option>
+      <option value="bus">Business & Management</option>
+      <option value="arts">Arts & Humanities</option>
+    </select>
 
-        <label class="form-label small-muted">Field (content suggestions)</label>
-        <select id="field" class="form-select mb-2">
-          <option value="">— Select Field —</option>
-          <option>Computer Science</option>
-          <option>Medical & Health</option>
-          <option>Engineering</option>
-          <option>Social Sciences</option>
-          <option>Education</option>
-          <option>Business</option>
-          <option>Arts & Humanities</option>
-        </select>
+    <label class="form-label small-muted">Level</label>
+    <select id="level" class="form-select mb-3">
+      <option>Diploma</option>
+      <option selected>Degree</option>
+      <option>Master</option>
+      <option>PhD</option>
+    </select>
 
-        <div class="d-grid gap-2 mt-2">
-          <button id="downloadBtn" class="btn btn-success btn-sm"><i class="bi bi-download me-1"></i> Download CLO</button>
-          <button id="downloadRubricBtn" class="btn btn-outline-secondary btn-sm"><i class="bi bi-file-earmark-text me-1"></i> Download Rubric</button>
-        </div>
-      </div>
+    <label class="form-label small-muted">Field (content suggestions)</label>
+    <select id="field" class="form-select">
+      <option value="">— Select Field —</option>
+      <option>Computer Science</option>
+      <option>Medical & Health</option>
+      <option>Engineering</option>
+      <option>Social Sciences</option>
+      <option>Education</option>
+      <option>Business</option>
+      <option>Arts & Humanities</option>
+    </select>
 
-      <!-- IEG → PEO Logic -->
-      <div class="card-box mb-3">
-        <label class="form-label small-muted">IEG</label>
-        <select id="ieg" class="form-select mb-2"><option value="">Select IEG</option></select>
+  </div>
 
-        <label class="form-label small-muted">PEO</label>
-        <select id="peo" class="form-select mb-2"><option value="">Select PEO</option></select>
+  <!-- IEG → PEO → LOGIC (Group 2) -->
+  <div class="card-box mb-3">
 
-        <div class="mt-2 small-muted fw-bold">Why this IEG → PEO?</div>
-        <div id="iep_logic" class="p-2 mt-1 rounded" style="background:#f8f5ff;">—</div>
-      </div>
+    <label class="form-label small-muted">IEG</label>
+    <select id="ieg" class="form-select mb-2">
+      <option value="">Select IEG</option>
+    </select>
 
-      <!-- PLO Mapping -->
-      <div class="card-box">
-        <label class="form-label small-muted">PLO</label>
-        <select id="plo" class="form-select mb-2"><option value="">Select PLO</option></select>
+    <label class="form-label small-muted">PEO</label>
+    <select id="peo" class="form-select mb-2">
+      <option value="">Select PEO</option>
+    </select>
 
-        <div class="mt-3 small-muted">Statements</div>
-        <div class="mt-2 small-muted">
-          <div><strong>PEO:</strong> <span id="peo_statement">—</span></div>
-          <div><strong>PLO:</strong> <span id="plo_statement">—</span></div>
-          <div><strong>Indicator:</strong> <span id="plo_indicator">—</span></div>
-        </div>
-      </div>
+    <div class="small-muted mt-3 fw-bold">Why this IEG → PEO?</div>
+    <div id="iep_logic"
+         class="p-2 rounded mt-1"
+         style="background:#f8f5ff; font-size:0.88rem; min-height:45px;">
+      —
+    </div>
 
-    </aside>
+  </div>
+
+  <!-- PLO Mapping (Group 3) -->
+  <div class="card-box mb-4">
+
+    <label class="form-label small-muted">PLO</label>
+    <select id="plo" class="form-select mb-3">
+      <option value="">Select PLO</option>
+    </select>
+
+    <div class="small-muted">Statements</div>
+    <div class="mt-2 small-muted">
+      <div><strong>PEO:</strong> <span id="peo_statement">—</span></div>
+      <div><strong>PLO:</strong> <span id="plo_statement">—</span></div>
+      <div><strong>Indicator:</strong> <span id="plo_indicator">—</span></div>
+    </div>
+
+  </div>
+
+  <!-- Download Buttons (Group 4 - ALWAYS at bottom) -->
+  <div class="card-box mt-auto">
+    <div class="d-grid gap-2">
+      <button id="downloadBtn" class="btn btn-success btn-sm">
+        <i class="bi bi-download me-1"></i> Download CLO
+      </button>
+      <button id="downloadRubricBtn" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-file-earmark-text me-1"></i> Download Rubric
+      </button>
+    </div>
+  </div>
+
+</aside>
 
     <!-- =====================================================
          MAIN BUILDER PANEL
@@ -420,28 +442,37 @@ body[data-theme="dark"] footer {
       } catch (e) { console.error(e); }
     }
 
-    /* IEG → PEO */
-    iegSel.addEventListener('change', async () => {
-      const ieg = iegSel.value;
-      peoSel.innerHTML = '<option>Loading…</option>';
-      logicBox.innerText = "—";
+    /* IEG → PEO logic explanation box */
+const logicBox = $('iep_logic');
 
-      if (!ieg) {
-        peoSel.innerHTML = '<option>Select PEO</option>';
-        return;
-      }
+/* IEG → PEO */
+iegSel.addEventListener('change', async () => {
+  const ieg = iegSel.value;
 
-      try {
-        const res = await fetch(`/api/get_peos/${encodeURIComponent(ieg)}`);
-        const peos = await res.json();
-        peoSel.innerHTML = '<option value="">Select PEO</option>';
-        (peos || []).forEach(p => peoSel.add(new Option(p, p)));
+  // Clear fields
+  peoSel.innerHTML = '<option value="">Select PEO</option>';
+  logicBox.innerHTML = '—';
 
-        const logicRes = await fetch(`/api/logic/ieg_peo/${encodeURIComponent(ieg)}`);
-        logicBox.innerText = await logicRes.json() || "—";
+  if (!ieg) return;
 
-      } catch (e) { console.error(e); }
-    });
+  try {
+    // Load PEOs
+    const res = await fetch(`/api/get_peos/${encodeURIComponent(ieg)}`);
+    const peos = await res.json();
+
+    peoSel.innerHTML = '<option value="">Select PEO</option>';
+    peos.forEach(p => peoSel.add(new Option(p, p)));
+
+    // Load logic explanation
+    const logicRes = await fetch(`/api/logic/ieg_peo/${encodeURIComponent(ieg)}`);
+    const logicText = await logicRes.text();  // <--- MUST USE TEXT
+    logicBox.innerText = logicText || "No logic explanation found.";
+
+  } catch (err) {
+    console.error(err);
+    logicBox.innerText = "Logic unavailable.";
+  }
+});
 
     /* PEO → PLO */
     peoSel.addEventListener('change', async () => {
