@@ -455,10 +455,13 @@ def download_clo():
     ws.title = "CLO"
 
     ws.append(["Field","Value"])
-    for k,v in LAST_CLO.items():
-        if isinstance(v, dict):
+
+    for key, val in LAST_CLO.items():
+        if isinstance(val, dict):
             continue
-        ws.append([k, v])
+        if isinstance(val, list):
+            val = "; ".join(str(x) for x in val)
+        ws.append([key, val])
 
     out = BytesIO()
     wb.save(out)
@@ -466,11 +469,11 @@ def download_clo():
     fname = f"CLO_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
 
     return send_file(
-        out, as_attachment=True,
+        out,
+        as_attachment=True,
         download_name=fname,
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     )
-
 
 @app.route("/download_rubric")
 def download_rubric():
@@ -513,3 +516,4 @@ def index():
 # ------------------------------------------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0")
+
